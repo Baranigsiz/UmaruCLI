@@ -1,8 +1,8 @@
 # Umaru CLI 🚀
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)
-![Release](https://img.shields.io/github/v/release/UmaruCLI/umaru?color=success)
-![Build](https://img.shields.io/github/actions/workflow/status/UmaruCLI/umaru/release.yml?logo=github)
+![Release](https://img.shields.io/github/v/release/Baranigsiz/UmaruCLI?color=success)
+![Build](https://img.shields.io/github/actions/workflow/status/Baranigsiz/UmaruCLI/release.yml?logo=github)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 Umaru is a professional, lightning-fast, and highly extensible CLI tool built with Go to bootstrap modern developer projects instantly. It provides an interactive terminal UI, smart dependency checks, and scaffolds your projects using industry-standard architectures.
@@ -30,7 +30,7 @@ Umaru CLI natively supports the following boilerplate architectures out-of-the-b
 ## 🚀 Installation
 
 ### Using Pre-Compiled Binaries (Recommended)
-You can download the latest pre-compiled binaries for Windows, macOS, and Linux directly from our [Releases Page](https://github.com/UmaruCLI/umaru/releases).
+You can download the latest pre-compiled binaries for Windows, macOS, and Linux directly from our [Releases Page](https://github.com/Baranigsiz/UmaruCLI/releases).
 
 1. Download the archive for your operating system.
 2. Extract the binary (`umaru.exe` or `umaru`).
@@ -38,8 +38,8 @@ You can download the latest pre-compiled binaries for Windows, macOS, and Linux 
 
 ### From Source
 ```bash
-git clone https://github.com/UmaruCLI/umaru.git
-cd umaru
+git clone https://github.com/Baranigsiz/UmaruCLI.git
+cd UmaruCLI
 go build -o umaru main.go
 # Move it to your bin folder
 mv umaru /usr/local/bin/
