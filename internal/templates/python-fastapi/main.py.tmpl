@@ -1,0 +1,7 @@
+from fastapi import FastAPI
+
+app = FastAPI(title="{{.ProjectName}}")
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World", "Project": "{{.ProjectName}}"}

@@ -1,0 +1,6 @@
+{
+  "name": "Rust Actix Web",
+  "description": "Blazing fast Rust web framework using Actix.",
+  "installCommand": ["cargo", "build"],
+  "runCommand": "cargo run"
+}

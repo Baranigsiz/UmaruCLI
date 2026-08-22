@@ -1,0 +1,6 @@
+{
+  "name": "Go Fiber API",
+  "description": "A robust, high-performance API template using Go and Fiber.",
+  "installCommand": ["go", "mod", "tidy"],
+  "runCommand": "go run main.go"
+}

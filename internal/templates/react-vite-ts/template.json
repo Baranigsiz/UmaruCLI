@@ -1,0 +1,6 @@
+{
+  "name": "React (Vite + TypeScript)",
+  "description": "Lightning fast React frontend using Vite and TypeScript.",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}

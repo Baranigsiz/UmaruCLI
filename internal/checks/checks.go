@@ -1,0 +1,25 @@
+package checks
+
+import (
+	"fmt"
+	"os/exec"
+	"umaru/internal/templates"
+)
+
+// PreFlightChecks verifies that all required system tools are available
+func PreFlightChecks(template templates.TemplateConfig) error {
+	// Always check for git, since we run git init
+	if _, err := exec.LookPath("git"); err != nil {
+		return fmt.Errorf("'git' is not installed or not found in PATH")
+	}
+
+	// Check for the package manager required by the template (e.g., npm, go)
+	if len(template.InstallCommand) > 0 {
+		pkgManager := template.InstallCommand[0]
+		if _, err := exec.LookPath(pkgManager); err != nil {
+			return fmt.Errorf("'%s' is required for this template but was not found in PATH", pkgManager)
+		}
+	}
+
+	return nil
+}

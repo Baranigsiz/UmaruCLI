@@ -1,0 +1,6 @@
+{
+  "name": "Next.js (App Router + Tailwind)",
+  "description": "Production grade full-stack React framework with Tailwind CSS.",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Python FastAPI",
+  "description": "High-performance Python backend using FastAPI.",
+  "installCommand": ["pip", "install", "-r", "requirements.txt"],
+  "runCommand": "uvicorn main:app --reload"
+}

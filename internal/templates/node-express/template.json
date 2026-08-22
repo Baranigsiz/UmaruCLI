@@ -1,0 +1,6 @@
+{
+  "name": "Node.js Express (TypeScript)",
+  "description": "A modern Node.js backend using Express and TypeScript.",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}
