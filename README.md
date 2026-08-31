@@ -1,6 +1,6 @@
 # Umaru CLI 🚀
 
-![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)
+![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go&logoColor=white)
 ![CI](https://github.com/Baranigsiz/UmaruCLI/actions/workflows/ci.yml/badge.svg)
 ![Release](https://github.com/Baranigsiz/UmaruCLI/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
