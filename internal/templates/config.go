@@ -2,6 +2,7 @@ package templates
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"path"
 )
@@ -47,3 +48,20 @@ func GetAvailableTemplates() ([]TemplateConfig, error) {
 
 	return templates, nil
 }
+
+// FindTemplateByID looks for a template matching the given ID.
+func FindTemplateByID(id string) (*TemplateConfig, error) {
+	templates, err := GetAvailableTemplates()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, t := range templates {
+		if t.ID == id {
+			return &t, nil
+		}
+	}
+
+	return nil, fmt.Errorf("template '%s' not found. Run 'umaru list' to view available templates", id)
+}
+

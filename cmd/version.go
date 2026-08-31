@@ -6,11 +6,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// These variables are injected at build time via -ldflags by GoReleaser
+var (
+	Version   = "dev"
+	Commit    = "none"
+	BuildDate = "unknown"
+)
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version number of Umaru",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Umaru CLI v0.1.0")
+		fmt.Printf("Umaru CLI %s (commit: %s, built at: %s)\n", Version, Commit, BuildDate)
 	},
 }
 

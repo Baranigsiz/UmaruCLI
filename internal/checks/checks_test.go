@@ -17,36 +17,53 @@ func TestPreFlightChecks(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		template    templates.TemplateConfig
-		expectError bool
+		name         string
+		template     templates.TemplateConfig
+		checkGit     bool
+		checkInstall bool
+		expectError  bool
 	}{
 		{
 			name: "Valid Template (go)",
 			template: templates.TemplateConfig{
 				InstallCommand: []string{"go", "mod", "tidy"},
 			},
-			expectError: false,
+			checkGit:     true,
+			checkInstall: true,
+			expectError:  false,
 		},
 		{
 			name: "Invalid Template (non-existent command)",
 			template: templates.TemplateConfig{
 				InstallCommand: []string{"some_fake_command_123"},
 			},
-			expectError: true,
+			checkGit:     true,
+			checkInstall: true,
+			expectError:  true,
+		},
+		{
+			name: "Invalid Template but checkInstall is false",
+			template: templates.TemplateConfig{
+				InstallCommand: []string{"some_fake_command_123"},
+			},
+			checkGit:     true,
+			checkInstall: false,
+			expectError:  false,
 		},
 		{
 			name: "Empty Install Command",
 			template: templates.TemplateConfig{
 				InstallCommand: []string{},
 			},
-			expectError: false, // Should pass because there's no pkgManager to check
+			checkGit:     true,
+			checkInstall: true,
+			expectError:  false, // Should pass because there's no pkgManager to check
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := PreFlightChecks(tt.template)
+			err := PreFlightChecks(tt.template, tt.checkGit, tt.checkInstall)
 			if (err != nil) != tt.expectError {
 				t.Errorf("PreFlightChecks() error = %v, expectError %v", err, tt.expectError)
 			}

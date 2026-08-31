@@ -2,19 +2,20 @@ package prompts
 
 import (
 	"fmt"
+	"strings"
 	"umaru/internal/templates"
 
 	"github.com/charmbracelet/huh"
 )
 
 type PromptResult struct {
-	ProjectName    string
-	Template       templates.TemplateConfig
+	ProjectName string
+	Template    templates.TemplateConfig
 }
 
-func Run() (*PromptResult, error) {
-	var projectName string
-	var selectedTemplateID string
+func Run(initialName string, initialTemplateID string) (*PromptResult, error) {
+	projectName := strings.TrimSpace(initialName)
+	selectedTemplateID := strings.TrimSpace(initialTemplateID)
 
 	// Dynamically load templates
 	availableTemplates, err := templates.GetAvailableTemplates()
@@ -22,45 +23,68 @@ func Run() (*PromptResult, error) {
 		return nil, fmt.Errorf("could not load templates: %v", err)
 	}
 
-	var options []huh.Option[string]
-	for _, t := range availableTemplates {
-		options = append(options, huh.NewOption(t.Name, t.ID))
+	// If template ID is already provided, validate it
+	if selectedTemplateID != "" {
+		tmpl, err := templates.FindTemplateByID(selectedTemplateID)
+		if err != nil {
+			return nil, err
+		}
+		// If project name is also provided, we're done (non-interactive)
+		if projectName != "" {
+			return &PromptResult{
+				ProjectName: projectName,
+				Template:    *tmpl,
+			}, nil
+		}
 	}
 
-	form := huh.NewForm(
-		huh.NewGroup(
+	// Build fields based on what is missing
+	var fields []huh.Field
+
+	if projectName == "" {
+		fields = append(fields,
 			huh.NewInput().
 				Title("What is your project named?").
 				Value(&projectName).
 				Validate(func(str string) error {
-					if len(str) == 0 {
+					if len(strings.TrimSpace(str)) == 0 {
 						return fmt.Errorf("project name cannot be empty")
 					}
 					return nil
 				}),
+		)
+	}
+
+	if selectedTemplateID == "" {
+		var options []huh.Option[string]
+		for _, t := range availableTemplates {
+			options = append(options, huh.NewOption(fmt.Sprintf("%s - %s", t.Name, t.Description), t.ID))
+		}
+
+		fields = append(fields,
 			huh.NewSelect[string]().
 				Title("Choose a project template").
 				Options(options...).
 				Value(&selectedTemplateID),
-		),
-	)
+		)
+	}
 
-	err = form.Run()
+	if len(fields) > 0 {
+		form := huh.NewForm(huh.NewGroup(fields...))
+		err = form.Run()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Find the selected template config
+	tmpl, err := templates.FindTemplateByID(selectedTemplateID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Find the selected template config
-	var selectedConfig templates.TemplateConfig
-	for _, t := range availableTemplates {
-		if t.ID == selectedTemplateID {
-			selectedConfig = t
-			break
-		}
-	}
-
 	return &PromptResult{
-		ProjectName: projectName,
-		Template:    selectedConfig,
+		ProjectName: strings.TrimSpace(projectName),
+		Template:    *tmpl,
 	}, nil
 }

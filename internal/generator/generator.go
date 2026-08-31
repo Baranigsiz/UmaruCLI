@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -14,8 +16,44 @@ type ProjectConfig struct {
 	Template    string
 }
 
-func Generate(config ProjectConfig) error {
+// CheckDestination checks if the destination directory exists and whether it is empty.
+// If force is true, an existing non-empty directory is permitted.
+func CheckDestination(destDir string, force bool) error {
+	info, err := os.Stat(destDir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
 
+	if !info.IsDir() {
+		return fmt.Errorf("target '%s' exists and is not a directory", destDir)
+	}
+
+	if force {
+		return nil
+	}
+
+	f, err := os.Open(destDir)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Read one entry to check if empty
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return nil // directory is empty
+	}
+	if err == nil {
+		return fmt.Errorf("directory '%s' already exists and is not empty. Use --force to proceed anyway", destDir)
+	}
+
+	return err
+}
+
+func Generate(config ProjectConfig) error {
 	err := fs.WalkDir(templates.FS, config.Template, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -31,9 +69,16 @@ func Generate(config ProjectConfig) error {
 			return err
 		}
 
+		// Do not copy internal template.json into generated projects
+		if relPath == "template.json" {
+			return nil
+		}
+
+		isTemplate := strings.HasSuffix(relPath, ".tmpl")
+
 		// Remove .tmpl extension if exists
 		destPath := filepath.Join(config.ProjectName, relPath)
-		if strings.HasSuffix(destPath, ".tmpl") {
+		if isTemplate {
 			destPath = strings.TrimSuffix(destPath, ".tmpl")
 		}
 
@@ -42,26 +87,33 @@ func Generate(config ProjectConfig) error {
 			return err
 		}
 
-		// Read template content
+		// Read file content
 		content, err := templates.FS.ReadFile(path)
 		if err != nil {
 			return err
 		}
 
-		// Parse and execute template
-		tmpl, err := template.New(destPath).Parse(string(content))
-		if err != nil {
-			return err
-		}
+		if isTemplate {
+			// Parse and execute template for .tmpl files
+			tmpl, err := template.New(filepath.Base(destPath)).Parse(string(content))
+			if err != nil {
+				return fmt.Errorf("failed to parse template %s: %w", path, err)
+			}
 
-		destFile, err := os.Create(destPath)
-		if err != nil {
-			return err
-		}
-		defer destFile.Close()
+			destFile, err := os.Create(destPath)
+			if err != nil {
+				return err
+			}
+			defer destFile.Close()
 
-		if err := tmpl.Execute(destFile, config); err != nil {
-			return err
+			if err := tmpl.Execute(destFile, config); err != nil {
+				return fmt.Errorf("failed to execute template %s: %w", path, err)
+			}
+		} else {
+			// Write raw file bytes without template parsing (preserves binary & non-template syntax)
+			if err := os.WriteFile(destPath, content, 0644); err != nil {
+				return err
+			}
 		}
 
 		return nil

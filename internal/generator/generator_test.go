@@ -3,15 +3,12 @@ package generator
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 func TestGenerate(t *testing.T) {
-	// Use t.TempDir() to create a temporary directory for output
-	// This prevents the test from polluting the real filesystem
 	tempDir := t.TempDir()
-
-	// The target project name/path should be inside the temp dir
 	targetPath := filepath.Join(tempDir, "my-test-project")
 
 	config := ProjectConfig{
@@ -25,14 +22,11 @@ func TestGenerate(t *testing.T) {
 		t.Fatalf("Generate() failed: %v", err)
 	}
 
-	// Verify that the files were generated correctly
-	// We expect go-fiber to generate at least go.mod, main.go, and template.json
-	
+	// Verify expected files are generated without .tmpl extension
 	expectedFiles := []string{
 		"go.mod",
 		"main.go",
-		".gitignore", // Since we strip .tmpl, it should be .gitignore, not .gitignore.tmpl
-		"template.json",
+		".gitignore",
 	}
 
 	for _, file := range expectedFiles {
@@ -42,16 +36,58 @@ func TestGenerate(t *testing.T) {
 		}
 	}
 
-	// Additionally, verify that template rendering worked by checking the content of go.mod
-	// In go.mod.tmpl, the module name is likely {{.ProjectName}}, but we passed targetPath as ProjectName.
-	// Since targetPath is an absolute path, it will be rendered as such. We just need to check if it's there.
+	// Verify template.json is EXCLUDED from generated project
+	templateJSONPath := filepath.Join(targetPath, "template.json")
+	if _, err := os.Stat(templateJSONPath); !os.IsNotExist(err) {
+		t.Errorf("template.json was copied to destination, but should have been excluded")
+	}
+
+	// Verify template rendering worked on go.mod
 	goModBytes, err := os.ReadFile(filepath.Join(targetPath, "go.mod"))
 	if err != nil {
 		t.Fatalf("Failed to read generated go.mod: %v", err)
 	}
 
 	goModContent := string(goModBytes)
-	if goModContent == "" {
-		t.Errorf("go.mod is empty, template rendering might have failed")
+	if !strings.Contains(goModContent, "module") {
+		t.Errorf("go.mod does not contain expected module definition: %s", goModContent)
+	}
+}
+
+func TestCheckDestination(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// 1. Non-existent path -> should pass
+	nonExistent := filepath.Join(tempDir, "brand-new-project")
+	if err := CheckDestination(nonExistent, false); err != nil {
+		t.Errorf("Expected non-existent path to pass, got error: %v", err)
+	}
+
+	// 2. Empty directory -> should pass
+	emptyDir := filepath.Join(tempDir, "empty-dir")
+	if err := os.Mkdir(emptyDir, 0755); err != nil {
+		t.Fatalf("Failed to create empty dir: %v", err)
+	}
+	if err := CheckDestination(emptyDir, false); err != nil {
+		t.Errorf("Expected empty dir to pass, got error: %v", err)
+	}
+
+	// 3. Non-empty directory without force -> should fail
+	dummyFile := filepath.Join(emptyDir, "some-file.txt")
+	if err := os.WriteFile(dummyFile, []byte("hello"), 0644); err != nil {
+		t.Fatalf("Failed to create dummy file: %v", err)
+	}
+	if err := CheckDestination(emptyDir, false); err == nil {
+		t.Errorf("Expected non-empty directory without force to fail, but it passed")
+	}
+
+	// 4. Non-empty directory with force -> should pass
+	if err := CheckDestination(emptyDir, true); err != nil {
+		t.Errorf("Expected non-empty directory with force=true to pass, got error: %v", err)
+	}
+
+	// 5. Existing file (not a directory) -> should fail
+	if err := CheckDestination(dummyFile, false); err == nil {
+		t.Errorf("Expected file path to fail, but it passed")
 	}
 }

@@ -1,8 +1,8 @@
 # Umaru CLI 🚀
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)
-![Release](https://img.shields.io/github/v/release/Baranigsiz/UmaruCLI?color=success)
-![Build](https://img.shields.io/github/actions/workflow/status/Baranigsiz/UmaruCLI/release.yml?logo=github)
+![CI](https://github.com/Baranigsiz/UmaruCLI/actions/workflows/ci.yml/badge.svg)
+![Release](https://github.com/Baranigsiz/UmaruCLI/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 Umaru is a professional, lightning-fast, and highly extensible CLI tool built with Go to bootstrap modern developer projects instantly. It provides an interactive terminal UI, smart dependency checks, and scaffolds your projects using industry-standard architectures.
@@ -47,15 +47,41 @@ mv umaru /usr/local/bin/
 
 ## 💻 Usage
 
-Start a new project interactively. The CLI will guide you through the process:
+### Interactive Mode
+Start a new project interactively with beautiful prompts:
 ```bash
 umaru init
 ```
 
-Check the version:
+### Scriptable / Non-Interactive Mode (CI/CD Friendly)
+Pass arguments and flags directly to skip interactive menus:
+```bash
+# Initialize a Go Fiber project skipping git and install steps
+umaru init my-api -t go-fiber --no-git --skip-install
+
+# Scaffold a React app and overwrite target directory if not empty
+umaru init my-frontend -t react-vite-ts --force
+```
+
+### List Available Templates
+Explore all built-in starter templates directly from your terminal:
+```bash
+umaru list
+```
+
+### Check Version
 ```bash
 umaru version
 ```
+
+### CLI Flags for `umaru init`
+| Flag | Short | Description |
+|---|---|---|
+| `--template` | `-t` | Specify the starter template ID |
+| `--no-git` | | Skip Git repository initialization |
+| `--skip-install` | | Skip running the package manager / installing dependencies |
+| `--force` | `-f` | Overwrite existing files in target directory |
+
 
 ## 🛠️ Architecture & Extensibility
 
@@ -84,7 +110,8 @@ go test ./...
 
 ## 📜 Built With
 - [Cobra](https://github.com/spf13/cobra) - CLI framework
-- [Huh](https://github.com/charmbracelet/huh) - Interactive prompts
+- [Huh](https://github.com/charmbracelet/huh) - Interactive prompts & forms
+- [Lipgloss](https://github.com/charmbracelet/lipgloss) - Style definitions & table rendering
 - [GoReleaser](https://goreleaser.com/) - Automated CI/CD pipeline
 
 ## License
