@@ -1,0 +1,47 @@
+package main
+
+import (
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"{{.ModuleName}}/internal/config"
+	"{{.ModuleName}}/internal/routes"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+func main() {
+	cfg := config.Load()
+
+	app := fiber.New(fiber.Config{
+		AppName:      cfg.AppName,
+		ServerHeader: "Fiber",
+	})
+
+	// Register routes
+	routes.SetupRoutes(app)
+
+	// Channel to listen for interrupt signals
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		log.Printf("🚀 Server is running on port %s in %s mode", cfg.Port, cfg.AppEnv)
+		if err := app.Listen(":" + cfg.Port); err != nil {
+			log.Printf("Server shutting down: %v\n", err)
+		}
+	}()
+
+	<-quit
+	log.Println("🛑 Gracefully shutting down...")
+
+	// Attempt graceful shutdown with a timeout of 5 seconds
+	if err := app.ShutdownWithTimeout(5 * time.Second); err != nil {
+		log.Fatalf("Fiber shutdown error: %v", err)
+	}
+
+	log.Println("✅ Server exited cleanly")
+}

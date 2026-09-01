@@ -1,0 +1,13 @@
+package handlers
+
+import (
+	"github.com/gofiber/fiber/v2"
+)
+
+func Welcome(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"project": "{{.ProjectName}}",
+		"message": "Welcome to your production-grade Go Fiber API powered by Umaru CLI!",
+		"docs":    "/health",
+	})
+}

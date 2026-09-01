@@ -1,0 +1,17 @@
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class ItemBase(BaseModel):
+    title: str = Field(..., example="Build with Umaru CLI")
+    description: Optional[str] = Field(None, example="Bootstrap modern developer projects instantly")
+    price: float = Field(..., gt=0, example=29.99)
+
+class ItemCreate(ItemBase):
+    pass
+
+class ItemResponse(ItemBase):
+    id: int
+    is_active: bool = True
+
+    class Config:
+        from_attributes = True

@@ -1,0 +1,28 @@
+from fastapi import APIRouter, HTTPException, status
+from typing import List
+from app.schemas.item import ItemCreate, ItemResponse
+
+router = APIRouter()
+
+# In-memory mock database
+db_items: List[dict] = [
+    {"id": 1, "title": "First Project", "description": "Scaffolded with Umaru CLI", "price": 19.99, "is_active": True},
+]
+
+@router.get("/", response_model=List[ItemResponse], summary="List all items")
+def list_items():
+    return db_items
+
+@router.post("/", response_model=ItemResponse, status_code=status.HTTP_201_CREATED, summary="Create a new item")
+def create_item(item: ItemCreate):
+    new_id = len(db_items) + 1
+    new_item = {"id": new_id, **item.model_dump(), "is_active": True}
+    db_items.append(new_item)
+    return new_item
+
+@router.get("/{item_id}", response_model=ItemResponse, summary="Get item by ID")
+def get_item(item_id: int):
+    for item in db_items:
+        if item["id"] == item_id:
+            return item
+    raise HTTPException(status_code=404, detail="Item not found")

@@ -1,6 +1,6 @@
 {
-  "name": "Go Fiber API",
-  "description": "A robust, high-performance API template using Go and Fiber.",
+  "name": "Go Fiber API (Production-Ready)",
+  "description": "Clean architecture Go REST API with Fiber, Docker, Graceful Shutdown & Makefile.",
   "installCommand": ["go", "mod", "tidy"],
-  "runCommand": "go run main.go"
+  "runCommand": "go run cmd/api/main.go"
 }

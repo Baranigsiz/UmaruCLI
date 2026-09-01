@@ -1,6 +1,6 @@
 {
-  "name": "Python FastAPI",
-  "description": "High-performance Python backend using FastAPI.",
+  "name": "Python FastAPI (Production-Ready)",
+  "description": "Modular FastAPI backend with Pydantic v2, CORS, Docker, Router architecture & OpenAPI docs.",
   "installCommand": ["pip", "install", "-r", "requirements.txt"],
-  "runCommand": "uvicorn main:app --reload"
+  "runCommand": "uvicorn app.main:app --reload"
 }

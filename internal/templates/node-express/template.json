@@ -1,6 +1,6 @@
 {
-  "name": "Node.js Express (TypeScript)",
-  "description": "A modern Node.js backend using Express and TypeScript.",
+  "name": "Node.js Express (TypeScript & Production-Ready)",
+  "description": "Clean architecture Express + TypeScript REST API with Docker, Cors, Helmet & Error Handling.",
   "installCommand": ["npm", "install"],
   "runCommand": "npm run dev"
 }

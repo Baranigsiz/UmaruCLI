@@ -1,0 +1,33 @@
+package config
+
+import (
+	"os"
+
+	"github.com/joho/godotenv"
+)
+
+type Config struct {
+	AppName string
+	Port    string
+	AppEnv  string
+}
+
+func Load() *Config {
+	_ = godotenv.Load()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	appEnv := os.Getenv("APP_ENV")
+	if appEnv == "" {
+		appEnv = "development"
+	}
+
+	return &Config{
+		AppName: "{{.ProjectName}}",
+		Port:    port,
+		AppEnv:  appEnv,
+	}
+}

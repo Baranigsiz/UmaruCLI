@@ -1,0 +1,10 @@
+import { Request, Response } from 'express';
+import { config } from '../config';
+
+export const getWelcome = (req: Request, res: Response) => {
+  res.status(200).json({
+    project: config.projectName,
+    message: 'Welcome to your production-grade Express + TypeScript API powered by Umaru CLI!',
+    docs: '/api/v1/health',
+  });
+};

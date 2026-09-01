@@ -1,0 +1,11 @@
+import { Request, Response } from 'express';
+import { config } from '../config';
+
+export const getHealth = (req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'healthy',
+    service: config.projectName,
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+};

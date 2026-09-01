@@ -1,0 +1,16 @@
+import { Router } from 'express';
+import { getHealth } from '../controllers/health.controller';
+import { getWelcome } from '../controllers/welcome.controller';
+
+const router = Router();
+
+// Base routes
+router.get('/', getWelcome);
+router.get('/health', getHealth);
+
+// API v1 routes
+router.get('/api/v1/ping', (req, res) => {
+  res.json({ message: 'pong' });
+});
+
+export default router;

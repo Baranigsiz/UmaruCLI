@@ -6,14 +6,64 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"umaru/internal/templates"
 )
 
 type ProjectConfig struct {
-	ProjectName string
-	Template    string
+	ProjectName string // Human readable or base project name
+	SafeName    string // Lowercase slug for npm, cargo, etc.
+	ModuleName  string // Safe identifier for Go modules
+	TargetDir   string // Filesystem target directory
+	Template    string // Template ID (e.g. "go-fiber")
+}
+
+// Slugify converts any string into a clean lowercase slug (e.g. "My Cool API" -> "my-cool-api")
+func Slugify(s string) string {
+	s = strings.TrimSpace(strings.ToLower(s))
+	// Replace non-alphanumeric characters (excluding hyphen and underscore) with hyphen
+	reg := regexp.MustCompile(`[^a-z0-9_\-]+`)
+	s = reg.ReplaceAllString(s, "-")
+	// Trim leading and trailing hyphens
+	s = strings.Trim(s, "-")
+	if s == "" {
+		return "umaru-app"
+	}
+	return s
+}
+
+// ResolveProjectConfig determines the target directory and normalized project names
+func ResolveProjectConfig(rawInput string, templateID string) (ProjectConfig, error) {
+	rawInput = strings.TrimSpace(rawInput)
+	if rawInput == "" {
+		rawInput = "."
+	}
+
+	targetDir := filepath.Clean(rawInput)
+	var projectName string
+
+	if targetDir == "." {
+		absPath, err := filepath.Abs(targetDir)
+		if err != nil {
+			return ProjectConfig{}, fmt.Errorf("failed to resolve current directory: %w", err)
+		}
+		projectName = filepath.Base(absPath)
+	} else {
+		projectName = filepath.Base(targetDir)
+	}
+
+	safeName := Slugify(projectName)
+	moduleName := safeName
+
+	return ProjectConfig{
+		ProjectName: projectName,
+		SafeName:    safeName,
+		ModuleName:  moduleName,
+		TargetDir:   targetDir,
+		Template:    templateID,
+	}, nil
 }
 
 // CheckDestination checks if the destination directory exists and whether it is empty.
@@ -77,7 +127,7 @@ func Generate(config ProjectConfig) error {
 		isTemplate := strings.HasSuffix(relPath, ".tmpl")
 
 		// Remove .tmpl extension if exists
-		destPath := filepath.Join(config.ProjectName, relPath)
+		destPath := filepath.Join(config.TargetDir, relPath)
 		if isTemplate {
 			destPath = strings.TrimSuffix(destPath, ".tmpl")
 		}
@@ -104,10 +154,14 @@ func Generate(config ProjectConfig) error {
 			if err != nil {
 				return err
 			}
-			defer destFile.Close()
 
-			if err := tmpl.Execute(destFile, config); err != nil {
-				return fmt.Errorf("failed to execute template %s: %w", path, err)
+			execErr := tmpl.Execute(destFile, config)
+			closeErr := destFile.Close()
+			if execErr != nil {
+				return fmt.Errorf("failed to execute template %s: %w", path, execErr)
+			}
+			if closeErr != nil {
+				return closeErr
 			}
 		} else {
 			// Write raw file bytes without template parsing (preserves binary & non-template syntax)

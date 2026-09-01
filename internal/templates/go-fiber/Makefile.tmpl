@@ -1,0 +1,19 @@
+.PHONY: dev build run test docker-build docker-up
+
+dev:
+	go run cmd/api/main.go
+
+build:
+	go build -o bin/server cmd/api/main.go
+
+run: build
+	./bin/server
+
+test:
+	go test -v ./...
+
+docker-build:
+	docker build -t {{.SafeName}} .
+
+docker-up:
+	docker compose up -d
