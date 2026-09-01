@@ -1,0 +1,111 @@
+import { useState, useEffect } from 'react'
+import { Server, Layout, Zap, CheckCircle2, RefreshCw } from 'lucide-react'
+
+interface ApiResponse {
+  message?: string
+  status?: string
+  backend?: string
+  frontend?: string
+  timestamp?: string
+}
+
+export default function App() {
+  const [apiData, setApiData] = useState<ApiResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const fetchBackend = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/welcome')
+      const data = await res.json()
+      setApiData(data)
+    } catch {
+      setApiData({ message: 'Could not connect to Go backend. Ensure API is running on port 8080.' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchBackend()
+  }, [])
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-100">
+      <div className="max-w-3xl w-full text-center space-y-8">
+        <!-- Badge -->
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm font-medium">
+          <Zap className="w-4 h-4" />
+          <span>Fullstack Monorepo (Go Fiber + React Vite)</span>
+        </div>
+
+        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
+          {{.ProjectName}}
+        </h1>
+
+        <p className="text-slate-400 text-lg sm:text-xl max-w-xl mx-auto">
+          High-performance production fullstack architecture scaffolded with{' '}
+          <span className="text-cyan-400 font-semibold">Umaru CLI</span>.
+        </p>
+
+        <!-- Live Backend Status Card -->
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl max-w-lg mx-auto backdrop-blur-sm text-left space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <Server className="w-5 h-5 text-cyan-400" />
+              <h2 className="font-bold text-white">Go Backend Status</h2>
+            </div>
+            <button
+              onClick={fetchBackend}
+              disabled={loading}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              title="Refresh status"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Endpoint:</span>
+              <span className="font-mono text-slate-200">GET /api/welcome</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Backend Response:</span>
+              <span className="text-cyan-300 font-medium">{apiData?.message || 'Connecting...'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Architecture:</span>
+              <span className="text-emerald-400 flex items-center gap-1">
+                <CheckCircle2 className="w-4 h-4" /> Docker & Compose Ready
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tech Cards -->
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left pt-4">
+          <div className="p-5 rounded-xl bg-slate-900/40 border border-slate-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Server className="w-5 h-5 text-cyan-400" />
+              <h3 className="font-bold text-white">Go Fiber API (apps/api)</h3>
+            </div>
+            <p className="text-sm text-slate-400">
+              Clean modular structure, CORS middleware, graceful shutdown, and lightning fast request handling.
+            </p>
+          </div>
+
+          <div className="p-5 rounded-xl bg-slate-900/40 border border-slate-800">
+            <div className="flex items-center gap-2 mb-2">
+              <Layout className="w-5 h-5 text-indigo-400" />
+              <h3 className="font-bold text-white">React + Vite (apps/web)</h3>
+            </div>
+            <p className="text-sm text-slate-400">
+              TypeScript, Tailwind CSS, pre-configured proxy to backend, and hot module replacement.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

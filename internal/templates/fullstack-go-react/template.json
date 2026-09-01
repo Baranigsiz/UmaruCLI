@@ -1,0 +1,6 @@
+{
+  "name": "Fullstack Monorepo (Go Fiber + React Vite)",
+  "description": "Complete production monorepo with Go Fiber backend, React TypeScript frontend, and Docker Compose",
+  "installCommand": ["npm", "install"],
+  "runCommand": "docker-compose up --build"
+}

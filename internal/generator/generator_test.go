@@ -18,12 +18,41 @@ func TestSlugify(t *testing.T) {
 		{"   Spaces and special @#$ characters   ", "spaces-and-special-characters"},
 		{"", "umaru-app"},
 		{"---", "umaru-app"},
+		{"Türkçe Karakter Testi", "turkce-karakter-testi"},
+		{"Örnek Şahane Proje", "ornek-sahane-proje"},
+		{"Çalışma Alanı", "calisma-alani"},
+		{"Café & Crème Brûlée", "cafe-creme-brulee"},
 	}
 
 	for _, tt := range tests {
 		got := Slugify(tt.input)
 		if got != tt.expected {
 			t.Errorf("Slugify(%q) = %q, expected %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestDryRun(t *testing.T) {
+	config, err := ResolveProjectConfig("dry-run-sample", "go-fiber")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+
+	files, err := DryRun(config)
+	if err != nil {
+		t.Fatalf("DryRun failed: %v", err)
+	}
+
+	if len(files) == 0 {
+		t.Fatalf("Expected files in DryRun, got 0")
+	}
+
+	for _, f := range files {
+		if strings.HasSuffix(f, ".tmpl") {
+			t.Errorf("DryRun returned path with .tmpl extension: %s", f)
+		}
+		if strings.HasSuffix(f, "template.json") {
+			t.Errorf("DryRun returned template.json: %s", f)
 		}
 	}
 }

@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AppService {
+  getHello(): object {
+    return {
+      message: 'Welcome to NestJS Enterprise API! 🦁🚀',
+      docs: '/api/docs',
+      status: 'active',
+    };
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Astro (Tailwind CSS + TypeScript)",
+  "description": "Ultra-fast content-driven web framework with Tailwind CSS and TypeScript",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}

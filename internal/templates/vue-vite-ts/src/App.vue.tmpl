@@ -1,0 +1,70 @@
+<script setup lang="ts">
+import { useCounterStore } from './stores/counter'
+import { Sparkles, Zap, Layers, ShieldCheck, Plus, Minus } from 'lucide-vue-next'
+
+const counter = useCounterStore()
+</script>
+
+<template>
+  <main class="flex min-h-screen flex-col items-center justify-center p-8">
+    <div class="max-w-3xl w-full text-center space-y-8">
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium">
+        <Sparkles class="w-4 h-4" />
+        <span>Vue 3 + Vite + TypeScript + Pinia</span>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+        {{.ProjectName}}
+      </h1>
+
+      <p class="text-slate-400 text-lg sm:text-xl max-w-xl mx-auto">
+        Your production-ready Vue 3 application scaffolded with <span class="text-emerald-400 font-semibold">Umaru CLI</span>.
+      </p>
+
+      <!-- Pinia Counter Card -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl max-w-md mx-auto backdrop-blur-sm">
+        <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Pinia Store Counter</h2>
+        <div class="text-5xl font-black text-white mb-6 font-mono" v-text="counter.count"></div>
+        <div class="flex items-center justify-center gap-4">
+          <button
+            @click="counter.decrement"
+            class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors border border-slate-700 active:scale-95"
+            aria-label="Decrement"
+          >
+            <Minus class="w-5 h-5" />
+          </button>
+          <button
+            @click="counter.increment"
+            class="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 active:scale-95"
+          >
+            <Plus class="w-5 h-5" />
+            <span>Increment</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Features Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 text-left">
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800/80">
+          <Zap class="w-6 h-6 text-amber-400 mb-2" />
+          <h3 class="font-bold text-white mb-1">Vite 5 Speed</h3>
+          <p class="text-sm text-slate-400">Instant HMR and lightning-fast build times.</p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800/80">
+          <Layers class="w-6 h-6 text-emerald-400 mb-2" />
+          <h3 class="font-bold text-white mb-1">Pinia State</h3>
+          <p class="text-sm text-slate-400">Type-safe, intuitive state management.</p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800/80">
+          <ShieldCheck class="w-6 h-6 text-cyan-400 mb-2" />
+          <h3 class="font-bold text-white mb-1">Strict TypeScript</h3>
+          <p class="text-sm text-slate-400">Full end-to-end type safety out of the box.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>

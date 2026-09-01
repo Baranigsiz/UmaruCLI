@@ -1,0 +1,32 @@
+---
+interface Props {
+	title: string;
+	body: string;
+	href: string;
+	tag?: string;
+}
+
+const { href, title, body, tag } = Astro.props;
+---
+
+<a
+	href={href}
+	target="_blank"
+	rel="noopener noreferrer"
+	class="group block p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-rose-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/10 hover:-translate-y-1"
+>
+	<div class="flex items-center justify-between mb-3">
+		<h2 class="text-xl font-bold text-white group-hover:text-rose-400 transition-colors">
+			{title}
+			<span class="inline-block transition-transform group-hover:translate-x-1">&rarr;</span>
+		</h2>
+		{tag && (
+			<span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+				{tag}
+			</span>
+		)}
+	</div>
+	<p class="text-sm text-slate-400 leading-relaxed">
+		{body}
+	</p>
+</a>

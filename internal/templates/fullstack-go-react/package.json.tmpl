@@ -1,0 +1,13 @@
+{
+  "name": "{{.SafeName}}-monorepo",
+  "private": true,
+  "scripts": {
+    "dev:web": "npm --prefix apps/web run dev",
+    "build:web": "npm --prefix apps/web run build",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down"
+  },
+  "workspaces": [
+    "apps/*"
+  ]
+}

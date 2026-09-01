@@ -1,0 +1,6 @@
+{
+  "name": "NestJS Enterprise API (TypeScript + Swagger)",
+  "description": "Modular enterprise backend with NestJS 10, Swagger OpenAPI docs, and Docker",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run start:dev"
+}

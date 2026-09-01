@@ -14,8 +14,11 @@
 - 🏎️ **Lightning Fast**: High performance, single static binary compiled with Go.
 - 🏗️ **Production-Ready Architectures**: Scaffolds full clean architectures (Controllers, Routes, Config, Middlewares, Docker & `docker-compose.yml`, Makefiles) instead of bare-bones Hello-World scripts.
 - 🎨 **Modern Terminal DX**: Beautiful interactive prompts with [Huh](https://github.com/charmbracelet/huh) and styled Lipgloss result cards with next-step instructions.
-- 📂 **Smart Path & Slug Resolution**: Full support for `.` (current directory), path normalization, and automatic slugification for `package.json`, `go.mod`, and `Cargo.toml`.
-- 🛡️ **Pre-Flight Checks**: Checks for required dependencies (`git`, `npm`, `cargo`, `go`) beforehand so generation never fails halfway through.
+- 📦 **Multi-Package Manager Support**: Seamlessly choose between `npm`, `pnpm`, `yarn`, or `bun` for JavaScript & TypeScript projects.
+- 🔍 **Dry-Run Mode**: Preview what files will be created before writing anything to disk.
+- 📜 **Verbose Logging**: Live streaming logs for long dependency installations.
+- 📂 **Smart Path & Unicode Slug Resolution**: Full support for `.` (current directory), Unicode/Turkish transliteration, and automatic slugification for `package.json`, `go.mod`, and `Cargo.toml`.
+- 🛡️ **Pre-Flight Checks**: Checks for required dependencies (`git`, `npm`, `pnpm`, `yarn`, `bun`, `cargo`, `go`) beforehand so generation never fails halfway through.
 - 🔌 **Zero External Dependencies**: All starter templates are compiled directly into the binary using Go's `embed.FS`.
 
 ---
@@ -27,11 +30,17 @@ Umaru CLI natively provides batteries-included starter architectures:
 | Template | Stack | Architecture Features |
 |---|---|---|
 | 🏎️ **Go Fiber API** | Go + Fiber v2 | Clean architecture (`cmd/`, `internal/`), Docker multi-stage build, `docker-compose`, Makefile, Graceful Shutdown, CORS & Logger. |
+| 🏎️ **Go Gin API** | Go 1.24 + Gin | Layered Clean Architecture, Gin Recovery & Logger, CORS, Graceful Shutdown, Docker & Compose. |
 | 🌐 **Node.js Express** | Node.js + TypeScript | Modular architecture (`controllers/`, `routes/`, `middlewares/`), Docker, Helmet, Morgan, CORS, Error handling. |
+| 🦁 **NestJS Enterprise API** | NestJS 10 + TypeScript | Modular architecture, Swagger OpenAPI (`/api/docs`), ValidationPipe, Docker & Compose, Jest. |
 | 🐍 **Python FastAPI** | FastAPI + Pydantic v2 | Versioned router (`/api/v1/`), Pydantic models, OpenAPI `/docs`, Docker, `docker-compose`, CORS. |
 | ▲ **Next.js** | Next.js 14 + Tailwind CSS | App Router, Tailwind CSS, Lucide icons, PostCSS, TypeScript. |
+| 🚀 **Astro** | Astro 4 + Tailwind CSS | Zero-JS default content architecture, Markdown/MDX ready, Lucide icons, TypeScript. |
 | ⚛️ **React** | React 18 + Vite 5 + TS | Fast development setup, Lucide icons, strict TypeScript. |
+| 💚 **Vue 3** | Vue 3 + Vite 5 + TS | Composition API (`<script setup>`), Pinia state store, Tailwind CSS, Lucide icons. |
 | 🦀 **Rust Actix Web** | Rust + Actix-Web 4 | Safe and ultra-fast backend, Serde JSON serialization, healthchecks. |
+| 🦀 **Rust Axum API** | Rust + Axum 0.7 + Tokio | Tokio async runtime, Tower HTTP middleware, Tracing, Docker multi-stage, Graceful Shutdown. |
+| 📦 **Fullstack Monorepo** | Go Fiber + React Vite + Docker | Complete monorepo (`apps/api`, `apps/web`), Docker Compose, live API proxy, Tailwind CSS. |
 
 ---
 
@@ -69,8 +78,11 @@ Pass arguments directly for instant CI/CD or scripted scaffolding:
 # Initialize a production-ready Go Fiber API in the current directory
 umaru init . -t go-fiber --no-git --skip-install
 
-# Scaffold a React app and overwrite if directory is not empty
-umaru init my-frontend -t react-vite-ts --force
+# Scaffold a React app with pnpm and simulate via dry-run
+umaru init my-frontend -t react-vite-ts -p pnpm --dry-run
+
+# Create a project with verbose installation logs
+umaru init my-api -t node-express -p bun -v
 ```
 
 ### List Available Templates
@@ -87,7 +99,10 @@ umaru version
 ### CLI Flags for `umaru init`
 | Flag | Short | Description |
 |---|---|---|
-| `--template` | `-t` | Specify the starter template ID |
+| `--template` | `-t` | Specify starter template ID (e.g., `go-fiber`, `react-vite-ts`) |
+| `--package-manager` | `-p` | Package manager for Node templates (`npm`, `pnpm`, `yarn`, `bun`) |
+| `--dry-run` | | Simulate generation without writing any files to disk |
+| `--verbose` | `-v` | Show detailed installation logs from package managers |
 | `--no-git` | | Skip Git repository initialization |
 | `--skip-install` | | Skip installing package dependencies |
 | `--force` | `-f` | Overwrite existing files in target directory |

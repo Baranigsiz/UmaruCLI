@@ -1,0 +1,15 @@
+.PHONY: dev build clean docker-up docker-down
+
+dev:
+	@echo "Starting fullstack development..."
+	@echo "API: cd apps/api && go run cmd/api/main.go"
+	@echo "Web: cd apps/web && npm run dev"
+
+docker-up:
+	docker-compose up --build
+
+docker-down:
+	docker-compose down
+
+clean:
+	rm -rf apps/web/dist apps/api/bin

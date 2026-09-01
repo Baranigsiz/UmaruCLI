@@ -9,13 +9,15 @@ import (
 )
 
 type PromptResult struct {
-	ProjectName string
-	Template    templates.TemplateConfig
+	ProjectName    string
+	Template       templates.TemplateConfig
+	PackageManager string
 }
 
-func Run(initialName string, initialTemplateID string) (*PromptResult, error) {
+func Run(initialName string, initialTemplateID string, initialPkgManager string) (*PromptResult, error) {
 	projectName := strings.TrimSpace(initialName)
 	selectedTemplateID := strings.TrimSpace(initialTemplateID)
+	selectedPkgManager := strings.TrimSpace(initialPkgManager)
 
 	// Dynamically load templates
 	availableTemplates, err := templates.GetAvailableTemplates()
@@ -24,25 +26,31 @@ func Run(initialName string, initialTemplateID string) (*PromptResult, error) {
 	}
 
 	// If template ID is already provided, validate it
+	var preSelectedTmpl *templates.TemplateConfig
 	if selectedTemplateID != "" {
 		tmpl, err := templates.FindTemplateByID(selectedTemplateID)
 		if err != nil {
 			return nil, err
 		}
-		// If project name is also provided, we're done (non-interactive)
-		if projectName != "" {
+		preSelectedTmpl = tmpl
+	}
+
+	// If project name and template ID are provided (and pkgManager if node-based or already provided), return immediately
+	if projectName != "" && preSelectedTmpl != nil {
+		if !preSelectedTmpl.IsNodeBased() || selectedPkgManager != "" {
 			return &PromptResult{
-				ProjectName: projectName,
-				Template:    *tmpl,
+				ProjectName:    projectName,
+				Template:       *preSelectedTmpl,
+				PackageManager: selectedPkgManager,
 			}, nil
 		}
 	}
 
-	// Build fields based on what is missing
-	var fields []huh.Field
+	// 1. First Group: Project Name & Template Selection
+	var basicFields []huh.Field
 
 	if projectName == "" {
-		fields = append(fields,
+		basicFields = append(basicFields,
 			huh.NewInput().
 				Title("What is your project named?").
 				Value(&projectName).
@@ -61,7 +69,7 @@ func Run(initialName string, initialTemplateID string) (*PromptResult, error) {
 			options = append(options, huh.NewOption(fmt.Sprintf("%s - %s", t.Name, t.Description), t.ID))
 		}
 
-		fields = append(fields,
+		basicFields = append(basicFields,
 			huh.NewSelect[string]().
 				Title("Choose a project template").
 				Options(options...).
@@ -69,22 +77,42 @@ func Run(initialName string, initialTemplateID string) (*PromptResult, error) {
 		)
 	}
 
-	if len(fields) > 0 {
-		form := huh.NewForm(huh.NewGroup(fields...))
-		err = form.Run()
-		if err != nil {
+	if len(basicFields) > 0 {
+		form := huh.NewForm(huh.NewGroup(basicFields...))
+		if err := form.Run(); err != nil {
 			return nil, err
 		}
 	}
 
-	// Find the selected template config
+	// Resolve the selected template config
 	tmpl, err := templates.FindTemplateByID(selectedTemplateID)
 	if err != nil {
 		return nil, err
 	}
 
+	// 2. Second Group: If template is Node-based and package manager is not specified, ask for it
+	if tmpl.IsNodeBased() && selectedPkgManager == "" {
+		pkgOptions := []huh.Option[string]{
+			huh.NewOption("npm (Standard Node Package Manager)", "npm"),
+			huh.NewOption("pnpm (Fast, disk space efficient)", "pnpm"),
+			huh.NewOption("yarn (Classic Yarn Package Manager)", "yarn"),
+			huh.NewOption("bun (Ultra-fast all-in-one JavaScript runtime)", "bun"),
+		}
+
+		pkgSelect := huh.NewSelect[string]().
+			Title("Choose a package manager").
+			Options(pkgOptions...).
+			Value(&selectedPkgManager)
+
+		pkgForm := huh.NewForm(huh.NewGroup(pkgSelect))
+		if err := pkgForm.Run(); err != nil {
+			return nil, err
+		}
+	}
+
 	return &PromptResult{
-		ProjectName: strings.TrimSpace(projectName),
-		Template:    *tmpl,
+		ProjectName:    strings.TrimSpace(projectName),
+		Template:       *tmpl,
+		PackageManager: selectedPkgManager,
 	}, nil
 }

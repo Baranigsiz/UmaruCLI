@@ -1,0 +1,19 @@
+.PHONY: run build test clean docker-build docker-run
+
+run:
+	go run cmd/api/main.go
+
+build:
+	go build -o bin/api cmd/api/main.go
+
+test:
+	go test -v ./...
+
+clean:
+	rm -rf bin/
+
+docker-build:
+	docker build -t {{.SafeName}}:latest .
+
+docker-run:
+	docker run -p 8080:8080 {{.SafeName}}:latest

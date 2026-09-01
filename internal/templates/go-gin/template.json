@@ -1,0 +1,6 @@
+{
+  "name": "Go Gin API (Production Clean Architecture)",
+  "description": "Robust, high-performance Go REST API with Gin, CORS, and Docker",
+  "installCommand": ["go", "mod", "tidy"],
+  "runCommand": "go run cmd/api/main.go"
+}

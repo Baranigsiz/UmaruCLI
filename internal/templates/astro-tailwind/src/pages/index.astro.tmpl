@@ -1,0 +1,58 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+import { Rocket, Sparkles, Zap, ShieldCheck } from 'lucide-astro';
+---
+
+<Layout title="{{.ProjectName}} | Astro & Tailwind">
+	<main class="max-w-5xl mx-auto px-6 py-20">
+		<!-- Hero Section -->
+		<div class="text-center space-y-6 max-w-3xl mx-auto">
+			<div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-medium">
+				<Sparkles class="w-4 h-4" />
+				<span>Astro + Tailwind CSS + TypeScript</span>
+			</div>
+
+			<h1 class="text-5xl sm:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+				{{.ProjectName}}
+			</h1>
+
+			<p class="text-slate-400 text-lg sm:text-xl leading-relaxed">
+				Lightning-fast, zero-JS by default content website bootstrapped with <span class="text-rose-400 font-semibold">Umaru CLI</span>.
+			</p>
+
+			<div class="flex items-center justify-center gap-4 pt-4">
+				<a
+					href="https://docs.astro.build"
+					target="_blank"
+					class="px-6 py-3 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition-all shadow-lg shadow-rose-500/25 flex items-center gap-2 hover:scale-105 active:scale-95"
+				>
+					<Rocket class="w-5 h-5" />
+					<span>Explore Astro Docs</span>
+				</a>
+			</div>
+		</div>
+
+		<!-- Highlights Grid -->
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-20">
+			<Card
+				href="https://docs.astro.build"
+				title="Zero-JS Architecture"
+				body="Astro renders HTML on the server and strips away any unused JavaScript automatically."
+				tag="Performance"
+			/>
+			<Card
+				href="https://tailwindcss.com"
+				title="Tailwind CSS"
+				body="Rapidly build modern websites without ever leaving your HTML/Astro templates."
+				tag="Styling"
+			/>
+			<Card
+				href="https://github.com/Baranigsiz/UmaruCLI"
+				title="Umaru CLI Scaffolding"
+				body="Engineered for high developer velocity with best practices and clean structures."
+				tag="DevOps"
+			/>
+		</div>
+	</main>
+</Layout>

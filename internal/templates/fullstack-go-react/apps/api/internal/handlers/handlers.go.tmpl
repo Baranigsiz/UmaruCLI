@@ -1,0 +1,24 @@
+package handlers
+
+import (
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+func HealthCheck(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{
+		"status":    "healthy",
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
+		"service":   "{{.SafeName}}-api",
+		"version":   "0.1.0",
+	})
+}
+
+func Welcome(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{
+		"message": "Welcome to {{.ProjectName}} Fullstack API! 🏎️🚀",
+		"backend": "Go Fiber",
+		"frontend": "React + Vite + TypeScript",
+	})
+}

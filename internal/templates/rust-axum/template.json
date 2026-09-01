@@ -1,0 +1,6 @@
+{
+  "name": "Rust Axum API (Tokio Async)",
+  "description": "Blazing-fast, memory-safe async web service with Axum & Tokio",
+  "installCommand": ["cargo", "check"],
+  "runCommand": "cargo run"
+}

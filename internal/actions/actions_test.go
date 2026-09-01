@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
-	"umaru/internal/templates"
 )
 
 func TestInitGit(t *testing.T) {
@@ -27,10 +26,16 @@ func TestInitGit(t *testing.T) {
 
 func TestInstallDependencies_Empty(t *testing.T) {
 	tempDir := t.TempDir()
-	err := InstallDependencies(tempDir, templates.TemplateConfig{
-		InstallCommand: []string{},
-	})
+	err := InstallDependencies(tempDir, []string{}, false)
 	if err != nil {
 		t.Errorf("Expected empty install command to succeed, got %v", err)
 	}
 }
+
+func TestBuildCommand_Nil(t *testing.T) {
+	cmd := buildCommand(".", []string{})
+	if cmd != nil {
+		t.Errorf("Expected nil cmd for empty slice, got %+v", cmd)
+	}
+}
+

@@ -20,8 +20,47 @@ type ProjectConfig struct {
 	Template    string // Template ID (e.g. "go-fiber")
 }
 
-// Slugify converts any string into a clean lowercase slug (e.g. "My Cool API" -> "my-cool-api")
+// Transliterate replaces Unicode special/accented characters with ASCII equivalents
+func Transliterate(s string) string {
+	var sb strings.Builder
+	for _, r := range s {
+		switch r {
+		case 'ç', 'Ç':
+			sb.WriteString("c")
+		case 'ğ', 'Ğ':
+			sb.WriteString("g")
+		case 'ı', 'İ', 'I':
+			sb.WriteString("i")
+		case 'ö', 'Ö':
+			sb.WriteString("o")
+		case 'ş', 'Ş':
+			sb.WriteString("s")
+		case 'ü', 'Ü':
+			sb.WriteString("u")
+		case 'á', 'à', 'ä', 'â', 'ã', 'å', 'Á', 'À', 'Ä', 'Â', 'Ã', 'Å':
+			sb.WriteString("a")
+		case 'é', 'è', 'ë', 'ê', 'É', 'È', 'Ë', 'Ê':
+			sb.WriteString("e")
+		case 'í', 'ì', 'ï', 'î', 'Í', 'Ì', 'Ï', 'Î':
+			sb.WriteString("i")
+		case 'ó', 'ò', 'ô', 'õ', 'Ó', 'Ò', 'Ô', 'Õ':
+			sb.WriteString("o")
+		case 'ú', 'ù', 'û', 'Ú', 'Ù', 'Û':
+			sb.WriteString("u")
+		case 'ñ', 'Ñ':
+			sb.WriteString("n")
+		case 'ß':
+			sb.WriteString("ss")
+		default:
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}
+
+// Slugify converts any string into a clean lowercase slug (e.g. "Türkçe Proje" -> "turkce-proje")
 func Slugify(s string) string {
+	s = Transliterate(s)
 	s = strings.TrimSpace(strings.ToLower(s))
 	// Replace non-alphanumeric characters (excluding hyphen and underscore) with hyphen
 	reg := regexp.MustCompile(`[^a-z0-9_\-]+`)
@@ -103,6 +142,37 @@ func CheckDestination(destDir string, force bool) error {
 	return err
 }
 
+// DryRun returns the list of file paths that would be generated without writing to disk
+func DryRun(config ProjectConfig) ([]string, error) {
+	var files []string
+	err := fs.WalkDir(templates.FS, config.Template, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(config.Template, path)
+		if err != nil {
+			return err
+		}
+
+		if relPath == "template.json" {
+			return nil
+		}
+
+		destPath := filepath.Join(config.TargetDir, relPath)
+		destPath = strings.TrimSuffix(destPath, ".tmpl")
+
+		files = append(files, destPath)
+		return nil
+	})
+
+	return files, err
+}
+
 func Generate(config ProjectConfig) error {
 	err := fs.WalkDir(templates.FS, config.Template, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -128,9 +198,7 @@ func Generate(config ProjectConfig) error {
 
 		// Remove .tmpl extension if exists
 		destPath := filepath.Join(config.TargetDir, relPath)
-		if isTemplate {
-			destPath = strings.TrimSuffix(destPath, ".tmpl")
-		}
+		destPath = strings.TrimSuffix(destPath, ".tmpl")
 
 		// Create destination directory if it doesn't exist
 		if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
@@ -143,6 +211,12 @@ func Generate(config ProjectConfig) error {
 			return err
 		}
 
+		// Choose proper file permission: 0755 for shell scripts, 0644 for regular files
+		var perm os.FileMode = 0644
+		if strings.HasSuffix(destPath, ".sh") {
+			perm = 0755
+		}
+
 		if isTemplate {
 			// Parse and execute template for .tmpl files
 			tmpl, err := template.New(filepath.Base(destPath)).Parse(string(content))
@@ -150,7 +224,7 @@ func Generate(config ProjectConfig) error {
 				return fmt.Errorf("failed to parse template %s: %w", path, err)
 			}
 
-			destFile, err := os.Create(destPath)
+			destFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
 			if err != nil {
 				return err
 			}
@@ -165,7 +239,7 @@ func Generate(config ProjectConfig) error {
 			}
 		} else {
 			// Write raw file bytes without template parsing (preserves binary & non-template syntax)
-			if err := os.WriteFile(destPath, content, 0644); err != nil {
+			if err := os.WriteFile(destPath, content, perm); err != nil {
 				return err
 			}
 		}

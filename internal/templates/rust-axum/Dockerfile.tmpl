@@ -1,0 +1,23 @@
+# Build Stage
+FROM rust:1.80-slim-bullseye AS builder
+WORKDIR /app
+
+COPY Cargo.toml ./
+# Create dummy main to cache dependencies
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -rf src
+
+COPY src ./src
+# Touch main.rs to invalidate the build timestamp
+RUN touch src/main.rs && cargo build --release
+
+# Production Stage
+FROM debian:bullseye-slim AS runner
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/{{.SafeName}} /app/server
+COPY .env.example .env
+
+EXPOSE 8080
+CMD ["/app/server"]

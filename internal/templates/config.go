@@ -65,3 +65,46 @@ func FindTemplateByID(id string) (*TemplateConfig, error) {
 	return nil, fmt.Errorf("template '%s' not found. Run 'umaru list' to view available templates", id)
 }
 
+// IsNodeBased checks if the template uses a Node.js-based package manager
+func (t TemplateConfig) IsNodeBased() bool {
+	if len(t.InstallCommand) == 0 {
+		return false
+	}
+	cmd := t.InstallCommand[0]
+	return cmd == "npm" || cmd == "pnpm" || cmd == "yarn" || cmd == "bun"
+}
+
+// GetInstallCommand returns the install command tailored for the specified package manager
+func (t TemplateConfig) GetInstallCommand(pkgManager string) []string {
+	if !t.IsNodeBased() || pkgManager == "" {
+		return t.InstallCommand
+	}
+	switch pkgManager {
+	case "pnpm":
+		return []string{"pnpm", "install"}
+	case "yarn":
+		return []string{"yarn", "install"}
+	case "bun":
+		return []string{"bun", "install"}
+	default:
+		return []string{"npm", "install"}
+	}
+}
+
+// GetRunCommand returns the run command tailored for the specified package manager
+func (t TemplateConfig) GetRunCommand(pkgManager string) string {
+	if !t.IsNodeBased() || pkgManager == "" {
+		return t.RunCommand
+	}
+	switch pkgManager {
+	case "pnpm":
+		return "pnpm dev"
+	case "yarn":
+		return "yarn dev"
+	case "bun":
+		return "bun run dev"
+	default:
+		return "npm run dev"
+	}
+}
+

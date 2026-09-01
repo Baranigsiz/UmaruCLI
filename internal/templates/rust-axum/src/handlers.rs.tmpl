@@ -1,0 +1,20 @@
+use axum::{
+    response::IntoResponse,
+    Json,
+};
+use serde_json::json;
+
+pub async fn health_check() -> impl IntoResponse {
+    Json(json!({
+        "status": "healthy",
+        "service": "{{.SafeName}}",
+        "version": "0.1.0"
+    }))
+}
+
+pub async fn welcome() -> impl IntoResponse {
+    Json(json!({
+        "message": "Welcome to {{.ProjectName}} API built with Rust Axum! 🦀🚀",
+        "docs": "/health"
+    }))
+}
