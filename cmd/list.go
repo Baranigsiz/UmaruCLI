@@ -43,6 +43,10 @@ var listCmd = &cobra.Command{
 		runCmdStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#A3E635"))
 
+		categoryStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FBBF24")).
+			Bold(true)
+
 		t := table.New().
 			Border(lipgloss.RoundedBorder()).
 			BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("#6B7280"))).
@@ -54,13 +58,13 @@ var listCmd = &cobra.Command{
 					return selectedRowStyle
 				}
 			}).
-			Headers("ID", "NAME", "DESCRIPTION", "RUN COMMAND")
+			Headers("ID", "CATEGORY", "NAME", "RUN COMMAND")
 
 		for _, tmpl := range allTemplates {
 			t.Row(
 				idStyle.Render(tmpl.ID),
+				categoryStyle.Render(tmpl.GetCategory()),
 				tmpl.Name,
-				tmpl.Description,
 				runCmdStyle.Render(tmpl.RunCommand),
 			)
 		}

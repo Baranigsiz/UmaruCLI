@@ -11,8 +11,24 @@ type TemplateConfig struct {
 	ID             string   `json:"-"` // This will be the directory name (e.g. "go-fiber")
 	Name           string   `json:"name"`
 	Description    string   `json:"description"`
+	Category       string   `json:"category,omitempty"`
 	InstallCommand []string `json:"installCommand"`
 	RunCommand     string   `json:"runCommand"`
+}
+
+// GetCategory returns the category of the template (Frontend, Backend, Fullstack)
+func (t TemplateConfig) GetCategory() string {
+	if t.Category != "" {
+		return t.Category
+	}
+	switch t.ID {
+	case "react-vite-ts", "vue-vite-ts", "nextjs-tailwind", "astro-tailwind":
+		return "Frontend"
+	case "fullstack-go-react":
+		return "Fullstack"
+	default:
+		return "Backend"
+	}
 }
 
 // GetAvailableTemplates scans the embedded FS for template.json files

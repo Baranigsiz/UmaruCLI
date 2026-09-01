@@ -46,11 +46,12 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string)
 		}
 	}
 
-	// 1. First Group: Project Name & Template Selection
-	var basicFields []huh.Field
+	// 1. First Group: Project Name & Category Selection
+	selectedCategory := "all"
+	var firstFields []huh.Field
 
 	if projectName == "" {
-		basicFields = append(basicFields,
+		firstFields = append(firstFields,
 			huh.NewInput().
 				Title("What is your project named?").
 				Value(&projectName).
@@ -64,22 +65,50 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string)
 	}
 
 	if selectedTemplateID == "" {
-		var options []huh.Option[string]
-		for _, t := range availableTemplates {
-			options = append(options, huh.NewOption(fmt.Sprintf("%s - %s", t.Name, t.Description), t.ID))
+		categoryOptions := []huh.Option[string]{
+			huh.NewOption("🌟 All Templates (Show all 12 starters)", "all"),
+			huh.NewOption("🌐 Frontend Frameworks (React, Vue 3, Next.js, Astro)", "Frontend"),
+			huh.NewOption("⚙️ Backend APIs (Go, NestJS, Express, FastAPI, Rust)", "Backend"),
+			huh.NewOption("📦 Fullstack Monorepos (Go Fiber + React Vite)", "Fullstack"),
 		}
 
-		basicFields = append(basicFields,
+		firstFields = append(firstFields,
 			huh.NewSelect[string]().
-				Title("Choose a project template").
-				Options(options...).
-				Value(&selectedTemplateID),
+				Title("Select a category").
+				Options(categoryOptions...).
+				Value(&selectedCategory),
 		)
 	}
 
-	if len(basicFields) > 0 {
-		form := huh.NewForm(huh.NewGroup(basicFields...))
+	if len(firstFields) > 0 {
+		form := huh.NewForm(huh.NewGroup(firstFields...))
 		if err := form.Run(); err != nil {
+			return nil, err
+		}
+	}
+
+	// 2. Second Group: Template Selection based on category
+	if selectedTemplateID == "" {
+		var filteredTemplates []templates.TemplateConfig
+		for _, t := range availableTemplates {
+			if selectedCategory == "all" || t.GetCategory() == selectedCategory {
+				filteredTemplates = append(filteredTemplates, t)
+			}
+		}
+
+		var options []huh.Option[string]
+		for _, t := range filteredTemplates {
+			options = append(options, huh.NewOption(fmt.Sprintf("%s - %s", t.Name, t.Description), t.ID))
+		}
+
+		tmplForm := huh.NewForm(huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Choose a starter template").
+				Options(options...).
+				Value(&selectedTemplateID),
+		))
+
+		if err := tmplForm.Run(); err != nil {
 			return nil, err
 		}
 	}
