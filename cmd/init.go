@@ -12,6 +12,7 @@ import (
 	"umaru/internal/generator"
 	"umaru/internal/prompts"
 	"umaru/internal/templates"
+	"umaru/internal/ui"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/huh/spinner"
@@ -34,137 +35,59 @@ var (
 	dryRunFlag         bool
 )
 
-func printBanner() {
-	bannerStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#FAFAFA")).
-		Background(lipgloss.Color("#7D56F4")).
-		Padding(0, 1).
-		MarginBottom(1)
-
-	subStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#00D8F6")).
-		Bold(true)
-
-	fmt.Println()
-	fmt.Printf("%s %s\n\n", bannerStyle.Render("⚡ UMARU CLI"), subStyle.Render("Production-Ready Project Scaffolder"))
-}
-
-func printDryRunCard(config generator.ProjectConfig, templateName string, files []string) {
-	titleStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#FBBF24"))
-
-	labelStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#94A3B8"))
-
-	fileStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#A3E635"))
-
-	boxStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#FBBF24")).
-		Padding(1, 2).
-		MarginTop(1)
-
-	var sb strings.Builder
-	sb.WriteString(titleStyle.Render("🔍 Dry-Run Mode (Simulation - No files written)") + "\n\n")
-	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📁 Target:   "), config.TargetDir))
-	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📦 Template: "), templateName))
-
-	if config.Addons.HasAddons() {
-		var addonsList []string
-		if config.Addons.Database != "" && config.Addons.Database != "none" {
-			addonsList = append(addonsList, "DB: "+config.Addons.Database)
+func runScaffoldWorkflow(projConfig generator.ProjectConfig, generateFn func() error, installCmd []string, noGit bool, skipInstall bool, verbose bool, templateTitle string, runCmd string) {
+	if verbose {
+		fmt.Printf("🚀 Scaffolding %s using %s...\n", projConfig.SafeName, templateTitle)
+		if err := generateFn(); err != nil {
+			fmt.Printf("\n❌ Failed to generate project files: %v\n", err)
+			os.Exit(1)
 		}
-		if config.Addons.Auth != "" && config.Addons.Auth != "none" {
-			addonsList = append(addonsList, "Auth: "+config.Addons.Auth)
+		if !noGit {
+			fmt.Println("📦 Initializing Git repository...")
+			if err := actions.InitGit(projConfig.TargetDir); err != nil {
+				fmt.Printf("⚠️ Git init warning: %v\n", err)
+			}
 		}
-		if config.Addons.Redis {
-			addonsList = append(addonsList, "Cache: Redis")
+		if !skipInstall && len(installCmd) > 0 {
+			fmt.Printf("📥 Installing dependencies with '%s'...\n", strings.Join(installCmd, " "))
+			if err := actions.InstallDependencies(projConfig.TargetDir, installCmd, true); err != nil {
+				fmt.Printf("\n❌ Failed to install dependencies: %v\n", err)
+				os.Exit(1)
+			}
 		}
-		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("🧩 Addons:   "), strings.Join(addonsList, ", ")))
-	}
+	} else {
+		var setupErr error
+		err := spinner.New().
+			Title(fmt.Sprintf("Scaffolding %s using %s...", projConfig.SafeName, templateTitle)).
+			Action(func() {
+				setupErr = generateFn()
+				if setupErr != nil {
+					return
+				}
 
-	sb.WriteString(fmt.Sprintf("\n%s\n", labelStyle.Render("Files that would be generated:")))
+				if !noGit {
+					setupErr = actions.InitGit(projConfig.TargetDir)
+					if setupErr != nil {
+						return
+					}
+				}
 
-	for _, f := range files {
-		sb.WriteString(fmt.Sprintf("  📄 %s\n", fileStyle.Render(f)))
-	}
+				if !skipInstall && len(installCmd) > 0 {
+					setupErr = actions.InstallDependencies(projConfig.TargetDir, installCmd, false)
+				}
+			}).
+			Run()
 
-	fmt.Println(boxStyle.Render(sb.String()))
-	fmt.Println()
-}
-
-func printSuccessCard(config generator.ProjectConfig, templateName string, runCommand string, installCommand []string) {
-	titleStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#10B981"))
-
-	labelStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#94A3B8"))
-
-	valueStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#F8FAFC"))
-
-	cmdStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#00D8F6"))
-
-	starStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FBBF24")).
-		Italic(true)
-
-	boxStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#7D56F4")).
-		Padding(1, 2).
-		MarginTop(1)
-
-	var sb strings.Builder
-	sb.WriteString(titleStyle.Render("✨ Project Scaffolding Complete!") + "\n\n")
-	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📁 Project:   "), valueStyle.Render(config.SafeName)))
-	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📦 Template:  "), valueStyle.Render(templateName)))
-	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📍 Directory: "), valueStyle.Render(config.TargetDir)))
-
-	if config.Addons.HasAddons() {
-		var addonsList []string
-		if config.Addons.Database != "" && config.Addons.Database != "none" {
-			addonsList = append(addonsList, "DB: "+config.Addons.Database)
+		if err != nil || setupErr != nil {
+			if setupErr != nil {
+				err = setupErr
+			}
+			fmt.Printf("\n❌ Failed to setup project:\n%v\n", err)
+			os.Exit(1)
 		}
-		if config.Addons.Auth != "" && config.Addons.Auth != "none" {
-			addonsList = append(addonsList, "Auth: "+config.Addons.Auth)
-		}
-		if config.Addons.Redis {
-			addonsList = append(addonsList, "Cache: Redis")
-		}
-		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("🧩 Addons:    "), valueStyle.Render(strings.Join(addonsList, ", "))))
 	}
 
-	sb.WriteString("\n" + labelStyle.Render("Next steps to get started:") + "\n")
-	if config.TargetDir != "." {
-		sb.WriteString(fmt.Sprintf("  1. %s\n", cmdStyle.Render(fmt.Sprintf("cd %s", config.TargetDir))))
-	}
-
-	step := 2
-	if config.TargetDir == "." {
-		step = 1
-	}
-
-	if skipInstallFlag && len(installCommand) > 0 {
-		sb.WriteString(fmt.Sprintf("  %d. %s\n", step, cmdStyle.Render(strings.Join(installCommand, " "))))
-		step++
-	}
-	if runCommand != "" {
-		sb.WriteString(fmt.Sprintf("  %d. %s\n", step, cmdStyle.Render(runCommand)))
-	}
-
-	sb.WriteString("\n" + starStyle.Render("⭐ Love Umaru? Give us a star: https://github.com/Baranigsiz/UmaruCLI"))
-
-	fmt.Println(boxStyle.Render(sb.String()))
-	fmt.Println()
+	ui.PrintSuccessCard(projConfig, templateTitle, runCmd, installCmd, skipInstall)
 }
 
 var initCmd = &cobra.Command{
@@ -201,7 +124,7 @@ var initCmd = &cobra.Command{
 					fmt.Printf("\n❌ Remote dry-run failed: %v\n", err)
 					os.Exit(1)
 				}
-				printDryRunCard(projConfig, fmt.Sprintf("Remote (%s)", fromFlag), files)
+				ui.PrintDryRunCard(projConfig, fmt.Sprintf("Remote (%s)", fromFlag), files)
 				return
 			}
 
@@ -216,56 +139,25 @@ var initCmd = &cobra.Command{
 			}
 
 			var remoteTmpl *templates.TemplateConfig
-			var setupErr error
-
-			if verboseFlag {
-				fmt.Printf("🚀 Scaffolding %s from remote repository '%s'...\n", projConfig.SafeName, fromFlag)
-				remoteTmpl, setupErr = generator.GenerateFromRemote(fromFlag, projConfig)
-				if setupErr != nil {
-					fmt.Printf("\n❌ Failed to generate from remote: %v\n", setupErr)
-					os.Exit(1)
-				}
-				if !noGitFlag {
-					fmt.Println("📦 Initializing Git repository...")
-					if err := actions.InitGit(projConfig.TargetDir); err != nil {
-						fmt.Printf("⚠️ Git init warning: %v\n", err)
-					}
-				}
-			} else {
-				err = spinner.New().
-					Title(fmt.Sprintf("Scaffolding %s from remote repository...", projConfig.SafeName)).
-					Action(func() {
-						remoteTmpl, setupErr = generator.GenerateFromRemote(fromFlag, projConfig)
-						if setupErr != nil {
-							return
-						}
-						if !noGitFlag {
-							setupErr = actions.InitGit(projConfig.TargetDir)
-						}
-					}).
-					Run()
-
-				if err != nil || setupErr != nil {
-					if setupErr != nil {
-						err = setupErr
-					}
-					fmt.Printf("\n❌ Failed to setup remote project:\n%v\n", err)
-					os.Exit(1)
-				}
+			generateRemote := func() error {
+				tmpl, err := generator.GenerateFromRemote(fromFlag, projConfig)
+				remoteTmpl = tmpl
+				return err
 			}
 
-			runCmd := ""
 			var installCmd []string
+			runCmd := ""
 			if remoteTmpl != nil {
 				runCmd = remoteTmpl.RunCommand
 				installCmd = remoteTmpl.InstallCommand
 			}
-			printSuccessCard(projConfig, fmt.Sprintf("Remote (%s)", fromFlag), runCmd, installCmd)
+
+			runScaffoldWorkflow(projConfig, generateRemote, installCmd, noGitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), runCmd)
 			return
 		}
 
 		if initialName == "" && templateFlag == "" {
-			printBanner()
+			ui.PrintBanner()
 		}
 
 		initialAddons := generator.AddonConfig{
@@ -301,7 +193,7 @@ var initCmd = &cobra.Command{
 				fmt.Printf("\n❌ Dry-run failed: %v\n", err)
 				os.Exit(1)
 			}
-			printDryRunCard(projConfig, result.Template.Name, files)
+			ui.PrintDryRunCard(projConfig, result.Template.Name, files)
 			return
 		}
 
@@ -321,62 +213,11 @@ var initCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		var setupErr error
-
-		if verboseFlag {
-			fmt.Printf("🚀 Scaffolding %s using %s template...\n", projConfig.SafeName, result.Template.Name)
-			if err := generator.Generate(projConfig); err != nil {
-				fmt.Printf("\n❌ Failed to generate project files: %v\n", err)
-				os.Exit(1)
-			}
-			if !noGitFlag {
-				fmt.Println("📦 Initializing Git repository...")
-				if err := actions.InitGit(projConfig.TargetDir); err != nil {
-					fmt.Printf("⚠️ Git init warning: %v\n", err)
-				}
-			}
-			if !skipInstallFlag && len(installCmd) > 0 {
-				fmt.Printf("📥 Installing dependencies with '%s'...\n", strings.Join(installCmd, " "))
-				if err := actions.InstallDependencies(projConfig.TargetDir, installCmd, true); err != nil {
-					fmt.Printf("\n❌ Failed to install dependencies: %v\n", err)
-					os.Exit(1)
-				}
-			}
-		} else {
-			err = spinner.New().
-				Title(fmt.Sprintf("Scaffolding %s using %s template...", projConfig.SafeName, result.Template.Name)).
-				Action(func() {
-					// 1. Generate files (including Addons)
-					setupErr = generator.Generate(projConfig)
-					if setupErr != nil {
-						return
-					}
-
-					// 2. Init Git (unless --no-git)
-					if !noGitFlag {
-						setupErr = actions.InitGit(projConfig.TargetDir)
-						if setupErr != nil {
-							return
-						}
-					}
-
-					// 3. Install dependencies (unless --skip-install)
-					if !skipInstallFlag {
-						setupErr = actions.InstallDependencies(projConfig.TargetDir, installCmd, false)
-					}
-				}).
-				Run()
-
-			if err != nil || setupErr != nil {
-				if setupErr != nil {
-					err = setupErr
-				}
-				fmt.Printf("\n❌ Failed to setup project:\n%v\n", err)
-				os.Exit(1)
-			}
+		generateLocal := func() error {
+			return generator.Generate(projConfig)
 		}
 
-		printSuccessCard(projConfig, result.Template.Name, runCmd, installCmd)
+		runScaffoldWorkflow(projConfig, generateLocal, installCmd, noGitFlag, skipInstallFlag, verboseFlag, result.Template.Name, runCmd)
 	},
 }
 
@@ -387,7 +228,7 @@ func init() {
 	initCmd.Flags().StringVar(&dbFlag, "db", "", "Database addon driver (postgres, sqlite, mongodb, none)")
 	initCmd.Flags().StringVar(&authFlag, "auth", "", "Authentication addon (jwt, none)")
 	initCmd.Flags().BoolVar(&redisFlag, "redis", false, "Include Redis caching client addon")
-	initCmd.Flags().BoolVar(&noAddonsFlag, "no-addons", false, "Skip interactive addon wizard")
+	initCmd.Flags().BoolVar(&noAddonsFlag, "no-addons", false, "Skip interactive addon configuration wizard")
 	initCmd.Flags().BoolVar(&noGitFlag, "no-git", false, "Skip git repository initialization")
 	initCmd.Flags().BoolVar(&skipInstallFlag, "skip-install", false, "Skip installing dependencies")
 	initCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Overwrite existing files in target directory")
