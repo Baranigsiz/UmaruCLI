@@ -8,6 +8,7 @@ import (
 
 	"umaru/internal/actions"
 	"umaru/internal/checks"
+	"umaru/internal/config"
 	"umaru/internal/generator"
 	"umaru/internal/prompts"
 	"umaru/internal/templates"
@@ -22,6 +23,10 @@ var (
 	templateFlag       string
 	packageManagerFlag string
 	fromFlag           string
+	dbFlag             string
+	authFlag           string
+	redisFlag          bool
+	noAddonsFlag       bool
 	noGitFlag          bool
 	skipInstallFlag    bool
 	forceFlag          bool
@@ -66,8 +71,23 @@ func printDryRunCard(config generator.ProjectConfig, templateName string, files 
 	var sb strings.Builder
 	sb.WriteString(titleStyle.Render("🔍 Dry-Run Mode (Simulation - No files written)") + "\n\n")
 	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📁 Target:   "), config.TargetDir))
-	sb.WriteString(fmt.Sprintf("%s %s\n\n", labelStyle.Render("📦 Template: "), templateName))
-	sb.WriteString(labelStyle.Render("Files that would be generated:") + "\n")
+	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📦 Template: "), templateName))
+
+	if config.Addons.HasAddons() {
+		var addonsList []string
+		if config.Addons.Database != "" && config.Addons.Database != "none" {
+			addonsList = append(addonsList, "DB: "+config.Addons.Database)
+		}
+		if config.Addons.Auth != "" && config.Addons.Auth != "none" {
+			addonsList = append(addonsList, "Auth: "+config.Addons.Auth)
+		}
+		if config.Addons.Redis {
+			addonsList = append(addonsList, "Cache: Redis")
+		}
+		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("🧩 Addons:   "), strings.Join(addonsList, ", ")))
+	}
+
+	sb.WriteString(fmt.Sprintf("\n%s\n", labelStyle.Render("Files that would be generated:")))
 
 	for _, f := range files {
 		sb.WriteString(fmt.Sprintf("  📄 %s\n", fileStyle.Render(f)))
@@ -107,9 +127,23 @@ func printSuccessCard(config generator.ProjectConfig, templateName string, runCo
 	sb.WriteString(titleStyle.Render("✨ Project Scaffolding Complete!") + "\n\n")
 	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📁 Project:   "), valueStyle.Render(config.SafeName)))
 	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📦 Template:  "), valueStyle.Render(templateName)))
-	sb.WriteString(fmt.Sprintf("%s %s\n\n", labelStyle.Render("📍 Directory: "), valueStyle.Render(config.TargetDir)))
+	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📍 Directory: "), valueStyle.Render(config.TargetDir)))
 
-	sb.WriteString(labelStyle.Render("Next steps to get started:") + "\n")
+	if config.Addons.HasAddons() {
+		var addonsList []string
+		if config.Addons.Database != "" && config.Addons.Database != "none" {
+			addonsList = append(addonsList, "DB: "+config.Addons.Database)
+		}
+		if config.Addons.Auth != "" && config.Addons.Auth != "none" {
+			addonsList = append(addonsList, "Auth: "+config.Addons.Auth)
+		}
+		if config.Addons.Redis {
+			addonsList = append(addonsList, "Cache: Redis")
+		}
+		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("🧩 Addons:    "), valueStyle.Render(strings.Join(addonsList, ", "))))
+	}
+
+	sb.WriteString("\n" + labelStyle.Render("Next steps to get started:") + "\n")
 	if config.TargetDir != "." {
 		sb.WriteString(fmt.Sprintf("  1. %s\n", cmdStyle.Render(fmt.Sprintf("cd %s", config.TargetDir))))
 	}
@@ -143,28 +177,35 @@ var initCmd = &cobra.Command{
 			initialName = args[0]
 		}
 
+		userCfg := config.LoadUserConfig()
+		if !cmd.Flags().Changed("no-git") && !userCfg.GitInit {
+			noGitFlag = true
+		}
+
 		// Handle Remote Template Flow (--from)
 		if fromFlag != "" {
 			if initialName == "" {
 				initialName = "umaru-app"
 			}
-			config, err := generator.ResolveProjectConfig(initialName, "remote")
+			projConfig, err := generator.ResolveProjectConfig(initialName, "remote")
 			if err != nil {
 				fmt.Printf("\n❌ Failed to resolve project config: %v\n", err)
 				os.Exit(1)
 			}
+			projConfig.Author = userCfg.Author
+			projConfig.License = userCfg.License
 
 			if dryRunFlag {
-				files, err := generator.DryRunRemote(fromFlag, config)
+				files, err := generator.DryRunRemote(fromFlag, projConfig)
 				if err != nil {
 					fmt.Printf("\n❌ Remote dry-run failed: %v\n", err)
 					os.Exit(1)
 				}
-				printDryRunCard(config, fmt.Sprintf("Remote (%s)", fromFlag), files)
+				printDryRunCard(projConfig, fmt.Sprintf("Remote (%s)", fromFlag), files)
 				return
 			}
 
-			if err := generator.CheckDestination(config.TargetDir, forceFlag); err != nil {
+			if err := generator.CheckDestination(projConfig.TargetDir, forceFlag); err != nil {
 				fmt.Printf("\n❌ Destination check failed: %v\n", err)
 				os.Exit(1)
 			}
@@ -178,28 +219,28 @@ var initCmd = &cobra.Command{
 			var setupErr error
 
 			if verboseFlag {
-				fmt.Printf("🚀 Scaffolding %s from remote repository '%s'...\n", config.SafeName, fromFlag)
-				remoteTmpl, setupErr = generator.GenerateFromRemote(fromFlag, config)
+				fmt.Printf("🚀 Scaffolding %s from remote repository '%s'...\n", projConfig.SafeName, fromFlag)
+				remoteTmpl, setupErr = generator.GenerateFromRemote(fromFlag, projConfig)
 				if setupErr != nil {
 					fmt.Printf("\n❌ Failed to generate from remote: %v\n", setupErr)
 					os.Exit(1)
 				}
 				if !noGitFlag {
 					fmt.Println("📦 Initializing Git repository...")
-					if err := actions.InitGit(config.TargetDir); err != nil {
+					if err := actions.InitGit(projConfig.TargetDir); err != nil {
 						fmt.Printf("⚠️ Git init warning: %v\n", err)
 					}
 				}
 			} else {
 				err = spinner.New().
-					Title(fmt.Sprintf("Scaffolding %s from remote repository...", config.SafeName)).
+					Title(fmt.Sprintf("Scaffolding %s from remote repository...", projConfig.SafeName)).
 					Action(func() {
-						remoteTmpl, setupErr = generator.GenerateFromRemote(fromFlag, config)
+						remoteTmpl, setupErr = generator.GenerateFromRemote(fromFlag, projConfig)
 						if setupErr != nil {
 							return
 						}
 						if !noGitFlag {
-							setupErr = actions.InitGit(config.TargetDir)
+							setupErr = actions.InitGit(projConfig.TargetDir)
 						}
 					}).
 					Run()
@@ -219,7 +260,7 @@ var initCmd = &cobra.Command{
 				runCmd = remoteTmpl.RunCommand
 				installCmd = remoteTmpl.InstallCommand
 			}
-			printSuccessCard(config, fmt.Sprintf("Remote (%s)", fromFlag), runCmd, installCmd)
+			printSuccessCard(projConfig, fmt.Sprintf("Remote (%s)", fromFlag), runCmd, installCmd)
 			return
 		}
 
@@ -227,7 +268,13 @@ var initCmd = &cobra.Command{
 			printBanner()
 		}
 
-		result, err := prompts.Run(initialName, templateFlag, packageManagerFlag)
+		initialAddons := generator.AddonConfig{
+			Database: dbFlag,
+			Auth:     authFlag,
+			Redis:    redisFlag,
+		}
+
+		result, err := prompts.Run(initialName, templateFlag, packageManagerFlag, initialAddons, noAddonsFlag)
 		if err != nil {
 			if errors.Is(err, huh.ErrUserAborted) {
 				fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
@@ -238,25 +285,28 @@ var initCmd = &cobra.Command{
 		}
 
 		// Resolve safe naming and target directory
-		config, err := generator.ResolveProjectConfig(result.ProjectName, result.Template.ID)
+		projConfig, err := generator.ResolveProjectConfig(result.ProjectName, result.Template.ID)
 		if err != nil {
 			fmt.Printf("\n❌ Failed to resolve project config: %v\n", err)
 			os.Exit(1)
 		}
+		projConfig.Author = userCfg.Author
+		projConfig.License = userCfg.License
+		projConfig.Addons = result.Addons
 
 		// Handle Dry-Run mode
 		if dryRunFlag {
-			files, err := generator.DryRun(config)
+			files, err := generator.DryRun(projConfig)
 			if err != nil {
 				fmt.Printf("\n❌ Dry-run failed: %v\n", err)
 				os.Exit(1)
 			}
-			printDryRunCard(config, result.Template.Name, files)
+			printDryRunCard(projConfig, result.Template.Name, files)
 			return
 		}
 
 		// Check target destination directory
-		if err := generator.CheckDestination(config.TargetDir, forceFlag); err != nil {
+		if err := generator.CheckDestination(projConfig.TargetDir, forceFlag); err != nil {
 			fmt.Printf("\n❌ Destination check failed: %v\n", err)
 			os.Exit(1)
 		}
@@ -274,37 +324,37 @@ var initCmd = &cobra.Command{
 		var setupErr error
 
 		if verboseFlag {
-			fmt.Printf("🚀 Scaffolding %s using %s template...\n", config.SafeName, result.Template.Name)
-			if err := generator.Generate(config); err != nil {
+			fmt.Printf("🚀 Scaffolding %s using %s template...\n", projConfig.SafeName, result.Template.Name)
+			if err := generator.Generate(projConfig); err != nil {
 				fmt.Printf("\n❌ Failed to generate project files: %v\n", err)
 				os.Exit(1)
 			}
 			if !noGitFlag {
 				fmt.Println("📦 Initializing Git repository...")
-				if err := actions.InitGit(config.TargetDir); err != nil {
+				if err := actions.InitGit(projConfig.TargetDir); err != nil {
 					fmt.Printf("⚠️ Git init warning: %v\n", err)
 				}
 			}
 			if !skipInstallFlag && len(installCmd) > 0 {
 				fmt.Printf("📥 Installing dependencies with '%s'...\n", strings.Join(installCmd, " "))
-				if err := actions.InstallDependencies(config.TargetDir, installCmd, true); err != nil {
+				if err := actions.InstallDependencies(projConfig.TargetDir, installCmd, true); err != nil {
 					fmt.Printf("\n❌ Failed to install dependencies: %v\n", err)
 					os.Exit(1)
 				}
 			}
 		} else {
 			err = spinner.New().
-				Title(fmt.Sprintf("Scaffolding %s using %s template...", config.SafeName, result.Template.Name)).
+				Title(fmt.Sprintf("Scaffolding %s using %s template...", projConfig.SafeName, result.Template.Name)).
 				Action(func() {
-					// 1. Generate files
-					setupErr = generator.Generate(config)
+					// 1. Generate files (including Addons)
+					setupErr = generator.Generate(projConfig)
 					if setupErr != nil {
 						return
 					}
 
 					// 2. Init Git (unless --no-git)
 					if !noGitFlag {
-						setupErr = actions.InitGit(config.TargetDir)
+						setupErr = actions.InitGit(projConfig.TargetDir)
 						if setupErr != nil {
 							return
 						}
@@ -312,7 +362,7 @@ var initCmd = &cobra.Command{
 
 					// 3. Install dependencies (unless --skip-install)
 					if !skipInstallFlag {
-						setupErr = actions.InstallDependencies(config.TargetDir, installCmd, false)
+						setupErr = actions.InstallDependencies(projConfig.TargetDir, installCmd, false)
 					}
 				}).
 				Run()
@@ -326,7 +376,7 @@ var initCmd = &cobra.Command{
 			}
 		}
 
-		printSuccessCard(config, result.Template.Name, runCmd, installCmd)
+		printSuccessCard(projConfig, result.Template.Name, runCmd, installCmd)
 	},
 }
 
@@ -334,6 +384,10 @@ func init() {
 	initCmd.Flags().StringVarP(&templateFlag, "template", "t", "", "Template ID to use (e.g. go-fiber, react-vite-ts)")
 	initCmd.Flags().StringVarP(&packageManagerFlag, "package-manager", "p", "", "Package manager for Node templates (npm, pnpm, yarn, bun)")
 	initCmd.Flags().StringVar(&fromFlag, "from", "", "Scaffold project directly from a Git repository or GitHub shorthand (e.g. owner/repo)")
+	initCmd.Flags().StringVar(&dbFlag, "db", "", "Database addon driver (postgres, sqlite, mongodb, none)")
+	initCmd.Flags().StringVar(&authFlag, "auth", "", "Authentication addon (jwt, none)")
+	initCmd.Flags().BoolVar(&redisFlag, "redis", false, "Include Redis caching client addon")
+	initCmd.Flags().BoolVar(&noAddonsFlag, "no-addons", false, "Skip interactive addon wizard")
 	initCmd.Flags().BoolVar(&noGitFlag, "no-git", false, "Skip git repository initialization")
 	initCmd.Flags().BoolVar(&skipInstallFlag, "skip-install", false, "Skip installing dependencies")
 	initCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Overwrite existing files in target directory")
@@ -359,6 +413,21 @@ func init() {
 			"pnpm\tFast, disk space efficient package manager",
 			"yarn\tClassic Yarn package manager",
 			"bun\tUltra-fast all-in-one JavaScript runtime",
+		}, cobra.ShellCompDirectiveNoFileComp
+	})
+
+	_ = initCmd.RegisterFlagCompletionFunc("db", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{
+			"postgres\tPostgreSQL relational database",
+			"sqlite\tSQLite embedded lightweight database",
+			"none\tNo database driver",
+		}, cobra.ShellCompDirectiveNoFileComp
+	})
+
+	_ = initCmd.RegisterFlagCompletionFunc("auth", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{
+			"jwt\tJSON Web Token authentication",
+			"none\tPublic / No authentication middleware",
 		}, cobra.ShellCompDirectiveNoFileComp
 	})
 

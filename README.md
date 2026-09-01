@@ -24,7 +24,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
           Production Scaffolding in Milliseconds
 ```
 
-[✨ Features](#-features) • [📦 Starters](#-supported-starters) • [🚀 Installation](#-installation) • [💻 Usage](#-usage) • [🐚 Autocompletion](#-shell-autocompletion) • [🔄 Self-Upgrade](#-self-upgrade) • [🛠️ Extensibility](#️-extensibility--custom-templates) • [🗺️ Roadmap](#️-roadmap)
+[✨ Features](#-features) • [📦 Starters](#-supported-starters) • [🧩 Addon Wizard](#-interactive-addon-wizard) • [⚙️ Global Config](#️-global-configuration) • [🚀 Installation](#-installation) • [💻 Usage](#-usage) • [🐚 Autocompletion](#-shell-autocompletion) • [🔄 Self-Upgrade](#-self-upgrade) • [🛠️ Extensibility](#️-extensibility--custom-templates)
 
 </div>
 
@@ -48,9 +48,11 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
 - 🔌 **Zero Network Reliance:** All 12 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
+- ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
 - 🎨 **Modern Terminal DX:** Interactive, accessible prompts powered by [Huh](https://github.com/charmbracelet/huh) and styled result cards with [Lipgloss](https://github.com/charmbracelet/lipgloss).
-- 🐚 **Dynamic Shell Autocompletions:** Instant completion for template IDs and flags in Bash, Zsh, Fish, and PowerShell.
+- 🐚 **Dynamic Shell Autocompletions:** Instant completion for template IDs, database drivers, and flags in Bash, Zsh, Fish, and PowerShell.
 - 🔄 **One-Command Upgrades:** Built-in self-updater via `umaru upgrade`.
 - 📦 **Universal Package Manager Support:** Choose your preferred JS/TS package manager on the fly (`npm`, `pnpm`, `yarn`, `bun`).
 - 🛡️ **Pre-Flight Verification:** Proactively checks system dependencies (`git`, `go`, `cargo`, `pnpm`, etc.) beforehand so generation never fails halfway through.
@@ -87,6 +89,44 @@ Umaru CLI includes 12 production-ready architectures organized across 3 categori
 | Template ID | Technology Stack | Included Features |
 |---|---|---|
 | `fullstack-go-react` | **Go Fiber + React Vite + TS** | Monorepo structure (`apps/api`, `apps/web`), Live API Proxy, Unified Docker Compose, Makefile. |
+
+---
+
+## 🧩 Interactive Addon Wizard
+
+When scaffolding backend or fullstack projects, Umaru CLI can automatically inject modular infrastructure:
+
+- 🐘 **Database Driver:** `PostgreSQL` (connection pool & healthcheck) or `SQLite` (embedded WAL mode).
+- 🔐 **Authentication:** `JWT` (claim generation & verification middleware).
+- 🔴 **Cache:** `Redis` (client connection pool & ping).
+
+```bash
+# Non-interactive addon specification
+umaru init my-backend -t go-fiber --db postgres --auth jwt --redis
+
+# Skip addon prompts during interactive initialization
+umaru init my-backend --no-addons
+```
+
+---
+
+## ⚙️ Global Configuration
+
+Save your personal defaults to `~/.umarurc.json` so you never have to re-type them:
+
+```bash
+# Set your default package manager (npm, pnpm, yarn, bun)
+umaru config set pm pnpm
+
+# Set your default project author
+umaru config set author "Baran Igsiz"
+
+# View all saved preferences in a table
+umaru config list
+
+# Reset all preferences to defaults
+umaru config reset
+```
 
 ---
 
@@ -130,7 +170,9 @@ umaru init
 ? What is your project named? my-awesome-api
 ? Select a category: ⚙️ Backend APIs
 ? Choose a starter template: Go Fiber API (Production-Ready)
-? Choose a package manager: (auto-detected or skipped for Go)
+? Choose a database addon: PostgreSQL (Production-ready relational DB)
+? Choose an authentication addon: JWT (JSON Web Token authentication)
+? Include Redis cache support? Yes
 
 ✔ Scaffolding my-awesome-api using Go Fiber API...
 ✔ Initializing Git repository...
@@ -140,6 +182,7 @@ umaru init
   📁 Project:    my-awesome-api
   📦 Template:   Go Fiber API (Production-Ready)
   📍 Directory:  my-awesome-api
+  🧩 Addons:     DB: postgres, Auth: jwt, Cache: Redis
 
 Next steps to get started:
   1. cd my-awesome-api
@@ -152,8 +195,8 @@ Next steps to get started:
 Provide arguments to bypass prompts for automated workflows:
 
 ```bash
-# 1. Initialize a Go Fiber API in the current folder without Git or auto-install
-umaru init . -t go-fiber --no-git --skip-install
+# 1. Initialize a Go Fiber API with Postgres & JWT in the current folder
+umaru init . -t go-fiber --db postgres --auth jwt --no-git --skip-install
 
 # 2. Scaffold a React + Vite application with Bun package manager
 umaru init my-frontend -t react-vite-ts -p bun
@@ -223,6 +266,10 @@ umaru version
 | `--template` | `-t` | `""` | Specify template ID directly (e.g. `go-fiber`, `react-vite-ts`) |
 | `--package-manager` | `-p` | `""` | Package manager for Node.js starters (`npm`, `pnpm`, `yarn`, `bun`) |
 | `--from` | | `""` | Scaffold directly from a remote Git repository or GitHub shorthand |
+| `--db` | | `""` | Inject database driver addon (`postgres`, `sqlite`, `mongodb`, `none`) |
+| `--auth` | | `""` | Inject authentication middleware addon (`jwt`, `none`) |
+| `--redis` | | `false` | Inject Redis caching client module |
+| `--no-addons` | | `false` | Skip interactive addon configuration wizard |
 | `--dry-run` | | `false` | Simulate generation and list files without creating them |
 | `--verbose` | `-v` | `false` | Stream live installation outputs to stdout/stderr |
 | `--no-git` | | `false` | Skip automatic `git init` |
@@ -257,6 +304,8 @@ Inside `internal/templates/`, create a new folder (e.g., `internal/templates/my-
   - `{{.SafeName}}` — Sanitized lowercase slug (e.g., `my-cool-app`)
   - `{{.ModuleName}}` — Safe Go module identifier (e.g., `my-cool-app`)
   - `{{.TargetDir}}` — Filesystem destination directory
+  - `{{.Author}}` — Configured project author name
+  - `{{.License}}` — Configured project license
 
 ### 4. Build
 ```bash
@@ -266,19 +315,19 @@ The new template will automatically be listed in `umaru list`, the interactive w
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Roadmap (100% Complete!)
 
 - [x] 🌐 **Remote Templates:** Scaffold directly from GitHub repositories (`umaru init --from user/repo`).
 - [x] 🔄 **Self-Updater:** Built-in `umaru upgrade` command to automatically update to the latest release.
 - [x] 🐚 **Shell Completions:** Native autocompletion scripts for Bash, Zsh, Fish, and PowerShell with dynamic flag suggestions.
-- [ ] 🧩 **Interactive Addon Wizard:** Optional feature checkboxes per template (e.g., PostgreSQL, Redis, Tailwind, JWT Auth).
-- [ ] ⚙️ **Config File Support:** Global `.umarurc` to save user defaults (default author, license, package manager).
+- [x] 🧩 **Interactive Addon Wizard:** Optional feature injection (PostgreSQL, SQLite, Redis, JWT Auth).
+- [x] ⚙️ **Config File Support:** Global `~/.umarurc.json` configuration manager (`umaru config`).
 
 ---
 
 ## 🧪 Testing
 
-Run the full test suite across all templates and generators:
+Run the full test suite across all templates, generators, updaters, and configs:
 
 ```bash
 go test -v ./...
@@ -303,5 +352,5 @@ Contributions make the open-source community an amazing place to learn, inspire,
 Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
 
 <div align="center">
-  <sub>Built with ❤️ by <a href="https://github.com/Baranigsiz">Baran Igsiz</a> and contributors.</sub>
+  <sub>Built with ❤️ by <a href="https://github.com/Baranigsiz/UmaruCLI">Baran Igsiz</a> and contributors.</sub>
 </div>

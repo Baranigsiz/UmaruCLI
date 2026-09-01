@@ -3,6 +3,8 @@ package prompts
 import (
 	"fmt"
 	"strings"
+	"umaru/internal/config"
+	"umaru/internal/generator"
 	"umaru/internal/templates"
 
 	"github.com/charmbracelet/huh"
@@ -12,12 +14,20 @@ type PromptResult struct {
 	ProjectName    string
 	Template       templates.TemplateConfig
 	PackageManager string
+	Addons         generator.AddonConfig
 }
 
-func Run(initialName string, initialTemplateID string, initialPkgManager string) (*PromptResult, error) {
+func Run(initialName string, initialTemplateID string, initialPkgManager string, initialAddons generator.AddonConfig, skipAddons bool) (*PromptResult, error) {
 	projectName := strings.TrimSpace(initialName)
 	selectedTemplateID := strings.TrimSpace(initialTemplateID)
 	selectedPkgManager := strings.TrimSpace(initialPkgManager)
+	selectedAddons := initialAddons
+
+	// Load persistent user config
+	userCfg := config.LoadUserConfig()
+	if selectedPkgManager == "" && userCfg.PackageManager != "" {
+		selectedPkgManager = userCfg.PackageManager
+	}
 
 	// Dynamically load templates
 	availableTemplates, err := templates.GetAvailableTemplates()
@@ -35,13 +45,14 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string)
 		preSelectedTmpl = tmpl
 	}
 
-	// If project name and template ID are provided (and pkgManager if node-based or already provided), return immediately
+	// If non-interactive full arguments are provided, return immediately
 	if projectName != "" && preSelectedTmpl != nil {
 		if !preSelectedTmpl.IsNodeBased() || selectedPkgManager != "" {
 			return &PromptResult{
 				ProjectName:    projectName,
 				Template:       *preSelectedTmpl,
 				PackageManager: selectedPkgManager,
+				Addons:         selectedAddons,
 			}, nil
 		}
 	}
@@ -119,7 +130,7 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string)
 		return nil, err
 	}
 
-	// 2. Second Group: If template is Node-based and package manager is not specified, ask for it
+	// 3. Third Group: If template is Node-based and package manager is not specified, ask for it
 	if tmpl.IsNodeBased() && selectedPkgManager == "" {
 		pkgOptions := []huh.Option[string]{
 			huh.NewOption("npm (Standard Node Package Manager)", "npm"),
@@ -139,9 +150,53 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string)
 		}
 	}
 
+	// 4. Fourth Group: Interactive Addon Wizard (for Backend & Fullstack templates)
+	category := tmpl.GetCategory()
+	if !skipAddons && (category == "Backend" || category == "Fullstack") {
+		selectedDB := "none"
+		selectedAuth := "none"
+		var enableRedis bool
+
+		dbOptions := []huh.Option[string]{
+			huh.NewOption("None (Skip database setup)", "none"),
+			huh.NewOption("PostgreSQL (Production-ready relational DB)", "postgres"),
+			huh.NewOption("SQLite (Lightweight file-based embedded DB)", "sqlite"),
+		}
+
+		authOptions := []huh.Option[string]{
+			huh.NewOption("None (Public API / Custom Auth)", "none"),
+			huh.NewOption("JWT (JSON Web Token authentication)", "jwt"),
+		}
+
+		addonForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title("Choose a database addon (Optional)").
+					Options(dbOptions...).
+					Value(&selectedDB),
+				huh.NewSelect[string]().
+					Title("Choose an authentication addon (Optional)").
+					Options(authOptions...).
+					Value(&selectedAuth),
+				huh.NewConfirm().
+					Title("Include Redis cache support?").
+					Value(&enableRedis),
+			),
+		)
+
+		if err := addonForm.Run(); err != nil {
+			return nil, err
+		}
+
+		selectedAddons.Database = selectedDB
+		selectedAddons.Auth = selectedAuth
+		selectedAddons.Redis = enableRedis
+	}
+
 	return &PromptResult{
 		ProjectName:    strings.TrimSpace(projectName),
 		Template:       *tmpl,
 		PackageManager: selectedPkgManager,
+		Addons:         selectedAddons,
 	}, nil
 }

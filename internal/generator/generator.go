@@ -13,11 +13,14 @@ import (
 )
 
 type ProjectConfig struct {
-	ProjectName string // Human readable or base project name
-	SafeName    string // Lowercase slug for npm, cargo, etc.
-	ModuleName  string // Safe identifier for Go modules
-	TargetDir   string // Filesystem target directory
-	Template    string // Template ID (e.g. "go-fiber")
+	ProjectName string      // Human readable or base project name
+	SafeName    string      // Lowercase slug for npm, cargo, etc.
+	ModuleName  string      // Safe identifier for Go modules
+	TargetDir   string      // Filesystem target directory
+	Template    string      // Template ID (e.g. "go-fiber")
+	Author      string      // Project author name
+	License     string      // Project license (e.g. "MIT")
+	Addons      AddonConfig // Optional Addon modules (db, auth, redis)
 }
 
 // Transliterate replaces Unicode special/accented characters with ASCII equivalents
@@ -102,6 +105,7 @@ func ResolveProjectConfig(rawInput string, templateID string) (ProjectConfig, er
 		ModuleName:  moduleName,
 		TargetDir:   targetDir,
 		Template:    templateID,
+		License:     "MIT",
 	}, nil
 }
 
@@ -169,6 +173,10 @@ func DryRun(config ProjectConfig) ([]string, error) {
 		files = append(files, destPath)
 		return nil
 	})
+
+	// Append Addon files if selected
+	addonFiles := GetAddonFiles(config)
+	files = append(files, addonFiles...)
 
 	return files, err
 }
@@ -247,5 +255,10 @@ func Generate(config ProjectConfig) error {
 		return nil
 	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Generate selected Addons
+	return GenerateAddons(config)
 }
