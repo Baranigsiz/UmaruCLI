@@ -1,64 +1,118 @@
-# Umaru CLI 🚀
+<div align="center">
 
-![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go&logoColor=white)
-![CI](https://github.com/Baranigsiz/UmaruCLI/actions/workflows/ci.yml/badge.svg)
-![Release](https://github.com/Baranigsiz/UmaruCLI/actions/workflows/release.yml/badge.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+# ⚡ Umaru CLI
 
-**Umaru** is a lightning-fast, production-grade project scaffolding CLI built with Go. It instantly bootstraps modern web and API projects configured with industry-standard architectures, Docker support, graceful shutdown, environment configurations, and interactive Charmbracelet terminal UI.
+**A lightning-fast, production-grade project scaffolding CLI for modern developers.**
+
+Bootstraps clean architecture backends, modern frontend apps, and monorepos in milliseconds — complete with Docker, Graceful Shutdown, OpenAPI, and interactive terminal UI.
+
+[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://golang.org)
+[![CI Workflow](https://img.shields.io/github/actions/workflow/status/Baranigsiz/UmaruCLI/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/Baranigsiz/UmaruCLI/actions)
+[![Release](https://img.shields.io/github/v/release/Baranigsiz/UmaruCLI?style=for-the-badge&logo=semanticrelease&logoColor=white&color=7D56F4)](https://github.com/Baranigsiz/UmaruCLI/releases)
+[![License](https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
+
+<br />
+
+```text
+  _   _                               ____ _     ___ 
+ | | | |_ __ ___   __ _ _ __ _   _   / ___| |   |_ _|
+ | | | | '_ ` _ \ / _` | '__| | | | | |   | |    | | 
+ | |_| | | | | | | (_| | |  | |_| | | |___| |___ | | 
+  \___/|_| |_| |_|\__,_|_|   \__,_|  \____|_____|___|
+                                                     
+          Production Scaffolding in Milliseconds
+```
+
+[✨ Features](#-features) • [📦 Starters](#-supported-starters) • [🚀 Installation](#-installation) • [💻 Usage](#-usage) • [🐚 Autocompletion](#-shell-autocompletion) • [🔄 Self-Upgrade](#-self-upgrade) • [🛠️ Extensibility](#️-extensibility--custom-templates) • [🗺️ Roadmap](#️-roadmap)
+
+</div>
+
+---
+
+## 💡 Why Umaru?
+
+Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. When starting a real-world application, developers often spend hours configuring:
+
+- 📂 **Folder structures** (Clean architecture, modular separation)
+- 🐳 **Docker & Docker Compose** with multi-stage production builds
+- 🛡️ **Graceful Shutdown & Signal Handling** to avoid abruptly terminated connections
+- 📝 **Configuration layers** (Environment variables, `.env` validation)
+- 🧪 **Makefiles, Linter configs & Git hooks**
+
+**Umaru CLI ships all of this out-of-the-box.** Every template is architected to be immediately deployable and extensible.
 
 ---
 
 ## ✨ Features
 
-- 🏎️ **Lightning Fast**: High performance, single static binary compiled with Go.
-- 🏗️ **Production-Ready Architectures**: Scaffolds full clean architectures (Controllers, Routes, Config, Middlewares, Docker & `docker-compose.yml`, Makefiles) instead of bare-bones Hello-World scripts.
-- 🎨 **Modern Terminal DX**: Beautiful interactive prompts with [Huh](https://github.com/charmbracelet/huh) and styled Lipgloss result cards with next-step instructions.
-- 📦 **Multi-Package Manager Support**: Seamlessly choose between `npm`, `pnpm`, `yarn`, or `bun` for JavaScript & TypeScript projects.
-- 🔍 **Dry-Run Mode**: Preview what files will be created before writing anything to disk.
-- 📜 **Verbose Logging**: Live streaming logs for long dependency installations.
-- 📂 **Smart Path & Unicode Slug Resolution**: Full support for `.` (current directory), Unicode/Turkish transliteration, and automatic slugification for `package.json`, `go.mod`, and `Cargo.toml`.
-- 🛡️ **Pre-Flight Checks**: Checks for required dependencies (`git`, `npm`, `pnpm`, `yarn`, `bun`, `cargo`, `go`) beforehand so generation never fails halfway through.
-- 🔌 **Zero External Dependencies**: All starter templates are compiled directly into the binary using Go's `embed.FS`.
+- 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
+- 🔌 **Zero Network Reliance:** All 12 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
+- 🎨 **Modern Terminal DX:** Interactive, accessible prompts powered by [Huh](https://github.com/charmbracelet/huh) and styled result cards with [Lipgloss](https://github.com/charmbracelet/lipgloss).
+- 🐚 **Dynamic Shell Autocompletions:** Instant completion for template IDs and flags in Bash, Zsh, Fish, and PowerShell.
+- 🔄 **One-Command Upgrades:** Built-in self-updater via `umaru upgrade`.
+- 📦 **Universal Package Manager Support:** Choose your preferred JS/TS package manager on the fly (`npm`, `pnpm`, `yarn`, `bun`).
+- 🛡️ **Pre-Flight Verification:** Proactively checks system dependencies (`git`, `go`, `cargo`, `pnpm`, etc.) beforehand so generation never fails halfway through.
+- 🔍 **Dry-Run Mode:** Simulate and inspect every file that would be generated without writing anything to disk.
+- 🔤 **Unicode & Transliteration Engine:** Native slugification for Turkish and accented characters (e.g. `Çalışma Projesi` ➔ `calisma-projesi`) for compliant `package.json`, `go.mod`, and `Cargo.toml`.
+- 📜 **Verbose Streaming Logs:** Optional live command streaming to monitor dependency installations in real-time.
 
 ---
 
-## 📦 Supported Templates
+## 📦 Supported Starters
 
-Umaru CLI natively provides batteries-included starter architectures:
+Umaru CLI includes 12 production-ready architectures organized across 3 categories:
 
-| Template | Stack | Architecture Features |
+### ⚙️ Backend APIs
+| Template ID | Technology Stack | Architecture & Included Features |
 |---|---|---|
-| 🏎️ **Go Fiber API** | Go + Fiber v2 | Clean architecture (`cmd/`, `internal/`), Docker multi-stage build, `docker-compose`, Makefile, Graceful Shutdown, CORS & Logger. |
-| 🏎️ **Go Gin API** | Go 1.24 + Gin | Layered Clean Architecture, Gin Recovery & Logger, CORS, Graceful Shutdown, Docker & Compose. |
-| 🌐 **Node.js Express** | Node.js + TypeScript | Modular architecture (`controllers/`, `routes/`, `middlewares/`), Docker, Helmet, Morgan, CORS, Error handling. |
-| 🦁 **NestJS Enterprise API** | NestJS 10 + TypeScript | Modular architecture, Swagger OpenAPI (`/api/docs`), ValidationPipe, Docker & Compose, Jest. |
-| 🐍 **Python FastAPI** | FastAPI + Pydantic v2 | Versioned router (`/api/v1/`), Pydantic models, OpenAPI `/docs`, Docker, `docker-compose`, CORS. |
-| ▲ **Next.js** | Next.js 14 + Tailwind CSS | App Router, Tailwind CSS, Lucide icons, PostCSS, TypeScript. |
-| 🚀 **Astro** | Astro 4 + Tailwind CSS | Zero-JS default content architecture, Markdown/MDX ready, Lucide icons, TypeScript. |
-| ⚛️ **React** | React 18 + Vite 5 + TS | Fast development setup, Lucide icons, strict TypeScript. |
-| 💚 **Vue 3** | Vue 3 + Vite 5 + TS | Composition API (`<script setup>`), Pinia state store, Tailwind CSS, Lucide icons. |
-| 🦀 **Rust Actix Web** | Rust + Actix-Web 4 | Safe and ultra-fast backend, Serde JSON serialization, healthchecks. |
-| 🦀 **Rust Axum API** | Rust + Axum 0.7 + Tokio | Tokio async runtime, Tower HTTP middleware, Tracing, Docker multi-stage, Graceful Shutdown. |
-| 📦 **Fullstack Monorepo** | Go Fiber + React Vite + Docker | Complete monorepo (`apps/api`, `apps/web`), Docker Compose, live API proxy, Tailwind CSS. |
+| `go-fiber` | **Go + Fiber v2** | Layered Clean Architecture (`cmd/`, `internal/`), Docker Multi-Stage, `docker-compose`, Graceful Shutdown, CORS, Makefile. |
+| `go-gin` | **Go 1.24 + Gin** | Enterprise Clean Architecture, Gin Recovery & Logger, CORS, Graceful Shutdown, Docker & Compose. |
+| `node-express` | **Node.js + TypeScript** | Modular Express architecture (`controllers/`, `routes/`, `middlewares/`), Helmet, Morgan, CORS, Global Error Handler. |
+| `nestjs-api` | **NestJS 10 + TypeScript** | Enterprise modular backend, Swagger OpenAPI (`/api/docs`), ValidationPipe, Docker & Compose, Jest test suite. |
+| `python-fastapi` | **FastAPI + Pydantic v2** | Versioned API Router (`/api/v1/`), Pydantic models, Interactive OpenAPI Swagger `/docs`, Docker, CORS. |
+| `rust-actix` | **Rust + Actix-Web 4** | Safe, ultra-high throughput backend, Serde JSON serialization, Health check endpoints. |
+| `rust-axum` | **Rust + Axum 0.7 + Tokio** | Async Tokio runtime, Tower HTTP middleware, Tracing subscriber, Docker Multi-Stage, Graceful Shutdown. |
+
+### 🌐 Frontend Applications
+| Template ID | Technology Stack | Included Features |
+|---|---|---|
+| `nextjs-tailwind` | **Next.js 14 + Tailwind CSS** | App Router, PostCSS, Lucide Icons, TypeScript, Optimized SEO meta defaults. |
+| `astro-tailwind` | **Astro 4 + Tailwind CSS** | Content-driven architecture, Zero-JS by default, Markdown/MDX ready, Lucide Icons. |
+| `react-vite-ts` | **React 18 + Vite 5 + TS** | Lightning-fast HMR, Strict TypeScript, Lucide Icons, Tailwind CSS. |
+| `vue-vite-ts` | **Vue 3 + Vite 5 + TS** | Composition API (`<script setup>`), Pinia State Management, Tailwind CSS, Lucide Icons. |
+
+### 📦 Fullstack Monorepos
+| Template ID | Technology Stack | Included Features |
+|---|---|---|
+| `fullstack-go-react` | **Go Fiber + React Vite + TS** | Monorepo structure (`apps/api`, `apps/web`), Live API Proxy, Unified Docker Compose, Makefile. |
 
 ---
 
 ## 🚀 Installation
 
-### Using Pre-Compiled Binaries (Recommended)
-Download the latest binary for Windows, macOS, or Linux directly from the [Releases Page](https://github.com/Baranigsiz/UmaruCLI/releases).
+### 1. Via Go Install (Any Platform with Go)
+```bash
+go install github.com/Baranigsiz/UmaruCLI@latest
+```
 
-1. Download the archive for your OS.
-2. Extract the binary (`umaru.exe` or `umaru`).
-3. Add it to your system's `PATH`.
+### 2. Pre-Compiled Binaries
+Download the binary for your operating system from the [Releases Page](https://github.com/Baranigsiz/UmaruCLI/releases):
 
-### From Source
+| Platform | Architecture | Binary Format |
+|---|---|---|
+| **Windows** | `x86_64` (amd64) / `ARM64` | `.zip` (`umaru.exe`) |
+| **macOS** | Apple Silicon (`arm64`) / Intel (`x86_64`) | `.tar.gz` (`umaru`) |
+| **Linux** | `x86_64` / `arm64` | `.tar.gz` (`umaru`) |
+
+### 3. Build from Source
 ```bash
 git clone https://github.com/Baranigsiz/UmaruCLI.git
 cd UmaruCLI
 go build -o umaru main.go
-# Move it to your bin folder (macOS/Linux)
+
+# Optional: Move to your local bin (Linux/macOS)
 mv umaru /usr/local/bin/
 ```
 
@@ -66,69 +120,165 @@ mv umaru /usr/local/bin/
 
 ## 💻 Usage
 
-### Interactive Mode
-Start a new project interactively with terminal prompts:
+### 🎯 Interactive Mode (Recommended)
+Simply run `umaru init` and follow the interactive wizard:
 ```bash
 umaru init
 ```
 
-### Non-Interactive / Scriptable Mode
-Pass arguments directly for instant CI/CD or scripted scaffolding:
-```bash
-# Initialize a production-ready Go Fiber API in the current directory
-umaru init . -t go-fiber --no-git --skip-install
+```text
+? What is your project named? my-awesome-api
+? Select a category: ⚙️ Backend APIs
+? Choose a starter template: Go Fiber API (Production-Ready)
+? Choose a package manager: (auto-detected or skipped for Go)
 
-# Scaffold a React app with pnpm and simulate via dry-run
-umaru init my-frontend -t react-vite-ts -p pnpm --dry-run
+✔ Scaffolding my-awesome-api using Go Fiber API...
+✔ Initializing Git repository...
+✔ Installing dependencies...
 
-# Create a project with verbose installation logs
-umaru init my-api -t node-express -p bun -v
+✨ Project Scaffolding Complete!
+  📁 Project:    my-awesome-api
+  📦 Template:   Go Fiber API (Production-Ready)
+  📍 Directory:  my-awesome-api
+
+Next steps to get started:
+  1. cd my-awesome-api
+  2. go run cmd/api/main.go
 ```
-
-### List Available Templates
-Explore all built-in starter templates:
-```bash
-umaru list
-```
-
-### Check Version
-```bash
-umaru version
-```
-
-### CLI Flags for `umaru init`
-| Flag | Short | Description |
-|---|---|---|
-| `--template` | `-t` | Specify starter template ID (e.g., `go-fiber`, `react-vite-ts`) |
-| `--package-manager` | `-p` | Package manager for Node templates (`npm`, `pnpm`, `yarn`, `bun`) |
-| `--dry-run` | | Simulate generation without writing any files to disk |
-| `--verbose` | `-v` | Show detailed installation logs from package managers |
-| `--no-git` | | Skip Git repository initialization |
-| `--skip-install` | | Skip installing package dependencies |
-| `--force` | `-f` | Overwrite existing files in target directory |
 
 ---
 
-## 🛠️ Architecture & Extensibility
+### ⚡ Non-Interactive & CI/CD Scripting
+Provide arguments to bypass prompts for automated workflows:
 
-Umaru CLI follows the **Open/Closed Principle**. You can add new templates without modifying any Go code:
+```bash
+# 1. Initialize a Go Fiber API in the current folder without Git or auto-install
+umaru init . -t go-fiber --no-git --skip-install
 
-1. Create a new folder inside `internal/templates/`.
-2. Add a `template.json` file:
+# 2. Scaffold a React + Vite application with Bun package manager
+umaru init my-frontend -t react-vite-ts -p bun
+
+# 3. Scaffold directly from a remote GitHub repository
+umaru init my-custom-app --from username/my-custom-starter
+
+# 4. Simulate file generation without writing to disk
+umaru init test-app -t node-express --dry-run
+
+# 5. Stream live dependency installation output
+umaru init payment-service -t nestjs-api -p pnpm -v
+```
+
+---
+
+### 🐚 Shell Autocompletion
+
+Umaru CLI supports dynamic autocompletion for Bash, Zsh, Fish, and PowerShell:
+
+```bash
+# Bash
+source <(umaru completion bash)
+
+# Zsh
+umaru completion zsh > "${fpath[1]}/_umaru"
+
+# Fish
+umaru completion fish | source
+
+# PowerShell
+umaru completion powershell | Out-String | Invoke-Expression
+```
+
+---
+
+### 🔄 Self-Upgrade
+
+Keep Umaru CLI up-to-date with the latest templates and improvements:
+
+```bash
+# Check and upgrade to the latest release automatically
+umaru upgrade
+
+# Check if a new version is available without installing
+umaru upgrade --check
+```
+
+---
+
+### 📋 List Starters & Check Version
+
+```bash
+# View all available starter templates in a formatted table
+umaru list
+
+# Display Umaru CLI version and build metadata
+umaru version
+```
+
+---
+
+## ⚙️ CLI Flags & Options
+
+| Flag | Short | Default | Description |
+|---|:---:|:---:|---|
+| `--template` | `-t` | `""` | Specify template ID directly (e.g. `go-fiber`, `react-vite-ts`) |
+| `--package-manager` | `-p` | `""` | Package manager for Node.js starters (`npm`, `pnpm`, `yarn`, `bun`) |
+| `--from` | | `""` | Scaffold directly from a remote Git repository or GitHub shorthand |
+| `--dry-run` | | `false` | Simulate generation and list files without creating them |
+| `--verbose` | `-v` | `false` | Stream live installation outputs to stdout/stderr |
+| `--no-git` | | `false` | Skip automatic `git init` |
+| `--skip-install` | | `false` | Skip automatic package/dependency installation |
+| `--force` | `-f` | `false` | Overwrite existing files in non-empty target directory |
+| `--help` | `-h` | | Display help and usage information |
+
+---
+
+## 🛠️ Extensibility & Custom Templates
+
+Umaru CLI is designed with the **Open/Closed Principle**. You can add new starters to the engine without modifying any Go code:
+
+### 1. Create a Template Directory
+Inside `internal/templates/`, create a new folder (e.g., `internal/templates/my-custom-starter`).
+
+### 2. Add `template.json` Metadata
 ```json
 {
-  "name": "My Custom Template",
-  "description": "Clean production starter.",
+  "name": "My Custom Starter",
+  "description": "Production-ready boilerplate for specialized workflows.",
+  "category": "Backend",
   "installCommand": ["npm", "install"],
   "runCommand": "npm run dev"
 }
 ```
-3. Add your boilerplate files. Files ending with `.tmpl` automatically render template variables (`{{.ProjectName}}`, `{{.SafeName}}`, `{{.ModuleName}}`).
-4. Rebuild the project.
+
+### 3. Add Boilerplate Files
+- Any file ending in `.tmpl` will be parsed by Go's `text/template` engine.
+- Available template variables:
+  - `{{.ProjectName}}` — Raw project name (e.g., `My Cool App`)
+  - `{{.SafeName}}` — Sanitized lowercase slug (e.g., `my-cool-app`)
+  - `{{.ModuleName}}` — Safe Go module identifier (e.g., `my-cool-app`)
+  - `{{.TargetDir}}` — Filesystem destination directory
+
+### 4. Build
+```bash
+go build -o umaru main.go
+```
+The new template will automatically be listed in `umaru list`, the interactive wizard, and shell autocompletions!
+
+---
+
+## 🗺️ Roadmap
+
+- [x] 🌐 **Remote Templates:** Scaffold directly from GitHub repositories (`umaru init --from user/repo`).
+- [x] 🔄 **Self-Updater:** Built-in `umaru upgrade` command to automatically update to the latest release.
+- [x] 🐚 **Shell Completions:** Native autocompletion scripts for Bash, Zsh, Fish, and PowerShell with dynamic flag suggestions.
+- [ ] 🧩 **Interactive Addon Wizard:** Optional feature checkboxes per template (e.g., PostgreSQL, Redis, Tailwind, JWT Auth).
+- [ ] ⚙️ **Config File Support:** Global `.umarurc` to save user defaults (default author, license, package manager).
 
 ---
 
 ## 🧪 Testing
+
+Run the full test suite across all templates and generators:
 
 ```bash
 go test -v ./...
@@ -136,13 +286,22 @@ go test -v ./...
 
 ---
 
-## 📜 Built With
-- [Cobra](https://github.com/spf13/cobra) - CLI framework
-- [Huh](https://github.com/charmbracelet/huh) - Interactive prompts & forms
-- [Lipgloss](https://github.com/charmbracelet/lipgloss) - Style definitions & table rendering
-- [GoReleaser](https://goreleaser.com/) - Automated release workflow
+## 🤝 Contributing
+
+Contributions make the open-source community an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**!
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingStarter`)
+3. Commit your Changes (`git commit -m 'feat: add AmazingStarter template'`)
+4. Push to the Branch (`git push origin feature/AmazingStarter`)
+5. Open a Pull Request
 
 ---
 
-## License
-MIT
+## 📄 License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+<div align="center">
+  <sub>Built with ❤️ by <a href="https://github.com/Baranigsiz">Baran Igsiz</a> and contributors.</sub>
+</div>

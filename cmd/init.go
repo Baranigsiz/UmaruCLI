@@ -10,6 +10,7 @@ import (
 	"umaru/internal/checks"
 	"umaru/internal/generator"
 	"umaru/internal/prompts"
+	"umaru/internal/templates"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/huh/spinner"
@@ -20,6 +21,7 @@ import (
 var (
 	templateFlag       string
 	packageManagerFlag string
+	fromFlag           string
 	noGitFlag          bool
 	skipInstallFlag    bool
 	forceFlag          bool
@@ -141,6 +143,86 @@ var initCmd = &cobra.Command{
 			initialName = args[0]
 		}
 
+		// Handle Remote Template Flow (--from)
+		if fromFlag != "" {
+			if initialName == "" {
+				initialName = "umaru-app"
+			}
+			config, err := generator.ResolveProjectConfig(initialName, "remote")
+			if err != nil {
+				fmt.Printf("\n❌ Failed to resolve project config: %v\n", err)
+				os.Exit(1)
+			}
+
+			if dryRunFlag {
+				files, err := generator.DryRunRemote(fromFlag, config)
+				if err != nil {
+					fmt.Printf("\n❌ Remote dry-run failed: %v\n", err)
+					os.Exit(1)
+				}
+				printDryRunCard(config, fmt.Sprintf("Remote (%s)", fromFlag), files)
+				return
+			}
+
+			if err := generator.CheckDestination(config.TargetDir, forceFlag); err != nil {
+				fmt.Printf("\n❌ Destination check failed: %v\n", err)
+				os.Exit(1)
+			}
+
+			if err := checks.PreFlightChecks([]string{"git"}, true, false); err != nil {
+				fmt.Printf("\n❌ Pre-flight check failed: %v\n", err)
+				os.Exit(1)
+			}
+
+			var remoteTmpl *templates.TemplateConfig
+			var setupErr error
+
+			if verboseFlag {
+				fmt.Printf("🚀 Scaffolding %s from remote repository '%s'...\n", config.SafeName, fromFlag)
+				remoteTmpl, setupErr = generator.GenerateFromRemote(fromFlag, config)
+				if setupErr != nil {
+					fmt.Printf("\n❌ Failed to generate from remote: %v\n", setupErr)
+					os.Exit(1)
+				}
+				if !noGitFlag {
+					fmt.Println("📦 Initializing Git repository...")
+					if err := actions.InitGit(config.TargetDir); err != nil {
+						fmt.Printf("⚠️ Git init warning: %v\n", err)
+					}
+				}
+			} else {
+				err = spinner.New().
+					Title(fmt.Sprintf("Scaffolding %s from remote repository...", config.SafeName)).
+					Action(func() {
+						remoteTmpl, setupErr = generator.GenerateFromRemote(fromFlag, config)
+						if setupErr != nil {
+							return
+						}
+						if !noGitFlag {
+							setupErr = actions.InitGit(config.TargetDir)
+						}
+					}).
+					Run()
+
+				if err != nil || setupErr != nil {
+					if setupErr != nil {
+						err = setupErr
+					}
+					fmt.Printf("\n❌ Failed to setup remote project:\n%v\n", err)
+					os.Exit(1)
+				}
+			}
+
+			runCmd := ""
+			var installCmd []string
+			if remoteTmpl != nil {
+				runCmd = remoteTmpl.RunCommand
+				installCmd = remoteTmpl.InstallCommand
+			}
+			printSuccessCard(config, fmt.Sprintf("Remote (%s)", fromFlag), runCmd, installCmd)
+			return
+		}
+
 		if initialName == "" && templateFlag == "" {
 			printBanner()
 		}
@@ -251,11 +333,34 @@ var initCmd = &cobra.Command{
 func init() {
 	initCmd.Flags().StringVarP(&templateFlag, "template", "t", "", "Template ID to use (e.g. go-fiber, react-vite-ts)")
 	initCmd.Flags().StringVarP(&packageManagerFlag, "package-manager", "p", "", "Package manager for Node templates (npm, pnpm, yarn, bun)")
+	initCmd.Flags().StringVar(&fromFlag, "from", "", "Scaffold project directly from a Git repository or GitHub shorthand (e.g. owner/repo)")
 	initCmd.Flags().BoolVar(&noGitFlag, "no-git", false, "Skip git repository initialization")
 	initCmd.Flags().BoolVar(&skipInstallFlag, "skip-install", false, "Skip installing dependencies")
 	initCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Overwrite existing files in target directory")
 	initCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Show detailed installation command logs")
 	initCmd.Flags().BoolVar(&dryRunFlag, "dry-run", false, "Simulate project generation without writing files")
+
+	// Dynamic Shell Autocompletions for Flags
+	_ = initCmd.RegisterFlagCompletionFunc("template", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		tmpls, err := templates.GetAvailableTemplates()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+		var completions []string
+		for _, t := range tmpls {
+			completions = append(completions, fmt.Sprintf("%s\t%s", t.ID, t.Name))
+		}
+		return completions, cobra.ShellCompDirectiveNoFileComp
+	})
+
+	_ = initCmd.RegisterFlagCompletionFunc("package-manager", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{
+			"npm\tStandard Node Package Manager",
+			"pnpm\tFast, disk space efficient package manager",
+			"yarn\tClassic Yarn package manager",
+			"bun\tUltra-fast all-in-one JavaScript runtime",
+		}, cobra.ShellCompDirectiveNoFileComp
+	})
+
 	rootCmd.AddCommand(initCmd)
 }
-
