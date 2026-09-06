@@ -14,7 +14,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 
 <br />
 
-```text
+<pre align="center">
   _   _                               ____ _     ___ 
  | | | |_ __ ___   __ _ _ __ _   _   / ___| |   |_ _|
  | | | | '_ ` _ \ / _` | '__| | | | | |   | |    | | 
@@ -22,9 +22,19 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
   \___/|_| |_| |_|\__,_|_|   \__,_|  \____|_____|___|
                                                      
           Production Scaffolding in Milliseconds
-```
+</pre>
 
-[✨ Features](#-features) • [📦 Starters](#-supported-starters) • [🧩 Addon Wizard](#-interactive-addon-wizard) • [⚙️ Global Config](#️-global-configuration) • [🚀 Installation](#-installation) • [💻 Usage](#-usage) • [🐚 Autocompletion](#-shell-autocompletion) • [🔄 Self-Upgrade](#-self-upgrade) • [🛠️ Extensibility](#️-extensibility--custom-templates)
+<p align="center">
+  <a href="#-features">✨ Features</a> •
+  <a href="#-supported-starters">📦 Starters (14)</a> •
+  <a href="#-interactive-addon-wizard">🧩 Addon Wizard</a> •
+  <a href="#️-global-configuration">⚙️ Global Config</a> •
+  <a href="#-installation">🚀 Installation</a> •
+  <a href="#-usage">💻 Usage</a> •
+  <a href="#-shell-autocompletion">🐚 Autocompletion</a> •
+  <a href="#-self-upgrade">🔄 Self-Upgrade</a> •
+  <a href="#️-extensibility--custom-templates">🛠️ Extensibility</a>
+</p>
 
 </div>
 
@@ -139,14 +149,17 @@ umaru config reset
 go install github.com/Baranigsiz/UmaruCLI@latest
 ```
 
-### 2. Pre-Compiled Binaries
-Download the binary for your operating system from the [Releases Page](https://github.com/Baranigsiz/UmaruCLI/releases):
+### 2. Pre-Compiled Binaries (Latest: [v1.4.0](https://github.com/Baranigsiz/UmaruCLI/releases/tag/v1.4.0))
+Download pre-built binary archives directly from the [GitHub Releases](https://github.com/Baranigsiz/UmaruCLI/releases):
 
-| Platform | Architecture | Binary Format |
-|---|---|---|
-| **Windows** | `x86_64` (amd64) / `ARM64` | `.zip` (`umaru.exe`) |
-| **macOS** | Apple Silicon (`arm64`) / Intel (`x86_64`) | `.tar.gz` (`umaru`) |
-| **Linux** | `x86_64` / `arm64` | `.tar.gz` (`umaru`) |
+| Platform | Architecture | Binary Archive | Direct Download |
+|---|---|---|---|
+| **Windows** | `x86_64` (amd64) | `.zip` (`umaru.exe`) | [umaru_1.4.0_windows_amd64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.4.0/umaru_1.4.0_windows_amd64.zip) |
+| **Windows** | `ARM64` | `.zip` (`umaru.exe`) | [umaru_1.4.0_windows_arm64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.4.0/umaru_1.4.0_windows_arm64.zip) |
+| **macOS** | Apple Silicon (`arm64`) | `.tar.gz` (`umaru`) | [umaru_1.4.0_darwin_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.4.0/umaru_1.4.0_darwin_arm64.tar.gz) |
+| **macOS** | Intel (`x86_64`) | `.tar.gz` (`umaru`) | [umaru_1.4.0_darwin_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.4.0/umaru_1.4.0_darwin_amd64.tar.gz) |
+| **Linux** | `x86_64` (amd64) | `.tar.gz` (`umaru`) | [umaru_1.4.0_linux_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.4.0/umaru_1.4.0_linux_amd64.tar.gz) |
+| **Linux** | `ARM64` | `.tar.gz` (`umaru`) | [umaru_1.4.0_linux_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.4.0/umaru_1.4.0_linux_arm64.tar.gz) |
 
 ### 3. Build from Source
 ```bash
@@ -268,7 +281,7 @@ umaru version
 | `--template` | `-t` | `""` | Specify template ID directly (e.g. `go-fiber`, `react-vite-ts`) |
 | `--package-manager` | `-p` | `""` | Package manager for Node.js starters (`npm`, `pnpm`, `yarn`, `bun`) |
 | `--from` | | `""` | Scaffold directly from a remote Git repository or GitHub shorthand |
-| `--db` | | `""` | Inject database driver addon (`postgres`, `sqlite`, `mongodb`, `none`) |
+| `--db` | | `""` | Inject database driver addon (`postgres`, `sqlite`, `none`) |
 | `--auth` | | `""` | Inject authentication middleware addon (`jwt`, `none`) |
 | `--redis` | | `false` | Inject Redis caching client module |
 | `--no-addons` | | `false` | Skip interactive addon configuration wizard |
@@ -324,6 +337,7 @@ The new template will automatically be listed in `umaru list`, the interactive w
 - [x] 🐚 **Shell Completions:** Native autocompletion scripts for Bash, Zsh, Fish, and PowerShell with dynamic flag suggestions.
 - [x] 🧩 **Interactive Addon Wizard:** Optional feature injection (PostgreSQL, SQLite, Redis, JWT Auth).
 - [x] ⚙️ **Config File Support:** Global `~/.umarurc.json` configuration manager (`umaru config`).
+- [x] 📦 **14 Production Starters:** Go (Fiber, Gin), TypeScript (Hono, NestJS, Express), Python (FastAPI), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepo.
 
 ---
 
