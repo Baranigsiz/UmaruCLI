@@ -1,0 +1,6 @@
+{
+  "name": "Hono API (TypeScript + Node/Bun)",
+  "description": "Ultrafast lightweight TypeScript API using Hono, OpenAPI-ready, and Docker",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}

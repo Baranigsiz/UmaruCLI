@@ -1,0 +1,28 @@
+<script lang="ts">
+  import { Sparkles } from 'lucide-svelte'
+
+  let count = $state(0)
+</script>
+
+<div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6">
+  <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center shadow-xl">
+    <div class="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center mx-auto mb-4 border border-orange-500/20">
+      <Sparkles class="w-6 h-6" />
+    </div>
+    <h1 class="text-2xl font-bold tracking-tight mb-2">Welcome to {{.ProjectName}}!</h1>
+    <p class="text-slate-400 text-sm mb-6">
+      Reactive frontend powered by Svelte 5 (Runes), Vite, and Tailwind CSS.
+    </p>
+
+    <button
+      onclick={() => count++}
+      class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-xl transition shadow-lg shadow-orange-500/20 mb-6 cursor-pointer"
+    >
+      Count is {count}
+    </button>
+
+    <div class="block text-xs font-mono text-slate-400">
+      Edit <code class="text-orange-400">src/App.svelte</code> to start building
+    </div>
+  </div>
+</div>

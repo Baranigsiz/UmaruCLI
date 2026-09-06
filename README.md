@@ -47,7 +47,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 ## ✨ Features
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
-- 🔌 **Zero Network Reliance:** All 12 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🔌 **Zero Network Reliance:** All 14 starter boilerplates are compiled directly into the binary via `//go:embed`.
 - 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
@@ -64,13 +64,14 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 
 ## 📦 Supported Starters
 
-Umaru CLI includes 12 production-ready architectures organized across 3 categories:
+Umaru CLI includes 14 production-ready architectures organized across 3 categories:
 
 ### ⚙️ Backend APIs
 | Template ID | Technology Stack | Architecture & Included Features |
 |---|---|---|
 | `go-fiber` | **Go + Fiber v2** | Layered Clean Architecture (`cmd/`, `internal/`), Docker Multi-Stage, `docker-compose`, Graceful Shutdown, CORS, Makefile. |
 | `go-gin` | **Go 1.24 + Gin** | Enterprise Clean Architecture, Gin Recovery & Logger, CORS, Graceful Shutdown, Docker & Compose. |
+| `hono-api` | **Hono + TypeScript** | Ultrafast lightweight TypeScript API (Node.js/Bun adapter), CORS, Logger, Docker & Compose. |
 | `node-express` | **Node.js + TypeScript** | Modular Express architecture (`controllers/`, `routes/`, `middlewares/`), Helmet, Morgan, CORS, Global Error Handler. |
 | `nestjs-api` | **NestJS 10 + TypeScript** | Enterprise modular backend, Swagger OpenAPI (`/api/docs`), ValidationPipe, Docker & Compose, Jest test suite. |
 | `python-fastapi` | **FastAPI + Pydantic v2** | Versioned API Router (`/api/v1/`), Pydantic models, Interactive OpenAPI Swagger `/docs`, Docker, CORS. |
@@ -83,6 +84,7 @@ Umaru CLI includes 12 production-ready architectures organized across 3 categori
 | `nextjs-tailwind` | **Next.js 14 + Tailwind CSS** | App Router, PostCSS, Lucide Icons, TypeScript, Optimized SEO meta defaults. |
 | `astro-tailwind` | **Astro 4 + Tailwind CSS** | Content-driven architecture, Zero-JS by default, Markdown/MDX ready, Lucide Icons. |
 | `react-vite-ts` | **React 18 + Vite 5 + TS** | Lightning-fast HMR, Strict TypeScript, Lucide Icons, Tailwind CSS. |
+| `svelte-vite-ts` | **Svelte 5 + Vite 5 + TS** | Modern Runes reactivity (`$state`), Tailwind CSS, Lucide Icons, Vite HMR. |
 | `vue-vite-ts` | **Vue 3 + Vite 5 + TS** | Composition API (`<script setup>`), Pinia State Management, Tailwind CSS, Lucide Icons. |
 
 ### 📦 Fullstack Monorepos

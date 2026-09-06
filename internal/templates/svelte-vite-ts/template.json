@@ -1,0 +1,6 @@
+{
+  "name": "Svelte 5 (Vite + TypeScript + Tailwind)",
+  "description": "Ultra-reactive frontend using Svelte 5 (Runes), Vite, TypeScript, and Tailwind CSS",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}
