@@ -1,0 +1,17 @@
+package handlers
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/labstack/echo/v4"
+)
+
+func HealthCheck(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]any{
+		"status":    "healthy",
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
+		"service":   "{{.SafeName}}",
+		"version":   "0.1.0",
+	})
+}

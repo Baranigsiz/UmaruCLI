@@ -1,0 +1,6 @@
+{
+  "name": "Go Echo API (Clean Architecture)",
+  "description": "High-performance Go backend using Echo v4, standard net/http compatibility, Docker, and Graceful Shutdown",
+  "installCommand": ["go", "mod", "tidy"],
+  "runCommand": "go run cmd/api/main.go"
+}

@@ -26,7 +26,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 
 <p align="center">
   <a href="#-features">✨ Features</a> •
-  <a href="#-supported-starters">📦 Starters (14)</a> •
+  <a href="#-supported-starters">📦 Starters (16)</a> •
   <a href="#-interactive-addon-wizard">🧩 Addon Wizard</a> •
   <a href="#️-global-configuration">⚙️ Global Config</a> •
   <a href="#-installation">🚀 Installation</a> •
@@ -57,7 +57,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 ## ✨ Features
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
-- 🔌 **Zero Network Reliance:** All 14 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🔌 **Zero Network Reliance:** All 16 starter boilerplates are compiled directly into the binary via `//go:embed`.
 - 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
@@ -74,13 +74,15 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 
 ## 📦 Supported Starters
 
-Umaru CLI includes 14 production-ready architectures organized across 3 categories:
+Umaru CLI includes 16 production-ready architectures organized across 3 categories:
 
 ### ⚙️ Backend APIs
 | Template ID | Technology Stack | Architecture & Included Features |
 |---|---|---|
 | `go-fiber` | **Go + Fiber v2** | Layered Clean Architecture (`cmd/`, `internal/`), Docker Multi-Stage, `docker-compose`, Graceful Shutdown, CORS, Makefile. |
 | `go-gin` | **Go 1.24 + Gin** | Enterprise Clean Architecture, Gin Recovery & Logger, CORS, Graceful Shutdown, Docker & Compose. |
+| `go-echo` | **Go + Echo v4** | Clean Architecture (`cmd/`, `internal/routes`, `handlers`, `config`), Docker Multi-Stage, `docker-compose`, Graceful Shutdown, CORS, Makefile. |
+| `fastify-api` | **Fastify + TypeScript** | High-throughput backend, OpenAPI Swagger UI (`/docs`), Strict TS, Docker Multi-Stage, `docker-compose`. |
 | `hono-api` | **Hono + TypeScript** | Ultrafast lightweight TypeScript API (Node.js/Bun adapter), CORS, Logger, Docker & Compose. |
 | `node-express` | **Node.js + TypeScript** | Modular Express architecture (`controllers/`, `routes/`, `middlewares/`), Helmet, Morgan, CORS, Global Error Handler. |
 | `nestjs-api` | **NestJS 10 + TypeScript** | Enterprise modular backend, Swagger OpenAPI (`/api/docs`), ValidationPipe, Docker & Compose, Jest test suite. |

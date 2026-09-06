@@ -1,0 +1,6 @@
+{
+  "name": "Fastify API (TypeScript + Swagger)",
+  "description": "High-throughput TypeScript Node.js backend using Fastify, OpenAPI Swagger docs, and Docker",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}

@@ -1,0 +1,16 @@
+.PHONY: run build test docker-build docker-run
+
+run:
+	go run cmd/api/main.go
+
+build:
+	go build -o bin/server cmd/api/main.go
+
+test:
+	go test -v ./...
+
+docker-build:
+	docker build -t {{.SafeName}} .
+
+docker-run:
+	docker run -p 8080:8080 {{.SafeName}}

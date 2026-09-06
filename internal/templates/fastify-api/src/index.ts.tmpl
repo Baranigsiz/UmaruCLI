@@ -1,0 +1,96 @@
+import 'dotenv/config'
+import Fastify from 'fastify'
+import cors from '@fastify/cors'
+import swagger from '@fastify/swagger'
+import swaggerUi from '@fastify/swagger-ui'
+
+const fastify = Fastify({
+  logger: {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true
+      }
+    }
+  }
+})
+
+// Register CORS
+await fastify.register(cors, {
+  origin: true
+})
+
+// Register Swagger OpenAPI Documentation
+await fastify.register(swagger, {
+  openapi: {
+    info: {
+      title: '{{.ProjectName}} API',
+      description: 'Production-ready Fastify TypeScript service with Swagger docs',
+      version: '0.1.0'
+    }
+  }
+})
+
+await fastify.register(swaggerUi, {
+  routePrefix: '/docs',
+  uiConfig: {
+    docExpansion: 'list',
+    deepLinking: false
+  }
+})
+
+// Routes
+fastify.get('/', {
+  schema: {
+    description: 'Welcome endpoint',
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          message: { type: 'string' },
+          framework: { type: 'string' },
+          docs: { type: 'string' }
+        }
+      }
+    }
+  }
+}, async () => {
+  return {
+    message: 'Welcome to {{.ProjectName}} API!',
+    framework: 'Fastify',
+    docs: '/docs'
+  }
+})
+
+fastify.get('/health', {
+  schema: {
+    description: 'Health check endpoint',
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          status: { type: 'string' },
+          uptime: { type: 'number' }
+        }
+      }
+    }
+  }
+}, async () => {
+  return {
+    status: 'ok',
+    uptime: process.uptime()
+  }
+})
+
+// Start server
+const port = Number(process.env.PORT) || 3000
+const host = process.env.HOST || '0.0.0.0'
+
+try {
+  await fastify.listen({ port, host })
+  console.log(`⚡ Fastify server running on http://localhost:${port}`)
+  console.log(`📚 Swagger UI documentation available at http://localhost:${port}/docs`)
+} catch (err) {
+  fastify.log.error(err)
+  process.exit(1)
+}

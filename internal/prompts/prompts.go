@@ -80,9 +80,9 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 
 	if selectedTemplateID == "" {
 		categoryOptions := []huh.Option[string]{
-			huh.NewOption("🌟 All Templates (Show all 14 starters)", "all"),
+			huh.NewOption("🌟 All Templates (Show all 16 starters)", "all"),
 			huh.NewOption("🌐 Frontend Frameworks (React, Vue 3, Svelte 5, Next.js, Astro)", "Frontend"),
-			huh.NewOption("⚙️ Backend APIs (Go, NestJS, Express, Hono, FastAPI, Rust)", "Backend"),
+			huh.NewOption("⚙️ Backend APIs (Go, NestJS, Express, Hono, Fastify, Echo, FastAPI, Rust)", "Backend"),
 			huh.NewOption("📦 Fullstack Monorepos (Go Fiber + React Vite)", "Fullstack"),
 		}
 

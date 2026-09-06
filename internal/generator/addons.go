@@ -21,6 +21,7 @@ func TemplateSupportsAddons(templateID string) bool {
 		strings.HasPrefix(templateID, "node-") ||
 		strings.HasPrefix(templateID, "nestjs-") ||
 		strings.HasPrefix(templateID, "hono-") ||
+		strings.HasPrefix(templateID, "fastify-") ||
 		strings.HasPrefix(templateID, "python-")
 }
 
@@ -41,7 +42,7 @@ func GetAddonFiles(config ProjectConfig) []string {
 	db := strings.ToLower(strings.TrimSpace(config.Addons.Database))
 	auth := strings.ToLower(strings.TrimSpace(config.Addons.Auth))
 	isGo := strings.HasPrefix(config.Template, "go-") || config.Template == "fullstack-go-react"
-	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-")
+	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-") || strings.HasPrefix(config.Template, "fastify-")
 	isPython := strings.HasPrefix(config.Template, "python-")
 
 	baseDir := config.TargetDir
@@ -94,7 +95,7 @@ func GenerateAddons(config ProjectConfig) error {
 	db := strings.ToLower(strings.TrimSpace(config.Addons.Database))
 	auth := strings.ToLower(strings.TrimSpace(config.Addons.Auth))
 	isGo := strings.HasPrefix(config.Template, "go-") || config.Template == "fullstack-go-react"
-	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-")
+	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-") || strings.HasPrefix(config.Template, "fastify-")
 	isPython := strings.HasPrefix(config.Template, "python-")
 
 	baseDir := config.TargetDir
