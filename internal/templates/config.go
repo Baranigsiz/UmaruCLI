@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"strings"
 )
 
 type TemplateConfig struct {
@@ -112,15 +113,26 @@ func (t TemplateConfig) GetRunCommand(pkgManager string) string {
 	if !t.IsNodeBased() || pkgManager == "" {
 		return t.RunCommand
 	}
+
+	// If RunCommand is not an npm script, return it as-is (e.g. docker-compose up)
+	var scriptName string
+	if strings.HasPrefix(t.RunCommand, "npm run ") {
+		scriptName = strings.TrimPrefix(t.RunCommand, "npm run ")
+	} else if strings.HasPrefix(t.RunCommand, "npm ") {
+		scriptName = strings.TrimPrefix(t.RunCommand, "npm ")
+	} else {
+		return t.RunCommand
+	}
+
 	switch pkgManager {
 	case "pnpm":
-		return "pnpm dev"
+		return "pnpm " + scriptName
 	case "yarn":
-		return "yarn dev"
+		return "yarn " + scriptName
 	case "bun":
-		return "bun run dev"
+		return "bun run " + scriptName
 	default:
-		return "npm run dev"
+		return "npm run " + scriptName
 	}
 }
 

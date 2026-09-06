@@ -70,6 +70,38 @@ func TestTemplateConfig_NodeHelpers(t *testing.T) {
 	if goTmpl.GetInstallCommand("pnpm")[0] != "go" {
 		t.Errorf("Expected go template to preserve install command")
 	}
+	if goTmpl.GetRunCommand("pnpm") != "go run cmd/api/main.go" {
+		t.Errorf("Expected go template to preserve run command, got '%s'", goTmpl.GetRunCommand("pnpm"))
+	}
+
+	// Test custom npm script (e.g. NestJS start:dev)
+	nestTmpl := TemplateConfig{
+		ID:             "nestjs-api",
+		InstallCommand: []string{"npm", "install"},
+		RunCommand:     "npm run start:dev",
+	}
+	if nestTmpl.GetRunCommand("pnpm") != "pnpm start:dev" {
+		t.Errorf("Expected 'pnpm start:dev', got '%s'", nestTmpl.GetRunCommand("pnpm"))
+	}
+	if nestTmpl.GetRunCommand("yarn") != "yarn start:dev" {
+		t.Errorf("Expected 'yarn start:dev', got '%s'", nestTmpl.GetRunCommand("yarn"))
+	}
+	if nestTmpl.GetRunCommand("bun") != "bun run start:dev" {
+		t.Errorf("Expected 'bun run start:dev', got '%s'", nestTmpl.GetRunCommand("bun"))
+	}
+	if nestTmpl.GetRunCommand("npm") != "npm run start:dev" {
+		t.Errorf("Expected 'npm run start:dev', got '%s'", nestTmpl.GetRunCommand("npm"))
+	}
+
+	// Test monorepo node-based template with non-npm run command (e.g. fullstack-go-react)
+	monorepoTmpl := TemplateConfig{
+		ID:             "fullstack-go-react",
+		InstallCommand: []string{"npm", "install"},
+		RunCommand:     "docker-compose up --build",
+	}
+	if monorepoTmpl.GetRunCommand("pnpm") != "docker-compose up --build" {
+		t.Errorf("Expected 'docker-compose up --build', got '%s'", monorepoTmpl.GetRunCommand("pnpm"))
+	}
 }
 
 func TestFindTemplateByID(t *testing.T) {

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"umaru/internal/config"
 
@@ -71,16 +72,16 @@ var configGetCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := config.LoadUserConfig()
-		key := args[0]
+		key := strings.ToLower(strings.TrimSpace(args[0]))
 
 		switch key {
-		case "package-manager", "pm":
+		case "package-manager", "pm", "packagemanager":
 			fmt.Println(cfg.PackageManager)
 		case "author":
 			fmt.Println(cfg.Author)
 		case "license":
 			fmt.Println(cfg.License)
-		case "git-init", "git":
+		case "git-init", "gitinit", "git":
 			fmt.Println(cfg.GitInit)
 		default:
 			fmt.Printf("❌ Unknown configuration key '%s'\n", key)

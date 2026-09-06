@@ -1,12 +1,24 @@
 import React from 'react'
+import { Sparkles } from 'lucide-react'
 
 function App() {
   return (
-    <div style={ { fontFamily: 'system-ui', textAlign: 'center', marginTop: '50px' } }>
-      <h1>Welcome to {{.ProjectName}}!</h1>
-      <p>This is your blazing fast React + Vite app.</p>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6">
+      <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center shadow-xl">
+        <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
+          <Sparkles className="w-6 h-6" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight mb-2">Welcome to {{.ProjectName}}!</h1>
+        <p className="text-slate-400 text-sm mb-6">
+          Your production-ready React + TypeScript + Vite starter with Tailwind CSS.
+        </p>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-mono text-slate-300">
+          Edit <code className="text-indigo-400">src/App.tsx</code> to get started
+        </div>
+      </div>
     </div>
   )
 }
 
 export default App
+

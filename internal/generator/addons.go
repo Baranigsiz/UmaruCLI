@@ -9,9 +9,18 @@ import (
 
 // AddonConfig holds optional infrastructure and middleware add-ons
 type AddonConfig struct {
-	Database string `json:"database,omitempty"` // "none", "postgres", "sqlite", "mongodb"
+	Database string `json:"database,omitempty"` // "none", "postgres", "sqlite"
 	Auth     string `json:"auth,omitempty"`     // "none", "jwt"
 	Redis    bool   `json:"redis,omitempty"`    // true/false
+}
+
+// TemplateSupportsAddons checks if the template supports the optional addons (DB, Auth, Redis)
+func TemplateSupportsAddons(templateID string) bool {
+	return strings.HasPrefix(templateID, "go-") ||
+		templateID == "fullstack-go-react" ||
+		strings.HasPrefix(templateID, "node-") ||
+		strings.HasPrefix(templateID, "nestjs-") ||
+		strings.HasPrefix(templateID, "python-")
 }
 
 // HasAddons returns true if any addon is enabled

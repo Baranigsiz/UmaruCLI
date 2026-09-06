@@ -61,13 +61,14 @@ func Transliterate(s string) string {
 	return sb.String()
 }
 
+var slugifyRegex = regexp.MustCompile(`[^a-z0-9_\-]+`)
+
 // Slugify converts any string into a clean lowercase slug (e.g. "Türkçe Proje" -> "turkce-proje")
 func Slugify(s string) string {
 	s = Transliterate(s)
 	s = strings.TrimSpace(strings.ToLower(s))
 	// Replace non-alphanumeric characters (excluding hyphen and underscore) with hyphen
-	reg := regexp.MustCompile(`[^a-z0-9_\-]+`)
-	s = reg.ReplaceAllString(s, "-")
+	s = slugifyRegex.ReplaceAllString(s, "-")
 	// Trim leading and trailing hyphens
 	s = strings.Trim(s, "-")
 	if s == "" {

@@ -35,13 +35,35 @@ var (
 	dryRunFlag         bool
 )
 
-func runScaffoldWorkflow(projConfig generator.ProjectConfig, generateFn func() error, installCmd []string, noGit bool, skipInstall bool, verbose bool, templateTitle string, runCmd string) {
+func runScaffoldWorkflow(
+	projConfig generator.ProjectConfig,
+	generateFn func() (*templates.TemplateConfig, error),
+	defaultInstallCmd []string,
+	noGit bool,
+	skipInstall bool,
+	verbose bool,
+	templateTitle string,
+	defaultRunCmd string,
+) {
+	installCmd := defaultInstallCmd
+	runCmd := defaultRunCmd
+
 	if verbose {
 		fmt.Printf("🚀 Scaffolding %s using %s...\n", projConfig.SafeName, templateTitle)
-		if err := generateFn(); err != nil {
+		tmplCfg, err := generateFn()
+		if err != nil {
 			fmt.Printf("\n❌ Failed to generate project files: %v\n", err)
 			os.Exit(1)
 		}
+		if tmplCfg != nil {
+			if len(installCmd) == 0 && len(tmplCfg.InstallCommand) > 0 {
+				installCmd = tmplCfg.InstallCommand
+			}
+			if runCmd == "" && tmplCfg.RunCommand != "" {
+				runCmd = tmplCfg.RunCommand
+			}
+		}
+
 		if !noGit {
 			fmt.Println("📦 Initializing Git repository...")
 			if err := actions.InitGit(projConfig.TargetDir); err != nil {
@@ -51,39 +73,59 @@ func runScaffoldWorkflow(projConfig generator.ProjectConfig, generateFn func() e
 		if !skipInstall && len(installCmd) > 0 {
 			fmt.Printf("📥 Installing dependencies with '%s'...\n", strings.Join(installCmd, " "))
 			if err := actions.InstallDependencies(projConfig.TargetDir, installCmd, true); err != nil {
-				fmt.Printf("\n❌ Failed to install dependencies: %v\n", err)
-				os.Exit(1)
+				fmt.Printf("⚠️ Failed to install dependencies: %v\n", err)
+				fmt.Printf("💡 You can install them manually by running '%s' in %s\n", strings.Join(installCmd, " "), projConfig.TargetDir)
+				skipInstall = true
 			}
 		}
 	} else {
-		var setupErr error
+		var genErr error
+		var gitErr error
+		var installErr error
+		var tmplCfg *templates.TemplateConfig
+
 		err := spinner.New().
 			Title(fmt.Sprintf("Scaffolding %s using %s...", projConfig.SafeName, templateTitle)).
 			Action(func() {
-				setupErr = generateFn()
-				if setupErr != nil {
+				tmplCfg, genErr = generateFn()
+				if genErr != nil {
 					return
 				}
 
-				if !noGit {
-					setupErr = actions.InitGit(projConfig.TargetDir)
-					if setupErr != nil {
-						return
+				if tmplCfg != nil {
+					if len(installCmd) == 0 && len(tmplCfg.InstallCommand) > 0 {
+						installCmd = tmplCfg.InstallCommand
+					}
+					if runCmd == "" && tmplCfg.RunCommand != "" {
+						runCmd = tmplCfg.RunCommand
 					}
 				}
 
+				if !noGit {
+					gitErr = actions.InitGit(projConfig.TargetDir)
+				}
+
 				if !skipInstall && len(installCmd) > 0 {
-					setupErr = actions.InstallDependencies(projConfig.TargetDir, installCmd, false)
+					installErr = actions.InstallDependencies(projConfig.TargetDir, installCmd, false)
 				}
 			}).
 			Run()
 
-		if err != nil || setupErr != nil {
-			if setupErr != nil {
-				err = setupErr
+		if err != nil || genErr != nil {
+			if genErr != nil {
+				err = genErr
 			}
-			fmt.Printf("\n❌ Failed to setup project:\n%v\n", err)
+			fmt.Printf("\n❌ Failed to generate project files:\n%v\n", err)
 			os.Exit(1)
+		}
+
+		if gitErr != nil {
+			fmt.Printf("⚠️ Git init warning: %v\n", gitErr)
+		}
+		if installErr != nil {
+			fmt.Printf("⚠️ Dependency installation warning: %v\n", installErr)
+			fmt.Printf("💡 You can install dependencies manually by running '%s' in the project directory.\n", strings.Join(installCmd, " "))
+			skipInstall = true
 		}
 	}
 
@@ -138,21 +180,11 @@ var initCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			var remoteTmpl *templates.TemplateConfig
-			generateRemote := func() error {
-				tmpl, err := generator.GenerateFromRemote(fromFlag, projConfig)
-				remoteTmpl = tmpl
-				return err
+			generateRemote := func() (*templates.TemplateConfig, error) {
+				return generator.GenerateFromRemote(fromFlag, projConfig)
 			}
 
-			var installCmd []string
-			runCmd := ""
-			if remoteTmpl != nil {
-				runCmd = remoteTmpl.RunCommand
-				installCmd = remoteTmpl.InstallCommand
-			}
-
-			runScaffoldWorkflow(projConfig, generateRemote, installCmd, noGitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), runCmd)
+			runScaffoldWorkflow(projConfig, generateRemote, nil, noGitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), "")
 			return
 		}
 
@@ -213,8 +245,11 @@ var initCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		generateLocal := func() error {
-			return generator.Generate(projConfig)
+		generateLocal := func() (*templates.TemplateConfig, error) {
+			if err := generator.Generate(projConfig); err != nil {
+				return nil, err
+			}
+			return &result.Template, nil
 		}
 
 		runScaffoldWorkflow(projConfig, generateLocal, installCmd, noGitFlag, skipInstallFlag, verboseFlag, result.Template.Name, runCmd)
@@ -225,7 +260,7 @@ func init() {
 	initCmd.Flags().StringVarP(&templateFlag, "template", "t", "", "Template ID to use (e.g. go-fiber, react-vite-ts)")
 	initCmd.Flags().StringVarP(&packageManagerFlag, "package-manager", "p", "", "Package manager for Node templates (npm, pnpm, yarn, bun)")
 	initCmd.Flags().StringVar(&fromFlag, "from", "", "Scaffold project directly from a Git repository or GitHub shorthand (e.g. owner/repo)")
-	initCmd.Flags().StringVar(&dbFlag, "db", "", "Database addon driver (postgres, sqlite, mongodb, none)")
+	initCmd.Flags().StringVar(&dbFlag, "db", "", "Database addon driver (postgres, sqlite, none)")
 	initCmd.Flags().StringVar(&authFlag, "auth", "", "Authentication addon (jwt, none)")
 	initCmd.Flags().BoolVar(&redisFlag, "redis", false, "Include Redis caching client addon")
 	initCmd.Flags().BoolVar(&noAddonsFlag, "no-addons", false, "Skip interactive addon configuration wizard")

@@ -3,6 +3,7 @@ package generator
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -33,21 +34,23 @@ func NormalizeGitURL(raw string) string {
 	return raw
 }
 
-// GenerateFromRemote clones a remote repository into the target directory,
-// strips the .git metadata, and renders any .tmpl files.
+// GenerateFromRemote clones a remote repository into a temporary directory,
+// strips the .git metadata, renders any .tmpl files, and copies the result
+// into the target directory.
 func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.TemplateConfig, error) {
 	normalizedURL := NormalizeGitURL(repoURL)
 	if normalizedURL == "" {
 		return nil, fmt.Errorf("invalid or empty remote repository URL")
 	}
 
-	// Ensure destination directory is created
-	if err := os.MkdirAll(config.TargetDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create target directory %s: %w", config.TargetDir, err)
+	tempDir, err := os.MkdirTemp("", "umaru-remote-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary clone directory: %w", err)
 	}
+	defer os.RemoveAll(tempDir)
 
-	// Clone repo with depth 1
-	cloneCmd := exec.Command("git", "clone", "--depth", "1", normalizedURL, config.TargetDir)
+	// Clone repo with depth 1 into temporary directory
+	cloneCmd := exec.Command("git", "clone", "--depth", "1", normalizedURL, tempDir)
 	if out, err := cloneCmd.CombinedOutput(); err != nil {
 		outStr := strings.TrimSpace(string(out))
 		if outStr != "" {
@@ -57,12 +60,12 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 	}
 
 	// Remove existing .git directory
-	gitDir := filepath.Join(config.TargetDir, ".git")
+	gitDir := filepath.Join(tempDir, ".git")
 	_ = os.RemoveAll(gitDir)
 
 	// Check if template.json exists in remote repository
 	var templateConfig templates.TemplateConfig
-	remoteTemplateJSON := filepath.Join(config.TargetDir, "template.json")
+	remoteTemplateJSON := filepath.Join(tempDir, "template.json")
 	if data, err := os.ReadFile(remoteTemplateJSON); err == nil {
 		_ = json.Unmarshal(data, &templateConfig)
 		_ = os.Remove(remoteTemplateJSON) // remove template.json from output
@@ -73,7 +76,7 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 	}
 
 	// Walk and process any .tmpl files
-	err := filepath.WalkDir(config.TargetDir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(tempDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -117,6 +120,58 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 
 	if err != nil {
 		return nil, fmt.Errorf("failed processing remote template files: %w", err)
+	}
+
+	// Ensure destination directory is created
+	if err := os.MkdirAll(config.TargetDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create target directory %s: %w", config.TargetDir, err)
+	}
+
+	// Copy all files and folders from tempDir to config.TargetDir
+	err = filepath.WalkDir(tempDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		relPath, err := filepath.Rel(tempDir, path)
+		if err != nil {
+			return err
+		}
+		if relPath == "." {
+			return nil
+		}
+
+		targetPath := filepath.Join(config.TargetDir, relPath)
+		if d.IsDir() {
+			return os.MkdirAll(targetPath, 0755)
+		}
+
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		info, err := d.Info()
+		perm := fs.FileMode(0644)
+		if err == nil {
+			perm = info.Mode().Perm()
+		}
+
+		dstFile, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+
+		if _, err := io.Copy(dstFile, srcFile); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed copying files to target directory: %w", err)
 	}
 
 	return &templateConfig, nil

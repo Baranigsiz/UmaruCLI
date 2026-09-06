@@ -77,6 +77,14 @@ func CleanVersion(v string) string {
 	return strings.TrimPrefix(v, "v")
 }
 
+func splitPreRelease(v string) (string, string) {
+	parts := strings.SplitN(v, "-", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return parts[0], ""
+}
+
 // IsNewerVersion returns true if latest is semantically newer than current
 func IsNewerVersion(current, latest string) bool {
 	curr := CleanVersion(current)
@@ -89,13 +97,25 @@ func IsNewerVersion(current, latest string) bool {
 		return false
 	}
 
-	currParts := strings.Split(curr, ".")
-	latParts := strings.Split(lat, ".")
+	currBase, currPre := splitPreRelease(curr)
+	latBase, latPre := splitPreRelease(lat)
 
-	for i := 0; i < len(currParts) && i < len(latParts); i++ {
+	currParts := strings.Split(currBase, ".")
+	latParts := strings.Split(latBase, ".")
+
+	maxLen := len(currParts)
+	if len(latParts) > maxLen {
+		maxLen = len(latParts)
+	}
+
+	for i := 0; i < maxLen; i++ {
 		var c, l int
-		_, _ = fmt.Sscanf(currParts[i], "%d", &c)
-		_, _ = fmt.Sscanf(latParts[i], "%d", &l)
+		if i < len(currParts) {
+			_, _ = fmt.Sscanf(currParts[i], "%d", &c)
+		}
+		if i < len(latParts) {
+			_, _ = fmt.Sscanf(latParts[i], "%d", &l)
+		}
 
 		if l > c {
 			return true
@@ -105,7 +125,19 @@ func IsNewerVersion(current, latest string) bool {
 		}
 	}
 
-	return len(latParts) > len(currParts)
+	// If numeric base versions are identical (e.g. 1.0.0 vs 1.0.0-beta):
+	// A normal version has higher precedence than a pre-release version.
+	if currPre != "" && latPre == "" {
+		return true
+	}
+	if currPre == "" && latPre != "" {
+		return false
+	}
+	if currPre != "" && latPre != "" {
+		return latPre > currPre
+	}
+
+	return false
 }
 
 // FindAssetForSystem finds the compatible archive asset for current OS and architecture
@@ -115,10 +147,33 @@ func (r *ReleaseInfo) FindAssetForSystem() (*ReleaseAsset, error) {
 
 	for _, asset := range r.Assets {
 		name := strings.ToLower(asset.Name)
-		// Match OS and Arch in filename (e.g., umaru_1.0.0_windows_amd64.zip or umaru_linux_amd64.tar.gz)
-		if strings.Contains(name, goos) && strings.Contains(name, goarch) {
-			return &asset, nil
+
+		// Must be a supported archive extension to prevent matching .sha256, .sig, .sbom
+		if !strings.HasSuffix(name, ".zip") && !strings.HasSuffix(name, ".tar.gz") && !strings.HasSuffix(name, ".tgz") {
+			continue
 		}
+
+		// Must contain the target OS
+		if !strings.Contains(name, goos) {
+			continue
+		}
+
+		// Match architecture accurately
+		if goarch == "arm" {
+			// Do not match arm64 when architecture is 32-bit arm
+			if strings.Contains(name, "arm64") {
+				continue
+			}
+			if !strings.Contains(name, "arm") {
+				continue
+			}
+		} else {
+			if !strings.Contains(name, goarch) {
+				continue
+			}
+		}
+
+		return &asset, nil
 	}
 
 	return nil, fmt.Errorf("no compatible release asset found for %s/%s in release %s", goos, goarch, r.TagName)

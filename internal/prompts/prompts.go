@@ -47,7 +47,10 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 
 	// If non-interactive full arguments are provided, return immediately
 	if projectName != "" && preSelectedTmpl != nil {
-		if !preSelectedTmpl.IsNodeBased() || selectedPkgManager != "" {
+		nodeSatisfied := !preSelectedTmpl.IsNodeBased() || selectedPkgManager != ""
+		addonsSatisfied := skipAddons || initialAddons.HasAddons() || !generator.TemplateSupportsAddons(preSelectedTmpl.ID)
+
+		if nodeSatisfied && addonsSatisfied {
 			return &PromptResult{
 				ProjectName:    projectName,
 				Template:       *preSelectedTmpl,
@@ -150,12 +153,17 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 		}
 	}
 
-	// 4. Fourth Group: Interactive Addon Wizard (for Backend & Fullstack templates)
-	category := tmpl.GetCategory()
-	if !skipAddons && (category == "Backend" || category == "Fullstack") {
-		selectedDB := "none"
-		selectedAuth := "none"
-		var enableRedis bool
+	// 4. Fourth Group: Interactive Addon Wizard (for templates supporting addons)
+	if !skipAddons && generator.TemplateSupportsAddons(tmpl.ID) {
+		selectedDB := selectedAddons.Database
+		if selectedDB == "" {
+			selectedDB = "none"
+		}
+		selectedAuth := selectedAddons.Auth
+		if selectedAuth == "" {
+			selectedAuth = "none"
+		}
+		enableRedis := selectedAddons.Redis
 
 		dbOptions := []huh.Option[string]{
 			huh.NewOption("None (Skip database setup)", "none"),

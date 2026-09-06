@@ -2,6 +2,7 @@ package updater
 
 import (
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -40,6 +41,10 @@ func TestIsNewerVersion(t *testing.T) {
 		{"none", "v1.0.0", false},
 		{"unknown", "v1.0.0", false},
 		{"1.0.0", "1.0.0.1", true},
+		{"1.0.0-beta", "1.0.0", true},
+		{"1.0.0-rc.1", "1.0.0", true},
+		{"1.0.0", "1.0.0-beta", false},
+		{"1.0.0-alpha", "1.0.0-beta", true},
 	}
 
 	for _, tt := range tests {
@@ -54,10 +59,15 @@ func TestFindAssetForSystem(t *testing.T) {
 	release := ReleaseInfo{
 		TagName: "v1.0.0",
 		Assets: []ReleaseAsset{
+			// Add non-archive assets (checksums, sbom) that should be skipped
+			{Name: "umaru_1.0.0_windows_amd64.zip.sha256", BrowserDownloadURL: "http://example.com/win64.sha256"},
+			{Name: "umaru_1.0.0_windows_amd64.sbom", BrowserDownloadURL: "http://example.com/win64.sbom"},
+			{Name: "umaru_1.0.0_linux_amd64.tar.gz.sha256", BrowserDownloadURL: "http://example.com/linux64.sha256"},
+			// Real archives
 			{Name: "umaru_1.0.0_windows_amd64.zip", BrowserDownloadURL: "http://example.com/win64.zip"},
 			{Name: "umaru_1.0.0_windows_arm64.zip", BrowserDownloadURL: "http://example.com/winarm.zip"},
 			{Name: "umaru_1.0.0_linux_amd64.tar.gz", BrowserDownloadURL: "http://example.com/linux64.tar.gz"},
-			{Name: "umaru_1.0.0_linux_arm64.tar.gz", BrowserDownloadURL: "http://example.com/linuxarm.tar.gz"},
+			{Name: "umaru_1.0.0_linux_arm64.tar.gz", BrowserDownloadURL: "http://example.com/linuxarm64.tar.gz"},
 			{Name: "umaru_1.0.0_darwin_amd64.tar.gz", BrowserDownloadURL: "http://example.com/darwin64.tar.gz"},
 			{Name: "umaru_1.0.0_darwin_arm64.tar.gz", BrowserDownloadURL: "http://example.com/darwinarm.tar.gz"},
 		},
@@ -70,5 +80,9 @@ func TestFindAssetForSystem(t *testing.T) {
 
 	if asset == nil {
 		t.Fatalf("Expected non-nil asset for %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+
+	if strings.HasSuffix(asset.Name, ".sha256") || strings.HasSuffix(asset.Name, ".sbom") {
+		t.Errorf("FindAssetForSystem matched non-archive asset: %s", asset.Name)
 	}
 }

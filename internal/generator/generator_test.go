@@ -206,3 +206,20 @@ func TestCheckDestination(t *testing.T) {
 		t.Errorf("Expected file path to fail, but it passed")
 	}
 }
+
+func TestTemplateSupportsAddons(t *testing.T) {
+	supported := []string{"go-fiber", "go-gin", "fullstack-go-react", "node-express", "nestjs-api", "python-fastapi"}
+	unsupported := []string{"react-vite-ts", "vue-vite-ts", "nextjs-tailwind", "astro-tailwind", "rust-actix", "rust-axum"}
+
+	for _, id := range supported {
+		if !TemplateSupportsAddons(id) {
+			t.Errorf("Expected template %s to support addons", id)
+		}
+	}
+
+	for _, id := range unsupported {
+		if TemplateSupportsAddons(id) {
+			t.Errorf("Expected template %s NOT to support addons", id)
+		}
+	}
+}

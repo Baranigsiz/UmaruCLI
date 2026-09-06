@@ -122,7 +122,11 @@ func PrintSuccessCard(config generator.ProjectConfig, templateName string, runCo
 
 	sb.WriteString("\n" + labelStyle.Render("Next steps to get started:") + "\n")
 	if config.TargetDir != "." {
-		sb.WriteString(fmt.Sprintf("  1. %s\n", cmdStyle.Render(fmt.Sprintf("cd %s", config.TargetDir))))
+		cdDir := config.TargetDir
+		if strings.Contains(cdDir, " ") {
+			cdDir = fmt.Sprintf(`"%s"`, cdDir)
+		}
+		sb.WriteString(fmt.Sprintf("  1. %s\n", cmdStyle.Render(fmt.Sprintf("cd %s", cdDir))))
 	}
 
 	step := 2
