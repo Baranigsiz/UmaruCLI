@@ -1,0 +1,7 @@
+{
+  "name": "FastAPI AI Agent & Streaming API",
+  "description": "Production-ready AI backend with FastAPI, OpenAI & Ollama streaming, ChromaDB vector search & Docker.",
+  "category": "Backend",
+  "installCommand": ["pip", "install", "-r", "requirements.txt"],
+  "runCommand": "uvicorn app.main:app --reload --port 8000"
+}

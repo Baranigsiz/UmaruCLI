@@ -375,7 +375,7 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 			} else {
 				groups["Rust"].Missing = appendUnique(groups["Rust"].Missing, "cargo")
 			}
-		case strings.HasPrefix(id, "python-") || id == "fastapi":
+		case strings.HasPrefix(id, "python-") || id == "fastapi" || strings.HasPrefix(id, "ai-"):
 			groups["Python"].Total++
 			if hasPython && hasPip {
 				groups["Python"].Ready++

@@ -1,0 +1,37 @@
+# {{.ProjectName}}
+
+Production-ready AI & LLM Streaming API built with **FastAPI**, **OpenAI / Ollama**, and **ChromaDB**.
+
+## 🚀 Features
+
+- ⚡ **FastAPI Clean Architecture:** Modular structure with API v1 routers, services, and pydantic settings.
+- 🌊 **Server-Sent Events (SSE) Streaming:** Real-time token-by-token chat streaming via `/api/v1/chat/stream`.
+- 🤖 **Multi-Provider LLM Support:** Seamlessly switch between OpenAI API and local Ollama models.
+- 🗄️ **ChromaDB Vector Store:** Ready for retrieval-augmented generation (RAG) and embedding storage.
+- 🐳 **Docker Compose:** One-command development environment.
+
+## 🛠️ Getting Started
+
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+```bash
+cp .env.example .env
+# Edit .env with your OpenAI API Key or local Ollama URL
+```
+
+### 3. Run Development Server
+```bash
+make dev
+# Or: uvicorn app.main:app --reload --port 8000
+```
+
+Visit the interactive OpenAPI Swagger documentation at: **http://localhost:8000/docs**
+
+### 4. Run with Docker Compose
+```bash
+make docker-up
+```

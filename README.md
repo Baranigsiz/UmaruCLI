@@ -34,7 +34,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 
 <p align="center">
   <a href="#-features">✨ Features</a> •
-  <a href="#-supported-starters">📦 Starters (17)</a> •
+  <a href="#-supported-starters">📦 Starters (18)</a> •
   <a href="#-interactive-addon-wizard">🧩 Addon Wizard</a> •
   <a href="#️-global-configuration">⚙️ Global Config</a> •
   <a href="#-installation">🚀 Installation</a> •
@@ -67,7 +67,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 ## ✨ Features
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
-- 🔌 **Zero Network Reliance:** All 17 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🔌 **Zero Network Reliance:** All 18 starter boilerplates are compiled directly into the binary via `//go:embed`.
 - 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
@@ -86,7 +86,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 
 ## 📦 Supported Starters
 
-Umaru CLI includes 17 production-ready architectures organized across 3 categories:
+Umaru CLI includes 18 production-ready architectures organized across 3 categories:
 
 ### ⚙️ Backend APIs
 | Template ID | Technology Stack | Architecture & Included Features |
@@ -99,6 +99,7 @@ Umaru CLI includes 17 production-ready architectures organized across 3 categori
 | `node-express` | **Node.js + TypeScript** | Modular Express architecture (`controllers/`, `routes/`, `middlewares/`), Helmet, Morgan, CORS, Global Error Handler. |
 | `nestjs-api` | **NestJS 10 + TypeScript** | Enterprise modular backend, Swagger OpenAPI (`/api/docs`), ValidationPipe, Docker & Compose, Jest test suite. |
 | `python-fastapi` | **FastAPI + Pydantic v2** | Versioned API Router (`/api/v1/`), Pydantic models, Interactive OpenAPI Swagger `/docs`, Docker, CORS. |
+| `ai-fastapi-starter` | **FastAPI + OpenAI/Ollama + ChromaDB** | Production AI & LLM Streaming API, Server-Sent Events (SSE), Vector DB, Pydantic v2, Docker Compose. |
 | `rust-actix` | **Rust + Actix-Web 4** | Safe, ultra-high throughput backend, Serde JSON serialization, Health check endpoints. |
 | `rust-axum` | **Rust + Axum 0.7 + Tokio** | Async Tokio runtime, Tower HTTP middleware, Tracing subscriber, Docker Multi-Stage, Graceful Shutdown. |
 
@@ -137,16 +138,18 @@ umaru init my-backend --no-addons
 
 ### ➕ Inject Addons into Existing Projects (`umaru add`)
 
-Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Python) and injects modular addons into your existing codebase:
+Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Python) and injects modular addons into your existing codebase. You can even stack multiple addons simultaneously in a single pass:
 
 ```bash
-# Interactive addon selection wizard
+# Interactive multi-select addon wizard
 umaru add
 
-# Direct addon injection
+# Stack multiple addons at once
+umaru add postgres redis jwt
+
+# Direct single addon injection
 umaru add redis
 umaru add jwt
-umaru add postgres
 umaru add sqlite
 
 # Overwrite existing addon files
@@ -192,7 +195,7 @@ umaru doctor --verbose
 - ⚡ **Runtimes:** Go, Node.js, Python, Cargo (Rust).
 - 📦 **Package Managers:** npm, pnpm, yarn, bun, pip.
 - 🐳 **Containers:** Docker CLI, Docker Compose, and live Docker Daemon status.
-- 📊 **Template Readiness:** Percentage calculation of ready vs. missing tooling across all 17 templates.
+- 📊 **Template Readiness:** Percentage calculation of ready vs. missing tooling across all 18 templates.
 - 💡 **Actionable Tips:** Direct installation links and commands for any missing tools.
 
 ---
@@ -422,7 +425,7 @@ The new template will automatically be listed in `umaru list`, the interactive w
 - [x] 🧩 **Interactive Addon Wizard:** Optional feature injection (PostgreSQL, SQLite, Redis, JWT Auth).
 - [x] ⚙️ **Config File Support:** Global `~/.umarurc.json` configuration manager (`umaru config`).
 - [x] 🩺 **System Diagnostics:** Built-in `umaru doctor` to verify developer environments, runtimes, versions, and template readiness.
-- [x] 📦 **17 Production Starters:** Go (Fiber, Gin, Echo), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepos (Go + React, TypeScript Monorepo).
+- [x] 📦 **18 Production Starters:** Go (Fiber, Gin, Echo), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI, AI & LLM Streaming), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepos (Go + React, TypeScript Monorepo).
 
 ---
 

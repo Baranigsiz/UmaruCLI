@@ -1,0 +1,45 @@
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
+from app.api.v1.health import router as health_router
+from app.api.v1.chat import router as chat_router
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Initialize DB connection pool / LLM clients
+    print(f"🚀 {settings.PROJECT_NAME} initialized (Provider: {settings.LLM_PROVIDER})")
+    yield
+    # Shutdown: Clean up connections
+    print(f"🛑 {settings.PROJECT_NAME} shutting down gracefully...")
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    description="Production-grade AI & LLM Streaming API with FastAPI and Clean Architecture",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# Cross-Origin Resource Sharing (CORS)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Register API routers
+app.include_router(health_router, prefix=settings.API_V1_STR)
+app.include_router(chat_router, prefix=settings.API_V1_STR)
+
+@app.get("/", tags=["Root"])
+async def root():
+    return {
+        "message": f"Welcome to {settings.PROJECT_NAME} API!",
+        "docs": "/docs",
+        "health": f"{settings.API_V1_STR}/health",
+        "chat_stream": f"{settings.API_V1_STR}/chat/stream"
+    }

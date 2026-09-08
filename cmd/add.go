@@ -21,8 +21,8 @@ var (
 )
 
 var addCmd = &cobra.Command{
-	Use:   "add [addon]",
-	Short: "Inject infrastructure addons into an existing project",
+	Use:   "add [addons...]",
+	Short: "Inject modular infrastructure addons into an existing project",
 	Long: `Detects the current project type and injects modular infrastructure addons:
   - postgres : PostgreSQL connection pool & config
   - sqlite   : SQLite embedded database setup
@@ -30,13 +30,12 @@ var addCmd = &cobra.Command{
   - redis    : Redis cache client configuration
 
 Usage:
-  umaru add               # Interactive wizard
-  umaru add redis         # Add Redis caching client
-  umaru add jwt           # Add JWT authentication middleware
-  umaru add postgres      # Add PostgreSQL database driver
-  umaru add sqlite        # Add SQLite database driver`,
+  umaru add                       # Interactive multi-select wizard
+  umaru add redis                 # Add a single addon
+  umaru add postgres redis jwt    # Add multiple addons in one pass
+  umaru add sqlite redis -f       # Overwrite existing addon files`,
 	ValidArgs: []string{"redis", "jwt", "postgres", "sqlite"},
-	Args:      cobra.MaximumNArgs(2),
+	Args:      cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		targetDir := addDirFlag
 		if targetDir == "" {
@@ -50,58 +49,66 @@ Usage:
 		}
 
 		addonConfig := generator.AddonConfig{}
-		var selectedAddonName string
 
 		if len(args) > 0 {
-			firstArg := strings.ToLower(strings.TrimSpace(args[0]))
-			secondArg := ""
-			if len(args) > 1 {
-				secondArg = strings.ToLower(strings.TrimSpace(args[1]))
-			}
-
-			switch firstArg {
-			case "redis":
-				addonConfig.Redis = true
-				selectedAddonName = "Redis Cache"
-			case "jwt", "auth":
-				addonConfig.Auth = "jwt"
-				selectedAddonName = "JWT Authentication"
-			case "postgres", "postgresql", "pg":
-				addonConfig.Database = "postgres"
-				selectedAddonName = "PostgreSQL Database"
-			case "sqlite", "sqlite3":
-				addonConfig.Database = "sqlite"
-				selectedAddonName = "SQLite Database"
-			case "db", "database":
-				if secondArg == "postgres" || secondArg == "postgresql" || secondArg == "pg" {
+			for _, rawArg := range args {
+				arg := strings.ToLower(strings.TrimSpace(rawArg))
+				switch arg {
+				case "redis", "cache":
+					addonConfig.Redis = true
+				case "jwt", "auth":
+					addonConfig.Auth = "jwt"
+				case "postgres", "postgresql", "pg":
+					if addonConfig.Database == "sqlite" {
+						fmt.Println("❌ Cannot select both PostgreSQL and SQLite. Choose one database driver.")
+						os.Exit(1)
+					}
 					addonConfig.Database = "postgres"
-					selectedAddonName = "PostgreSQL Database"
-				} else if secondArg == "sqlite" || secondArg == "sqlite3" {
+				case "sqlite", "sqlite3":
+					if addonConfig.Database == "postgres" {
+						fmt.Println("❌ Cannot select both PostgreSQL and SQLite. Choose one database driver.")
+						os.Exit(1)
+					}
 					addonConfig.Database = "sqlite"
-					selectedAddonName = "SQLite Database"
-				} else {
-					fmt.Println("❌ Please specify a database driver: 'postgres' or 'sqlite'")
-					fmt.Println("   Example: umaru add db postgres")
+				default:
+					fmt.Printf("❌ Unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis\n", arg)
 					os.Exit(1)
 				}
-			default:
-				fmt.Printf("❌ Unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis\n", firstArg)
-				os.Exit(1)
 			}
 		} else {
-			// Interactive Selection
-			var choiceKey string
+			// Interactive Multi-Selection
+			var selectedChoices []string
 			options := []huh.Option[string]{
-				huh.NewOption("🐘 PostgreSQL (Connection pool & config)", "postgres"),
+				huh.NewOption("🐘 PostgreSQL (Connection pool & healthcheck)", "postgres"),
 				huh.NewOption("📦 SQLite (Embedded file-based DB)", "sqlite"),
 				huh.NewOption("🔐 JWT (Authentication middleware & claims)", "jwt"),
 				huh.NewOption("🔴 Redis (In-memory caching client)", "redis"),
 			}
 
-			prompt := huh.NewSelect[string]().
-				Title(fmt.Sprintf("Select an addon to inject into %s (%s)", proj.ProjectName, proj.Framework)).
+			prompt := huh.NewMultiSelect[string]().
+				Title(fmt.Sprintf("Select addons to inject into %s (%s)", proj.ProjectName, proj.Framework)).
+				Description("Press [Space] to toggle, [Enter] to confirm").
 				Options(options...).
-				Value(&choiceKey)
+				Validate(func(selected []string) error {
+					if len(selected) == 0 {
+						return errors.New("please select at least one addon")
+					}
+					hasPG := false
+					hasSQLite := false
+					for _, s := range selected {
+						if s == "postgres" {
+							hasPG = true
+						}
+						if s == "sqlite" {
+							hasSQLite = true
+						}
+					}
+					if hasPG && hasSQLite {
+						return errors.New("cannot select both PostgreSQL and SQLite. Please select only one database")
+					}
+					return nil
+				}).
+				Value(&selectedChoices)
 
 			if err := prompt.Run(); err != nil {
 				if errors.Is(err, huh.ErrUserAborted) {
@@ -112,20 +119,23 @@ Usage:
 				os.Exit(1)
 			}
 
-			switch choiceKey {
-			case "postgres":
-				addonConfig.Database = "postgres"
-				selectedAddonName = "PostgreSQL Database"
-			case "sqlite":
-				addonConfig.Database = "sqlite"
-				selectedAddonName = "SQLite Database"
-			case "jwt":
-				addonConfig.Auth = "jwt"
-				selectedAddonName = "JWT Authentication"
-			case "redis":
-				addonConfig.Redis = true
-				selectedAddonName = "Redis Cache"
+			for _, choice := range selectedChoices {
+				switch choice {
+				case "postgres":
+					addonConfig.Database = "postgres"
+				case "sqlite":
+					addonConfig.Database = "sqlite"
+				case "jwt":
+					addonConfig.Auth = "jwt"
+				case "redis":
+					addonConfig.Redis = true
+				}
 			}
+		}
+
+		if !addonConfig.HasAddons() {
+			fmt.Println("No addons selected.")
+			return
 		}
 
 		projConfig := proj.ToProjectConfig(addonConfig)
@@ -158,57 +168,77 @@ Usage:
 
 		// Auto-run dependency resolution if applicable
 		if proj.Type == generator.ProjectTypeGo {
-			_ = actions.InstallDependencies(proj.TargetDir, []string{"go", "mod", "tidy"}, false)
+			_ = actions.InstallDependencies(targetDir, []string{"go", "mod", "tidy"}, false)
 		}
 
-		// Print Success Card
-		printAddonSuccessCard(proj, selectedAddonName, addonFiles)
+		// Success Card
+		titleStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#10B981"))
+
+		labelStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#94A3B8"))
+
+		valueStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#F8FAFC"))
+
+		fileStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#00D8F6"))
+
+		cmdStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#A3E635"))
+
+		boxStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#10B981")).
+			Padding(1, 2).
+			MarginTop(1)
+
+		var sb strings.Builder
+		sb.WriteString(titleStyle.Render("🧩 Addon(s) Injected Successfully!") + "\n\n")
+
+		var addonsList []string
+		if addonConfig.Database != "" && addonConfig.Database != "none" {
+			addonsList = append(addonsList, "DB: "+addonConfig.Database)
+		}
+		if addonConfig.Auth != "" && addonConfig.Auth != "none" {
+			addonsList = append(addonsList, "Auth: "+addonConfig.Auth)
+		}
+		if addonConfig.Redis {
+			addonsList = append(addonsList, "Cache: Redis")
+		}
+
+		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("Injected:   "), valueStyle.Render(strings.Join(addonsList, ", "))))
+		sb.WriteString(fmt.Sprintf("%s %s (%s)\n", labelStyle.Render("Project:    "), valueStyle.Render(proj.ProjectName), valueStyle.Render(string(proj.Framework))))
+		sb.WriteString(fmt.Sprintf("%s %s\n\n", labelStyle.Render("Target:     "), valueStyle.Render(targetDir)))
+
+		sb.WriteString(labelStyle.Render("Generated Addon Files:") + "\n")
+		for _, f := range addonFiles {
+			rel, err := filepath.Rel(targetDir, f)
+			if err != nil {
+				rel = f
+			}
+			sb.WriteString(fmt.Sprintf("  📄 %s\n", fileStyle.Render(rel)))
+		}
+
+		sb.WriteString("\n" + labelStyle.Render("Next steps:") + "\n")
+		switch proj.Type {
+		case generator.ProjectTypeNode:
+			sb.WriteString(fmt.Sprintf("  1. Run %s to install the updated dependencies in package.json\n", cmdStyle.Render("npm install (or pnpm/yarn/bun)")))
+			sb.WriteString("  2. Review and import the generated addon module in your application\n")
+		case generator.ProjectTypePython:
+			sb.WriteString(fmt.Sprintf("  1. Run %s to install the updated dependencies in requirements.txt\n", cmdStyle.Render("pip install -r requirements.txt")))
+			sb.WriteString("  2. Review and import the generated addon module in your application\n")
+		case generator.ProjectTypeGo:
+			sb.WriteString("  1. 'go mod tidy' was automatically executed\n")
+			sb.WriteString("  2. Import and initialize the addon in your main entrypoint\n")
+		}
+
+		fmt.Println(boxStyle.Render(sb.String()))
+		fmt.Println()
 	},
-}
-
-func printAddonSuccessCard(proj *generator.DetectedProject, addonName string, files []string) {
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#10B981"))
-	labelStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#94A3B8"))
-	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#F8FAFC"))
-	fileStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#A3E635"))
-	cmdStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00D8F6"))
-
-	boxStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#7D56F4")).
-		Padding(1, 2).
-		MarginTop(1)
-
-	var sb strings.Builder
-	sb.WriteString(titleStyle.Render("🧩 Addon Successfully Injected!") + "\n\n")
-	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📁 Project:   "), valueStyle.Render(fmt.Sprintf("%s (%s)", proj.ProjectName, proj.Framework))))
-	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("🧩 Addon:     "), valueStyle.Render(addonName)))
-	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📍 Directory: "), valueStyle.Render(proj.TargetDir)))
-
-	sb.WriteString("\n" + labelStyle.Render("Created Files:") + "\n")
-	for _, f := range files {
-		rel, err := filepath.Rel(proj.TargetDir, f)
-		if err != nil {
-			rel = f
-		}
-		sb.WriteString(fmt.Sprintf("  📄 %s\n", fileStyle.Render(rel)))
-	}
-
-	sb.WriteString("\n" + labelStyle.Render("Next steps:") + "\n")
-	switch proj.Type {
-	case generator.ProjectTypeNode:
-		sb.WriteString(fmt.Sprintf("  1. Run %s to install the updated dependencies in package.json\n", cmdStyle.Render("npm install (or pnpm/yarn/bun)")))
-		sb.WriteString("  2. Review and import the generated addon module in your application\n")
-	case generator.ProjectTypePython:
-		sb.WriteString(fmt.Sprintf("  1. Run %s to install the updated dependencies in requirements.txt\n", cmdStyle.Render("pip install -r requirements.txt")))
-		sb.WriteString("  2. Review and import the generated addon module in your application\n")
-	case generator.ProjectTypeGo:
-		sb.WriteString("  1. 'go mod tidy' was automatically executed\n")
-		sb.WriteString("  2. Import and initialize the addon in your main entrypoint\n")
-	}
-
-	fmt.Println(boxStyle.Render(sb.String()))
-	fmt.Println()
 }
 
 func init() {

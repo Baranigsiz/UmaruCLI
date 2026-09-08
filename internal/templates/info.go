@@ -25,6 +25,8 @@ func GetTemplatePorts(templateID string) []string {
 		return []string{"App: 3000"}
 	case "python-fastapi":
 		return []string{"API: 8000"}
+	case "ai-fastapi-starter":
+		return []string{"API: 8000", "ChromaDB: 8001"}
 	case "react-vite-ts", "vue-vite-ts", "svelte-vite-ts":
 		return []string{"Dev Server: 5173"}
 	case "astro-tailwind":
@@ -41,7 +43,7 @@ func GetTemplatePorts(templateID string) []string {
 // GetSupportedAddons returns which addons can be injected into this template
 func GetSupportedAddons(templateID string) []string {
 	switch templateID {
-	case "go-fiber", "go-gin", "go-echo", "fastify-api", "hono-api", "node-express", "nestjs-api", "python-fastapi", "fullstack-go-react", "fullstack-ts-monorepo":
+	case "go-fiber", "go-gin", "go-echo", "fastify-api", "hono-api", "node-express", "nestjs-api", "python-fastapi", "ai-fastapi-starter", "fullstack-go-react", "fullstack-ts-monorepo":
 		return []string{"🐘 PostgreSQL", "📦 SQLite", "🔴 Redis", "🔐 JWT Auth"}
 	case "rust-actix", "rust-axum":
 		return []string{"Docker Compose Services"}

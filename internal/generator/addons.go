@@ -25,7 +25,8 @@ func TemplateSupportsAddons(templateID string) bool {
 		strings.HasPrefix(templateID, "nestjs-") ||
 		strings.HasPrefix(templateID, "hono-") ||
 		strings.HasPrefix(templateID, "fastify-") ||
-		strings.HasPrefix(templateID, "python-")
+		strings.HasPrefix(templateID, "python-") ||
+		strings.HasPrefix(templateID, "ai-")
 }
 
 // HasAddons returns true if any addon is enabled
@@ -46,7 +47,7 @@ func GetAddonFiles(config ProjectConfig) []string {
 	auth := strings.ToLower(strings.TrimSpace(config.Addons.Auth))
 	isGo := strings.HasPrefix(config.Template, "go-") || config.Template == "fullstack-go-react"
 	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-") || strings.HasPrefix(config.Template, "fastify-") || config.Template == "fullstack-ts-monorepo"
-	isPython := strings.HasPrefix(config.Template, "python-")
+	isPython := strings.HasPrefix(config.Template, "python-") || strings.HasPrefix(config.Template, "ai-")
 
 	baseDir := config.TargetDir
 	if config.Template == "fullstack-go-react" || config.Template == "fullstack-ts-monorepo" {
@@ -99,7 +100,7 @@ func GenerateAddons(config ProjectConfig) error {
 	auth := strings.ToLower(strings.TrimSpace(config.Addons.Auth))
 	isGo := strings.HasPrefix(config.Template, "go-") || config.Template == "fullstack-go-react"
 	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-") || strings.HasPrefix(config.Template, "fastify-") || config.Template == "fullstack-ts-monorepo"
-	isPython := strings.HasPrefix(config.Template, "python-")
+	isPython := strings.HasPrefix(config.Template, "python-") || strings.HasPrefix(config.Template, "ai-")
 
 	baseDir := config.TargetDir
 	if config.Template == "fullstack-go-react" || config.Template == "fullstack-ts-monorepo" {
