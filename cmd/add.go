@@ -90,11 +90,6 @@ Usage:
 			}
 		} else {
 			// Interactive Selection
-			type addonChoice struct {
-				name   string
-				config generator.AddonConfig
-			}
-
 			var choiceKey string
 			options := []huh.Option[string]{
 				huh.NewOption("🐘 PostgreSQL (Connection pool & config)", "postgres"),
@@ -208,7 +203,7 @@ func printAddonSuccessCard(proj *generator.DetectedProject, addonName string, fi
 		sb.WriteString(fmt.Sprintf("  1. Run %s to install the updated dependencies in requirements.txt\n", cmdStyle.Render("pip install -r requirements.txt")))
 		sb.WriteString("  2. Review and import the generated addon module in your application\n")
 	case generator.ProjectTypeGo:
-		sb.WriteString(fmt.Sprintf("  1. 'go mod tidy' was automatically executed\n"))
+		sb.WriteString("  1. 'go mod tidy' was automatically executed\n")
 		sb.WriteString("  2. Import and initialize the addon in your main entrypoint\n")
 	}
 

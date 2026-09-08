@@ -12,6 +12,9 @@ jobs:
   govulncheck:
     name: Go Security Vulnerability Scan
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -25,5 +28,11 @@ jobs:
       - name: Run Govulncheck
         uses: golang/govulncheck-action@v1
         with:
-          go-version-input: '1.24.x'
-          go-package: ./...
+          output-format: sarif
+          output-file: govulncheck.sarif
+
+      - name: Upload SARIF report to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: govulncheck.sarif
