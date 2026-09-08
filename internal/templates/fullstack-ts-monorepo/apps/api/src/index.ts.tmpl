@@ -1,0 +1,39 @@
+import { serve } from '@hono/node-server'
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { logger } from 'hono/logger'
+
+const app = new Hono()
+
+app.use('*', logger())
+app.use('*', cors())
+
+app.get('/', (c) => {
+  return c.json({
+    message: 'Welcome to {{.ProjectName}} Fullstack API!',
+    framework: 'Hono',
+    version: '1.0.0',
+    status: 'healthy',
+    timestamp: new Date().toISOString()
+  })
+})
+
+app.get('/health', (c) => {
+  return c.json({ status: 'ok', uptime: process.uptime() })
+})
+
+app.get('/api/message', (c) => {
+  return c.json({
+    title: 'Hello from Hono Backend! 🚀',
+    description: 'This message is loaded dynamically from the Hono API running in apps/api.',
+    timestamp: new Date().toISOString()
+  })
+})
+
+const port = Number(process.env.PORT) || 3000
+console.log(`🔥 {{.ProjectName}} API running at http://localhost:${port}`)
+
+serve({
+  fetch: app.fetch,
+  port
+})

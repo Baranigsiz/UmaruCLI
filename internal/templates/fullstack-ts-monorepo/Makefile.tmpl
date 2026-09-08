@@ -1,0 +1,13 @@
+.PHONY: dev build docker-up docker-down
+
+dev:
+	npm run dev
+
+build:
+	npm run build
+
+docker-up:
+	docker-compose up --build
+
+docker-down:
+	docker-compose down

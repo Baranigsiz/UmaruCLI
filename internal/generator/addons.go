@@ -20,6 +20,7 @@ type AddonConfig struct {
 func TemplateSupportsAddons(templateID string) bool {
 	return strings.HasPrefix(templateID, "go-") ||
 		templateID == "fullstack-go-react" ||
+		templateID == "fullstack-ts-monorepo" ||
 		strings.HasPrefix(templateID, "node-") ||
 		strings.HasPrefix(templateID, "nestjs-") ||
 		strings.HasPrefix(templateID, "hono-") ||
@@ -44,11 +45,11 @@ func GetAddonFiles(config ProjectConfig) []string {
 	db := strings.ToLower(strings.TrimSpace(config.Addons.Database))
 	auth := strings.ToLower(strings.TrimSpace(config.Addons.Auth))
 	isGo := strings.HasPrefix(config.Template, "go-") || config.Template == "fullstack-go-react"
-	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-") || strings.HasPrefix(config.Template, "fastify-")
+	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-") || strings.HasPrefix(config.Template, "fastify-") || config.Template == "fullstack-ts-monorepo"
 	isPython := strings.HasPrefix(config.Template, "python-")
 
 	baseDir := config.TargetDir
-	if config.Template == "fullstack-go-react" {
+	if config.Template == "fullstack-go-react" || config.Template == "fullstack-ts-monorepo" {
 		baseDir = filepath.Join(config.TargetDir, "apps", "api")
 	}
 
@@ -97,11 +98,11 @@ func GenerateAddons(config ProjectConfig) error {
 	db := strings.ToLower(strings.TrimSpace(config.Addons.Database))
 	auth := strings.ToLower(strings.TrimSpace(config.Addons.Auth))
 	isGo := strings.HasPrefix(config.Template, "go-") || config.Template == "fullstack-go-react"
-	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-") || strings.HasPrefix(config.Template, "fastify-")
+	isNode := strings.HasPrefix(config.Template, "node-") || strings.HasPrefix(config.Template, "nestjs-") || strings.HasPrefix(config.Template, "hono-") || strings.HasPrefix(config.Template, "fastify-") || config.Template == "fullstack-ts-monorepo"
 	isPython := strings.HasPrefix(config.Template, "python-")
 
 	baseDir := config.TargetDir
-	if config.Template == "fullstack-go-react" {
+	if config.Template == "fullstack-go-react" || config.Template == "fullstack-ts-monorepo" {
 		baseDir = filepath.Join(config.TargetDir, "apps", "api")
 	}
 
@@ -291,7 +292,7 @@ func ValidateJWT(tokenStr, secretKey string) (*CustomClaims, error) {
 		} else if isNode {
 			var content string
 			switch {
-			case strings.HasPrefix(config.Template, "hono-"):
+			case strings.HasPrefix(config.Template, "hono-") || config.Template == "fullstack-ts-monorepo":
 				content = `import { Context, Next } from 'hono';
 
 export interface AuthUser {

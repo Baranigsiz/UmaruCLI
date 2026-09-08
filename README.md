@@ -26,7 +26,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 
 <p align="center">
   <a href="#-features">✨ Features</a> •
-  <a href="#-supported-starters">📦 Starters (16)</a> •
+  <a href="#-supported-starters">📦 Starters (17)</a> •
   <a href="#-interactive-addon-wizard">🧩 Addon Wizard</a> •
   <a href="#️-global-configuration">⚙️ Global Config</a> •
   <a href="#-installation">🚀 Installation</a> •
@@ -57,7 +57,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 ## ✨ Features
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
-- 🔌 **Zero Network Reliance:** All 16 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🔌 **Zero Network Reliance:** All 17 starter boilerplates are compiled directly into the binary via `//go:embed`.
 - 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
@@ -74,7 +74,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 
 ## 📦 Supported Starters
 
-Umaru CLI includes 16 production-ready architectures organized across 3 categories:
+Umaru CLI includes 17 production-ready architectures organized across 3 categories:
 
 ### ⚙️ Backend APIs
 | Template ID | Technology Stack | Architecture & Included Features |
@@ -103,6 +103,7 @@ Umaru CLI includes 16 production-ready architectures organized across 3 categori
 | Template ID | Technology Stack | Included Features |
 |---|---|---|
 | `fullstack-go-react` | **Go Fiber + React Vite + TS** | Monorepo structure (`apps/api`, `apps/web`), Live API Proxy, Unified Docker Compose, Makefile. |
+| `fullstack-ts-monorepo` | **Hono API + React Vite + TS** | High-performance TypeScript Monorepo, Hono backend, React 18 frontend, Tailwind CSS, Docker Compose. |
 
 ---
 
@@ -357,7 +358,7 @@ The new template will automatically be listed in `umaru list`, the interactive w
 - [x] 🐚 **Shell Completions:** Native autocompletion scripts for Bash, Zsh, Fish, and PowerShell with dynamic flag suggestions.
 - [x] 🧩 **Interactive Addon Wizard:** Optional feature injection (PostgreSQL, SQLite, Redis, JWT Auth).
 - [x] ⚙️ **Config File Support:** Global `~/.umarurc.json` configuration manager (`umaru config`).
-- [x] 📦 **16 Production Starters:** Go (Fiber, Gin, Echo), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepo.
+- [x] 📦 **17 Production Starters:** Go (Fiber, Gin, Echo), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepos (Go + React, TypeScript Monorepo).
 
 ---
 

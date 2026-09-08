@@ -1,0 +1,7 @@
+{
+  "name": "Fullstack TS Monorepo (Hono API + React Vite)",
+  "description": "High-performance TypeScript monorepo with Hono backend, React 18 frontend, Tailwind CSS & Docker Compose",
+  "category": "Fullstack",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}
