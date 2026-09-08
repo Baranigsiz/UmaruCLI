@@ -1,0 +1,7 @@
+# GitHub Linguist Language Overrides
+# Exclude embedded boilerplates and shell installers from repository code statistics
+
+internal/templates/** linguist-vendored
+install.ps1 linguist-documentation
+install.sh linguist-documentation
+demo.tape linguist-documentation
