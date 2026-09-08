@@ -37,6 +37,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
   <a href="#️-global-configuration">⚙️ Global Config</a> •
   <a href="#-installation">🚀 Installation</a> •
   <a href="#-usage">💻 Usage</a> •
+  <a href="#-system-diagnostics">🩺 Doctor</a> •
   <a href="#-shell-autocompletion">🐚 Autocompletion</a> •
   <a href="#-self-upgrade">🔄 Self-Upgrade</a> •
   <a href="#️-extensibility--custom-templates">🛠️ Extensibility</a>
@@ -71,6 +72,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 - 🐚 **Dynamic Shell Autocompletions:** Instant completion for template IDs, database drivers, and flags in Bash, Zsh, Fish, and PowerShell.
 - 🔄 **One-Command Upgrades:** Built-in self-updater via `umaru upgrade`.
 - 📦 **Universal Package Manager Support:** Choose your preferred JS/TS package manager on the fly (`npm`, `pnpm`, `yarn`, `bun`).
+- 🩺 **Environment Diagnostics:** Run `umaru doctor` to inspect installed runtimes, package managers, Docker daemon status, and template ecosystem readiness.
 - 🛡️ **Pre-Flight Verification:** Proactively checks system dependencies (`git`, `go`, `cargo`, `pnpm`, etc.) beforehand so generation never fails halfway through.
 - 🔍 **Dry-Run Mode:** Simulate and inspect every file that would be generated without writing anything to disk.
 - 🔤 **Unicode & Transliteration Engine:** Native slugification for Turkish and accented characters (e.g. `Çalışma Projesi` ➔ `calisma-projesi`) for compliant `package.json`, `go.mod`, and `Cargo.toml`.
@@ -166,6 +168,28 @@ umaru config list
 # Reset all preferences to defaults
 umaru config reset
 ```
+
+---
+
+## 🩺 System Diagnostics (`umaru doctor`)
+
+Verify your development environment, detect installed runtimes and package managers, inspect Docker status, and see exactly which templates are ready to scaffold:
+
+```bash
+# Standard diagnostic check
+umaru doctor
+
+# Verbose mode (displays binary file paths and troubleshooting info)
+umaru doctor --verbose
+```
+
+**What Umaru Doctor inspects:**
+- 🛠️ **Version Control:** Git detection & version check.
+- ⚡ **Runtimes:** Go, Node.js, Python, Cargo (Rust).
+- 📦 **Package Managers:** npm, pnpm, yarn, bun, pip.
+- 🐳 **Containers:** Docker CLI, Docker Compose, and live Docker Daemon status.
+- 📊 **Template Readiness:** Percentage calculation of ready vs. missing tooling across all 17 templates.
+- 💡 **Actionable Tips:** Direct installation links and commands for any missing tools.
 
 ---
 
@@ -364,6 +388,7 @@ The new template will automatically be listed in `umaru list`, the interactive w
 - [x] 🐚 **Shell Completions:** Native autocompletion scripts for Bash, Zsh, Fish, and PowerShell with dynamic flag suggestions.
 - [x] 🧩 **Interactive Addon Wizard:** Optional feature injection (PostgreSQL, SQLite, Redis, JWT Auth).
 - [x] ⚙️ **Config File Support:** Global `~/.umarurc.json` configuration manager (`umaru config`).
+- [x] 🩺 **System Diagnostics:** Built-in `umaru doctor` to verify developer environments, runtimes, versions, and template readiness.
 - [x] 📦 **17 Production Starters:** Go (Fiber, Gin, Echo), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepos (Go + React, TypeScript Monorepo).
 
 ---
