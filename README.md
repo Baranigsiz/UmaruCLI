@@ -339,7 +339,7 @@ The new template will automatically be listed in `umaru list`, the interactive w
 - [x] 🐚 **Shell Completions:** Native autocompletion scripts for Bash, Zsh, Fish, and PowerShell with dynamic flag suggestions.
 - [x] 🧩 **Interactive Addon Wizard:** Optional feature injection (PostgreSQL, SQLite, Redis, JWT Auth).
 - [x] ⚙️ **Config File Support:** Global `~/.umarurc.json` configuration manager (`umaru config`).
-- [x] 📦 **14 Production Starters:** Go (Fiber, Gin), TypeScript (Hono, NestJS, Express), Python (FastAPI), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepo.
+- [x] 📦 **16 Production Starters:** Go (Fiber, Gin, Echo), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepo.
 
 ---
 

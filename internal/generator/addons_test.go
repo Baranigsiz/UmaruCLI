@@ -3,6 +3,7 @@ package generator
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -91,5 +92,125 @@ func TestGenerateAddons_GoFiber(t *testing.T) {
 	redisFile := filepath.Join(targetPath, "internal", "cache", "redis.go")
 	if _, err := os.Stat(redisFile); os.IsNotExist(err) {
 		t.Errorf("Expected %s to exist", redisFile)
+	}
+}
+
+func TestGenerateAddons_PythonFastAPI(t *testing.T) {
+	tempDir := t.TempDir()
+	targetPath := filepath.Join(tempDir, "fastapi-with-addons")
+
+	config, err := ResolveProjectConfig(targetPath, "python-fastapi")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+
+	config.Addons = AddonConfig{
+		Database: "postgres",
+		Auth:     "jwt",
+		Redis:    true,
+	}
+
+	err = Generate(config)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Verify requirements.txt has been injected with required dependencies
+	reqPath := filepath.Join(targetPath, "requirements.txt")
+	content, err := os.ReadFile(reqPath)
+	if err != nil {
+		t.Fatalf("Failed to read requirements.txt: %v", err)
+	}
+	contentStr := string(content)
+
+	expectedDeps := []string{"asyncpg>=0.29.0", "python-jose[cryptography]>=3.3.0", "passlib[bcrypt]>=1.7.4", "redis>=5.0.0"}
+	for _, dep := range expectedDeps {
+		if !strings.Contains(contentStr, dep) {
+			t.Errorf("Expected requirements.txt to contain %q, but it was missing", dep)
+		}
+	}
+}
+
+func TestGenerateAddons_NodeExpress(t *testing.T) {
+	tempDir := t.TempDir()
+	targetPath := filepath.Join(tempDir, "express-with-addons")
+
+	config, err := ResolveProjectConfig(targetPath, "node-express")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+
+	config.Addons = AddonConfig{
+		Database: "postgres",
+		Auth:     "jwt",
+		Redis:    true,
+	}
+
+	err = Generate(config)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Verify package.json has injected dependencies
+	pkgPath := filepath.Join(targetPath, "package.json")
+	content, err := os.ReadFile(pkgPath)
+	if err != nil {
+		t.Fatalf("Failed to read package.json: %v", err)
+	}
+	contentStr := string(content)
+
+	expectedDeps := []string{`"pg": "^8.12.0"`, `"jsonwebtoken": "^9.0.2"`, `"ioredis": "^5.4.1"`, `"@types/pg": "^8.11.6"`, `"@types/jsonwebtoken": "^9.0.6"`, `"@types/ioredis": "^5.0.0"`}
+	for _, dep := range expectedDeps {
+		if !strings.Contains(contentStr, dep) {
+			t.Errorf("Expected package.json to contain %q, but it was missing", dep)
+		}
+	}
+}
+
+func TestGenerateAddons_FrameworkSpecificAuth(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Test Hono
+	honoPath := filepath.Join(tempDir, "hono-app")
+	honoConfig, err := ResolveProjectConfig(honoPath, "hono-api")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+	honoConfig.Addons = AddonConfig{Auth: "jwt"}
+	if err := Generate(honoConfig); err != nil {
+		t.Fatalf("Generate hono-api failed: %v", err)
+	}
+	honoAuthPath := filepath.Join(honoPath, "src", "middlewares", "auth.middleware.ts")
+	honoAuth, err := os.ReadFile(honoAuthPath)
+	if err != nil {
+		t.Fatalf("Failed to read hono auth middleware: %v", err)
+	}
+	if !strings.Contains(string(honoAuth), "from 'hono'") {
+		t.Errorf("Hono auth middleware should import from 'hono'")
+	}
+	if strings.Contains(string(honoAuth), "from 'express'") {
+		t.Errorf("Hono auth middleware should NOT import from 'express'")
+	}
+
+	// Test Fastify
+	fastifyPath := filepath.Join(tempDir, "fastify-app")
+	fastifyConfig, err := ResolveProjectConfig(fastifyPath, "fastify-api")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+	fastifyConfig.Addons = AddonConfig{Auth: "jwt"}
+	if err := Generate(fastifyConfig); err != nil {
+		t.Fatalf("Generate fastify-api failed: %v", err)
+	}
+	fastifyAuthPath := filepath.Join(fastifyPath, "src", "middlewares", "auth.middleware.ts")
+	fastifyAuth, err := os.ReadFile(fastifyAuthPath)
+	if err != nil {
+		t.Fatalf("Failed to read fastify auth middleware: %v", err)
+	}
+	if !strings.Contains(string(fastifyAuth), "from 'fastify'") {
+		t.Errorf("Fastify auth middleware should import from 'fastify'")
+	}
+	if strings.Contains(string(fastifyAuth), "from 'express'") {
+		t.Errorf("Fastify auth middleware should NOT import from 'express'")
 	}
 }

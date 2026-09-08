@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -287,7 +288,88 @@ func ValidateJWT(tokenStr, secretKey string) (*CustomClaims, error) {
 				return err
 			}
 		} else if isNode {
-			content := `import { Request, Response, NextFunction } from 'express';
+			var content string
+			switch {
+			case strings.HasPrefix(config.Template, "hono-"):
+				content = `import { Context, Next } from 'hono';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+}
+
+export async function authMiddleware(c: Context, next: Next) {
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ error: 'Unauthorized: Missing or malformed token' }, 401);
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    // In production, verify token with your JWT secret
+    c.set('user', { id: 'usr_sample', email: 'user@example.com', role: 'admin' });
+    await next();
+  } catch (err) {
+    return c.json({ error: 'Unauthorized: Invalid token' }, 401);
+  }
+}
+`
+			case strings.HasPrefix(config.Template, "fastify-"):
+				content = `import { FastifyRequest, FastifyReply } from 'fastify';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+}
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: AuthUser;
+  }
+}
+
+export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
+  const authHeader = request.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return reply.status(401).send({ error: 'Unauthorized: Missing or malformed token' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    // In production, verify token with jwt.verify(token, process.env.JWT_SECRET || 'secret')
+    request.user = { id: 'usr_sample', email: 'user@example.com', role: 'admin' };
+  } catch (err) {
+    return reply.status(401).send({ error: 'Unauthorized: Invalid token' });
+  }
+}
+`
+			case strings.HasPrefix(config.Template, "nestjs-"):
+				content = `import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const authHeader = request.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Missing or malformed token');
+    }
+
+    const token = authHeader.split(' ')[1];
+    try {
+      request.user = { id: 'usr_sample', email: 'user@example.com', role: 'admin' };
+      return true;
+    } catch (err) {
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
+}
+`
+			default:
+				content = `import { Request, Response, NextFunction } from 'express';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -313,6 +395,7 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   }
 }
 `
+			}
 			if err := writeFile(filepath.Join("src", "middlewares", "auth.middleware.ts"), content); err != nil {
 				return err
 			}
@@ -407,5 +490,145 @@ async def get_redis_client():
 		}
 	}
 
+	// 4. Inject Dependencies into Python requirements.txt or Node package.json
+	if isPython {
+		reqPath := filepath.Join(baseDir, "requirements.txt")
+		var pythonDeps []string
+		if db == "postgres" {
+			pythonDeps = append(pythonDeps, "asyncpg>=0.29.0")
+		}
+		if auth == "jwt" {
+			pythonDeps = append(pythonDeps, "python-jose[cryptography]>=3.3.0", "passlib[bcrypt]>=1.7.4")
+		}
+		if config.Addons.Redis {
+			pythonDeps = append(pythonDeps, "redis>=5.0.0")
+		}
+		if err := injectPythonDependencies(reqPath, pythonDeps); err != nil {
+			return fmt.Errorf("failed injecting python addon dependencies: %w", err)
+		}
+	}
+
+	if isNode {
+		pkgPath := filepath.Join(baseDir, "package.json")
+		nodeDeps := make(map[string]string)
+		nodeDevDeps := make(map[string]string)
+
+		if db == "postgres" {
+			nodeDeps["pg"] = "^8.12.0"
+			nodeDevDeps["@types/pg"] = "^8.11.6"
+		} else if db == "sqlite" {
+			nodeDeps["sqlite3"] = "^5.1.7"
+			nodeDevDeps["@types/sqlite3"] = "^3.1.11"
+		}
+
+		if auth == "jwt" {
+			nodeDeps["jsonwebtoken"] = "^9.0.2"
+			nodeDevDeps["@types/jsonwebtoken"] = "^9.0.6"
+		}
+
+		if config.Addons.Redis {
+			nodeDeps["ioredis"] = "^5.4.1"
+			nodeDevDeps["@types/ioredis"] = "^5.0.0"
+		}
+
+		if err := injectNodeDependencies(pkgPath, nodeDeps, nodeDevDeps); err != nil {
+			return fmt.Errorf("failed injecting node addon dependencies: %w", err)
+		}
+	}
+
 	return nil
+}
+
+// injectPythonDependencies appends missing packages to requirements.txt
+func injectPythonDependencies(requirementsPath string, packages []string) error {
+	content, err := os.ReadFile(requirementsPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	lines := strings.Split(string(content), "\n")
+	existing := make(map[string]bool)
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" && !strings.HasPrefix(trimmed, "#") {
+			pkgName := strings.Split(strings.Split(trimmed, ">")[0], "=")[0]
+			pkgName = strings.Split(pkgName, "[")[0]
+			existing[strings.ToLower(strings.TrimSpace(pkgName))] = true
+		}
+	}
+
+	var toAdd []string
+	for _, pkg := range packages {
+		pkgName := strings.Split(strings.Split(pkg, ">")[0], "=")[0]
+		pkgName = strings.Split(pkgName, "[")[0]
+		if !existing[strings.ToLower(strings.TrimSpace(pkgName))] {
+			toAdd = append(toAdd, pkg)
+		}
+	}
+
+	if len(toAdd) > 0 {
+		newContent := string(content)
+		if !strings.HasSuffix(newContent, "\n") && len(newContent) > 0 {
+			newContent += "\n"
+		}
+		newContent += strings.Join(toAdd, "\n") + "\n"
+		return os.WriteFile(requirementsPath, []byte(newContent), 0644)
+	}
+
+	return nil
+}
+
+// injectNodeDependencies safely injects dependencies and devDependencies into package.json
+func injectNodeDependencies(packageJSONPath string, deps map[string]string, devDeps map[string]string) error {
+	data, err := os.ReadFile(packageJSONPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	var pkgMap map[string]interface{}
+	if err := json.Unmarshal(data, &pkgMap); err != nil {
+		return err
+	}
+
+	if len(deps) > 0 {
+		var currentDeps map[string]interface{}
+		if existing, ok := pkgMap["dependencies"].(map[string]interface{}); ok {
+			currentDeps = existing
+		} else {
+			currentDeps = make(map[string]interface{})
+		}
+		for k, v := range deps {
+			if _, exists := currentDeps[k]; !exists {
+				currentDeps[k] = v
+			}
+		}
+		pkgMap["dependencies"] = currentDeps
+	}
+
+	if len(devDeps) > 0 {
+		var currentDevDeps map[string]interface{}
+		if existing, ok := pkgMap["devDependencies"].(map[string]interface{}); ok {
+			currentDevDeps = existing
+		} else {
+			currentDevDeps = make(map[string]interface{})
+		}
+		for k, v := range devDeps {
+			if _, exists := currentDevDeps[k]; !exists {
+				currentDevDeps[k] = v
+			}
+		}
+		pkgMap["devDependencies"] = currentDevDeps
+	}
+
+	updated, err := json.MarshalIndent(pkgMap, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(packageJSONPath, append(updated, '\n'), 0644)
 }
