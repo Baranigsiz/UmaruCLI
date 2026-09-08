@@ -24,6 +24,12 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
           Production Scaffolding in Milliseconds
 </pre>
 
+<br />
+
+<img src=".github/assets/demo.gif" alt="Umaru CLI Interactive Demo" width="850" />
+
+<br /><br />
+
 <p align="center">
   <a href="#-features">✨ Features</a> •
   <a href="#-supported-starters">📦 Starters (17)</a> •
