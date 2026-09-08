@@ -40,6 +40,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
   <a href="#-installation">🚀 Installation</a> •
   <a href="#-usage">💻 Usage</a> •
   <a href="#-system-diagnostics">🩺 Doctor</a> •
+  <a href="#-template-deep-inspection-umaru-info">🔍 Inspect</a> •
   <a href="#-shell-autocompletion">🐚 Autocompletion</a> •
   <a href="#-self-upgrade">🔄 Self-Upgrade</a> •
   <a href="#️-extensibility--custom-templates">🛠️ Extensibility</a>
@@ -75,6 +76,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 - 🔄 **One-Command Upgrades:** Built-in self-updater via `umaru upgrade`.
 - 📦 **Universal Package Manager Support:** Choose your preferred JS/TS package manager on the fly (`npm`, `pnpm`, `yarn`, `bun`).
 - 🩺 **Environment Diagnostics:** Run `umaru doctor` to inspect installed runtimes, package managers, Docker daemon status, and template ecosystem readiness.
+- 🔍 **Architecture Deep Inspection:** Inspect directory trees, default ports, and tech stacks of any template with `umaru info <template>`.
 - 🛡️ **Pre-Flight Verification:** Proactively checks system dependencies (`git`, `go`, `cargo`, `pnpm`, etc.) beforehand so generation never fails halfway through.
 - 🔍 **Dry-Run Mode:** Simulate and inspect every file that would be generated without writing anything to disk.
 - 🔤 **Unicode & Transliteration Engine:** Native slugification for Turkish and accented characters (e.g. `Çalışma Projesi` ➔ `calisma-projesi`) for compliant `package.json`, `go.mod`, and `Cargo.toml`.
@@ -269,6 +271,21 @@ umaru init
 Next steps to get started:
   1. cd my-awesome-api
   2. go run cmd/api/main.go
+```
+
+---
+
+### 🔍 Template Deep Inspection (`umaru info`)
+
+Inspect any starter template before scaffolding to explore its directory architecture, default ports, install/run commands, and compatible addons:
+
+```bash
+# Direct template inspection
+umaru info go-fiber
+umaru info fullstack-ts-monorepo
+
+# Interactive template selector
+umaru info
 ```
 
 ---
