@@ -122,6 +122,24 @@ umaru init my-backend -t go-fiber --db postgres --auth jwt --redis
 umaru init my-backend --no-addons
 ```
 
+### ➕ Inject Addons into Existing Projects (`umaru add`)
+
+Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Python) and injects modular addons into your existing codebase:
+
+```bash
+# Interactive addon selection wizard
+umaru add
+
+# Direct addon injection
+umaru add redis
+umaru add jwt
+umaru add postgres
+umaru add sqlite
+
+# Overwrite existing addon files
+umaru add redis --force
+```
+
 ---
 
 ## ⚙️ Global Configuration

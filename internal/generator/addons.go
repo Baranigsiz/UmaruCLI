@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -548,6 +549,7 @@ func injectPythonDependencies(requirementsPath string, packages []string) error 
 		}
 		return err
 	}
+	content = bytes.TrimPrefix(content, []byte("\xef\xbb\xbf"))
 
 	lines := strings.Split(string(content), "\n")
 	existing := make(map[string]bool)
@@ -590,6 +592,7 @@ func injectNodeDependencies(packageJSONPath string, deps map[string]string, devD
 		}
 		return err
 	}
+	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
 
 	var pkgMap map[string]interface{}
 	if err := json.Unmarshal(data, &pkgMap); err != nil {
