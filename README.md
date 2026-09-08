@@ -197,6 +197,20 @@ umaru doctor --verbose
 
 ## 🚀 Installation
 
+### ⚡ Quick Install (Recommended - Zero Dependencies)
+
+Install the pre-compiled binary instantly in one command:
+
+**Linux & macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Baranigsiz/UmaruCLI/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/Baranigsiz/UmaruCLI/main/install.ps1 | iex
+```
+
 ### 1. Via Go Install (Any Platform with Go)
 ```bash
 go install github.com/Baranigsiz/UmaruCLI@latest
