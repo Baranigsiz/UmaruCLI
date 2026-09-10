@@ -42,14 +42,15 @@ func TestGetAddonFiles(t *testing.T) {
 	}
 
 	files := GetAddonFiles(cfg)
-	if len(files) != 3 {
-		t.Fatalf("Expected 3 addon files, got %d: %v", len(files), files)
+	if len(files) != 4 {
+		t.Fatalf("Expected 4 addon files, got %d: %v", len(files), files)
 	}
 
 	expected := []string{
 		filepath.Join("sample-dir", "internal", "database", "postgres.go"),
 		filepath.Join("sample-dir", "internal", "middleware", "auth.go"),
 		filepath.Join("sample-dir", "internal", "cache", "redis.go"),
+		filepath.Join("sample-dir", ".env.example"),
 	}
 
 	for i, f := range files {
@@ -307,3 +308,97 @@ func TestGenerateAddons_CI(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateAddons_DockerWithServices(t *testing.T) {
+	tempDir := t.TempDir()
+	projPath := filepath.Join(tempDir, "fiber-full-docker")
+
+	cfg, err := ResolveProjectConfig(projPath, "go-fiber")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+	cfg.Addons = AddonConfig{
+		Docker:   true,
+		Database: "postgres",
+		Redis:    true,
+	}
+
+	if err := Generate(cfg); err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	composePath := filepath.Join(projPath, "docker-compose.yml")
+	content, err := os.ReadFile(composePath)
+	if err != nil {
+		t.Fatalf("docker-compose.yml not found: %v", err)
+	}
+
+	composeStr := string(content)
+	needles := []string{
+		"postgres:16-alpine",
+		"redis:7-alpine",
+		"5432:5432",
+		"6379:6379",
+		"depends_on:",
+		"postgres",
+		"redis",
+		"volumes:",
+		"_pgdata",
+		"_redisdata",
+	}
+
+	for _, n := range needles {
+		if !strings.Contains(composeStr, n) {
+			t.Errorf("docker-compose.yml should contain '%s'", n)
+		}
+	}
+}
+
+func TestGenerateAddons_EnvVariables(t *testing.T) {
+	tempDir := t.TempDir()
+	projPath := filepath.Join(tempDir, "fiber-env-test")
+
+	cfg, err := ResolveProjectConfig(projPath, "go-fiber")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+	cfg.Addons = AddonConfig{
+		Database: "postgres",
+		Auth:     "jwt",
+		Redis:    true,
+	}
+
+	if err := Generate(cfg); err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// Verify .env.example
+	envExamplePath := filepath.Join(projPath, ".env.example")
+	dataExample, err := os.ReadFile(envExamplePath)
+	if err != nil {
+		t.Fatalf(".env.example not found: %v", err)
+	}
+
+	exampleStr := string(dataExample)
+	expectedVars := []string{"DB_HOST", "DB_PORT", "DB_USER", "JWT_SECRET", "REDIS_ADDR"}
+	for _, v := range expectedVars {
+		if !strings.Contains(exampleStr, v) {
+			t.Errorf(".env.example should contain '%s'", v)
+		}
+	}
+
+	// Verify .env was automatically created as well
+	envPath := filepath.Join(projPath, ".env")
+	dataEnv, err := os.ReadFile(envPath)
+	if err != nil {
+		t.Fatalf(".env was not automatically created: %v", err)
+	}
+
+	envStr := string(dataEnv)
+	for _, v := range expectedVars {
+		if !strings.Contains(envStr, v) {
+			t.Errorf(".env should contain '%s'", v)
+		}
+	}
+}
+

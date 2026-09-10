@@ -63,6 +63,12 @@ func GetAddonFiles(config ProjectConfig) []string {
 	if config.Addons.CI {
 		files = append(files, getCIFiles(baseDir)...)
 	}
+	if len(getAddonEnvBlocks(config)) > 0 {
+		envExamplePath := filepath.Join(baseDir, ".env.example")
+		if !fileExists(envExamplePath) {
+			files = append(files, envExamplePath)
+		}
+	}
 
 	return files
 }
@@ -93,6 +99,9 @@ func GenerateAddons(config ProjectConfig) error {
 		if err := generateCIAddon(config, baseDir); err != nil {
 			return err
 		}
+	}
+	if err := injectEnvVariables(baseDir, config); err != nil {
+		return err
 	}
 
 	return nil

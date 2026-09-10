@@ -182,8 +182,18 @@ var initCmd = &cobra.Command{
 			}
 
 			if err := generator.CheckDestination(projConfig.TargetDir, forceFlag); err != nil {
-				fmt.Printf("\n❌ Destination check failed: %v\n", err)
-				os.Exit(1)
+				var confirmForce bool
+				confirmPrompt := huh.NewConfirm().
+					Title(fmt.Sprintf("Directory '%s' is not empty. Continue and overwrite existing files?", projConfig.TargetDir)).
+					Description("Some existing files may be overwritten.").
+					Value(&confirmForce)
+
+				if pErr := confirmPrompt.Run(); pErr == nil && confirmForce {
+					forceFlag = true
+				} else {
+					fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
+					return
+				}
 			}
 
 			if err := checks.PreFlightChecks([]string{"git"}, true, false); err != nil {
@@ -242,8 +252,18 @@ var initCmd = &cobra.Command{
 
 		// Check target destination directory
 		if err := generator.CheckDestination(projConfig.TargetDir, forceFlag); err != nil {
-			fmt.Printf("\n❌ Destination check failed: %v\n", err)
-			os.Exit(1)
+			var confirmForce bool
+			confirmPrompt := huh.NewConfirm().
+				Title(fmt.Sprintf("Directory '%s' is not empty. Continue and overwrite existing files?", projConfig.TargetDir)).
+				Description("Some existing files may be overwritten.").
+				Value(&confirmForce)
+
+			if pErr := confirmPrompt.Run(); pErr == nil && confirmForce {
+				forceFlag = true
+			} else {
+				fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
+				return
+			}
 		}
 
 		installCmd := result.Template.GetInstallCommand(result.PackageManager)
