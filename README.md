@@ -340,14 +340,24 @@ umaru init payment-service -t nestjs-api -p pnpm -v
 
 ### 🐚 Shell Autocompletion
 
-Umaru CLI supports dynamic autocompletion for Bash, Zsh, Fish, and PowerShell:
+Umaru CLI supports dynamic autocompletion for Bash, Zsh, Fish, and PowerShell with single-command automatic profile installation:
 
 ```bash
+# Automatically detect your shell and install autocompletions to your profile
+umaru completion --install
+
+# Or specify your target shell explicitly
+umaru completion zsh --install
+umaru completion powershell --install
+umaru completion bash --install
+umaru completion fish --install
+
+# Manual one-time session loading:
 # Bash
 source <(umaru completion bash)
 
 # Zsh
-umaru completion zsh > "${fpath[1]}/_umaru"
+eval "$(umaru completion zsh)"
 
 # Fish
 umaru completion fish | source

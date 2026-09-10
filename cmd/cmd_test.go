@@ -151,6 +151,71 @@ func TestCompletionCmd(t *testing.T) {
 	}
 }
 
+func TestCompletionCmd_Install(t *testing.T) {
+	tempHome := t.TempDir()
+	completionTestHomeDir = tempHome
+	defer func() {
+		completionTestHomeDir = ""
+	}()
+
+	// 1. Test installation for bash
+	outBash, err := executeCommand("completion", "bash", "--install")
+	if err != nil {
+		t.Fatalf("completion bash --install failed: %v", err)
+	}
+	if !strings.Contains(outBash, "Successfully installed") {
+		t.Errorf("Expected success output, got: %s", outBash)
+	}
+	bashrcPath := filepath.Join(tempHome, ".bashrc")
+	if _, err := os.Stat(bashrcPath); os.IsNotExist(err) {
+		t.Errorf("Expected %s to exist", bashrcPath)
+	}
+
+	// 1b. Test idempotence for bash
+	outBash2, err := executeCommand("completion", "bash", "--install")
+	if err != nil {
+		t.Fatalf("second completion bash --install failed: %v", err)
+	}
+	if !strings.Contains(outBash2, "already installed") {
+		t.Errorf("Expected idempotency message, got: %s", outBash2)
+	}
+
+	// 2. Test installation for zsh
+	outZsh, err := executeCommand("completion", "zsh", "--install")
+	if err != nil {
+		t.Fatalf("completion zsh --install failed: %v", err)
+	}
+	if !strings.Contains(outZsh, "Successfully installed") {
+		t.Errorf("Expected success output for zsh, got: %s", outZsh)
+	}
+	zshrcPath := filepath.Join(tempHome, ".zshrc")
+	if _, err := os.Stat(zshrcPath); os.IsNotExist(err) {
+		t.Errorf("Expected %s to exist", zshrcPath)
+	}
+
+	// 3. Test installation for powershell
+	outPS, err := executeCommand("completion", "powershell", "--install")
+	if err != nil {
+		t.Fatalf("completion powershell --install failed: %v", err)
+	}
+	if !strings.Contains(outPS, "Successfully installed") {
+		t.Errorf("Expected success output for powershell, got: %s", outPS)
+	}
+
+	// 4. Test installation for fish
+	outFish, err := executeCommand("completion", "fish", "--install")
+	if err != nil {
+		t.Fatalf("completion fish --install failed: %v", err)
+	}
+	if !strings.Contains(outFish, "Successfully installed") {
+		t.Errorf("Expected success output for fish, got: %s", outFish)
+	}
+	fishFile := filepath.Join(tempHome, ".config", "fish", "completions", "umaru.fish")
+	if _, err := os.Stat(fishFile); os.IsNotExist(err) {
+		t.Errorf("Expected %s to exist", fishFile)
+	}
+}
+
 func TestAddCmd_CI(t *testing.T) {
 	tempDir := t.TempDir()
 	goMod := "module test-app\ngo 1.24\n"
