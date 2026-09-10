@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -105,8 +106,17 @@ func buildDockerCompose(config ProjectConfig, appService, appPort string, defaul
 	return sb.String()
 }
 
+var (
+	topLevelSectionRegex = regexp.MustCompile(`(?m)^([a-zA-Z0-9_-]+):\s*$`)
+	topLevelVolumesRegex = regexp.MustCompile(`(?m)^volumes:\s*$`)
+)
+
 func appendDockerComposeServices(baseDir string, config ProjectConfig) error {
 	composePath := filepath.Join(baseDir, "docker-compose.yml")
+	if !fileExists(composePath) && fileExists(filepath.Join(config.TargetDir, "docker-compose.yml")) {
+		composePath = filepath.Join(config.TargetDir, "docker-compose.yml")
+	}
+
 	data, err := os.ReadFile(composePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -123,8 +133,7 @@ func appendDockerComposeServices(baseDir string, config ProjectConfig) error {
 	hasRedis := config.Addons.Redis
 
 	if hasPG && !strings.Contains(content, "postgres:") {
-		toAppend.WriteString(fmt.Sprintf(`
-  postgres:
+		toAppend.WriteString(fmt.Sprintf(`  postgres:
     image: postgres:16-alpine
     container_name: %s-postgres
     environment:
@@ -141,8 +150,7 @@ func appendDockerComposeServices(baseDir string, config ProjectConfig) error {
 	}
 
 	if hasRedis && !strings.Contains(content, "redis:") {
-		toAppend.WriteString(fmt.Sprintf(`
-  redis:
+		toAppend.WriteString(fmt.Sprintf(`  redis:
     image: redis:7-alpine
     container_name: %s-redis
     ports:
@@ -162,35 +170,73 @@ func appendDockerComposeServices(baseDir string, config ProjectConfig) error {
 		dependsOn = append(dependsOn, "redis")
 	}
 
-	if len(dependsOn) > 0 && !strings.Contains(content, "depends_on:") {
-		var depBlock strings.Builder
-		depBlock.WriteString("    depends_on:\n")
-		for _, dep := range dependsOn {
-			depBlock.WriteString(fmt.Sprintf("      - %s\n", dep))
+	if len(dependsOn) > 0 {
+		if !strings.Contains(content, "depends_on:") {
+			var depBlock strings.Builder
+			depBlock.WriteString("    depends_on:\n")
+			for _, dep := range dependsOn {
+				depBlock.WriteString(fmt.Sprintf("      - %s\n", dep))
+			}
+			content = strings.Replace(content, "restart: unless-stopped", depBlock.String()+"    restart: unless-stopped", 1)
+		} else {
+			for _, dep := range dependsOn {
+				depEntry := "- " + dep
+				if !strings.Contains(content, depEntry) {
+					content = strings.Replace(content, "depends_on:\n", fmt.Sprintf("depends_on:\n      - %s\n", dep), 1)
+				}
+			}
 		}
-		content = strings.Replace(content, "restart: unless-stopped", depBlock.String()+"    restart: unless-stopped", 1)
 	}
 
-	if toAppend.Len() == 0 {
+	if toAppend.Len() == 0 && len(volumesToAppend) == 0 {
 		return nil
 	}
 
-	if strings.Contains(content, "volumes:") {
-		parts := strings.Split(content, "volumes:")
-		newServices := parts[0] + toAppend.String() + "\nvolumes:" + parts[1]
-		for _, v := range volumesToAppend {
-			if !strings.Contains(newServices, v) {
-				newServices += fmt.Sprintf("\n  %s:", v)
+	// Insert new services before any top-level key following services: (volumes:, networks:, etc.)
+	if toAppend.Len() > 0 {
+		matches := topLevelSectionRegex.FindAllStringSubmatchIndex(content, -1)
+		insertIdx := -1
+		for _, m := range matches {
+			secName := content[m[2]:m[3]]
+			if secName != "version" && secName != "services" {
+				insertIdx = m[0]
+				break
 			}
 		}
-		content = newServices
-	} else {
-		content += toAppend.String()
-		if len(volumesToAppend) > 0 {
-			content += "\nvolumes:\n"
+
+		if insertIdx != -1 {
+			prefix := strings.TrimRight(content[:insertIdx], "\n")
+			suffix := strings.TrimLeft(content[insertIdx:], "\n")
+			content = prefix + "\n\n" + toAppend.String() + "\n" + suffix
+		} else {
+			content = strings.TrimRight(content, "\n") + "\n\n" + toAppend.String()
+		}
+	}
+
+	// Insert missing volumes under top-level volumes:
+	if len(volumesToAppend) > 0 {
+		vLoc := topLevelVolumesRegex.FindStringIndex(content)
+		if vLoc != nil {
+			var newVols strings.Builder
 			for _, v := range volumesToAppend {
-				content += fmt.Sprintf("  %s:\n", v)
+				if !strings.Contains(content, v+":") {
+					newVols.WriteString(fmt.Sprintf("  %s:\n", v))
+				}
 			}
+			if newVols.Len() > 0 {
+				vEnd := vLoc[1]
+				if vEnd < len(content) && content[vEnd] == '\n' {
+					vEnd++
+				}
+				content = content[:vEnd] + newVols.String() + content[vEnd:]
+			}
+		} else {
+			var newVols strings.Builder
+			newVols.WriteString("\nvolumes:\n")
+			for _, v := range volumesToAppend {
+				newVols.WriteString(fmt.Sprintf("  %s:\n", v))
+			}
+			content = strings.TrimRight(content, "\n") + "\n" + newVols.String()
 		}
 	}
 

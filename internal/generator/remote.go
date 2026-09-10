@@ -16,7 +16,7 @@ import (
 // NormalizeGitURL converts GitHub shorthands (e.g., "owner/repo") to full git clone URLs
 func NormalizeGitURL(raw string) string {
 	raw = strings.TrimSpace(raw)
-	if raw == "" {
+	if raw == "" || strings.HasPrefix(raw, "-") {
 		return ""
 	}
 
@@ -186,6 +186,9 @@ func DryRunRemote(repoURL string, config ProjectConfig) ([]string, error) {
 	defer os.RemoveAll(tempDir)
 
 	normalizedURL := NormalizeGitURL(repoURL)
+	if normalizedURL == "" {
+		return nil, fmt.Errorf("invalid or empty remote repository URL")
+	}
 	cloneCmd := exec.Command("git", "clone", "--depth", "1", normalizedURL, tempDir)
 	if out, err := cloneCmd.CombinedOutput(); err != nil {
 		return nil, fmt.Errorf("remote dry-run clone failed: %s", string(out))

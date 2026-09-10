@@ -129,7 +129,38 @@ var configResetCmd = &cobra.Command{
 	},
 }
 
+var configKeyCompletions = []string{
+	"package-manager\tDefault JS/TS package manager (npm, pnpm, yarn, bun)",
+	"author\tDefault project author name",
+	"license\tDefault project license (e.g. MIT)",
+	"git-init\tAuto initialize git repository (true/false)",
+}
+
 func init() {
+	configGetCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return configKeyCompletions, cobra.ShellCompDirectiveNoFileComp
+		}
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	configSetCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return configKeyCompletions, cobra.ShellCompDirectiveNoFileComp
+		}
+		if len(args) == 1 {
+			switch strings.ToLower(args[0]) {
+			case "package-manager", "pm", "packagemanager":
+				return []string{"npm", "pnpm", "yarn", "bun"}, cobra.ShellCompDirectiveNoFileComp
+			case "git-init", "git", "gitinit":
+				return []string{"true", "false"}, cobra.ShellCompDirectiveNoFileComp
+			case "license":
+				return []string{"MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause", "ISC", "Unlicense"}, cobra.ShellCompDirectiveNoFileComp
+			}
+		}
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
 	configCmd.AddCommand(configListCmd)
 	configCmd.AddCommand(configGetCmd)
 	configCmd.AddCommand(configSetCmd)

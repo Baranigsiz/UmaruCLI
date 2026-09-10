@@ -164,7 +164,7 @@ async def get_db_session():
 		}
 	}
 
-	if db == "postgres" && fileExists(filepath.Join(baseDir, "docker-compose.yml")) {
+	if db == "postgres" && (fileExists(filepath.Join(baseDir, "docker-compose.yml")) || fileExists(filepath.Join(config.TargetDir, "docker-compose.yml"))) {
 		_ = appendDockerComposeServices(baseDir, config)
 	}
 

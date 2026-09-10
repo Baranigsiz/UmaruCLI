@@ -117,6 +117,12 @@ func PrintSuccessCard(config generator.ProjectConfig, templateName string, runCo
 		if config.Addons.Redis {
 			addonsList = append(addonsList, "Cache: Redis")
 		}
+		if config.Addons.Docker {
+			addonsList = append(addonsList, "Docker: Containerized")
+		}
+		if config.Addons.CI {
+			addonsList = append(addonsList, "CI: GitHub Actions")
+		}
 		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("🧩 Addons:    "), valueStyle.Render(strings.Join(addonsList, ", "))))
 	}
 

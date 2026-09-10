@@ -95,7 +95,7 @@ async def get_redis_client():
 		}
 	}
 
-	if fileExists(filepath.Join(baseDir, "docker-compose.yml")) {
+	if fileExists(filepath.Join(baseDir, "docker-compose.yml")) || fileExists(filepath.Join(config.TargetDir, "docker-compose.yml")) {
 		_ = appendDockerComposeServices(baseDir, config)
 	}
 

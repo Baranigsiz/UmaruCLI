@@ -14,19 +14,31 @@ func buildCommand(dir string, command []string) *exec.Cmd {
 		return nil
 	}
 
+	execCmd := make([]string, len(command))
+	copy(execCmd, command)
+
+	// Fallback pip to pip3 if pip is not found in PATH
+	if strings.ToLower(execCmd[0]) == "pip" {
+		if _, err := exec.LookPath("pip"); err != nil {
+			if _, err3 := exec.LookPath("pip3"); err3 == nil {
+				execCmd[0] = "pip3"
+			}
+		}
+	}
+
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		// On Windows, JS package managers (npm, pnpm, yarn, bun) are cmd/bat scripts and need cmd.exe /c.
 		// Direct executables (git, go, etc.) should run directly so Go handles argument quoting natively.
-		first := strings.ToLower(command[0])
+		first := strings.ToLower(execCmd[0])
 		if first == "npm" || first == "pnpm" || first == "yarn" || first == "bun" {
-			fullCmd := strings.Join(command, " ")
+			fullCmd := strings.Join(execCmd, " ")
 			cmd = exec.Command("cmd.exe", "/c", fullCmd)
 		} else {
-			cmd = exec.Command(command[0], command[1:]...)
+			cmd = exec.Command(execCmd[0], execCmd[1:]...)
 		}
 	} else {
-		cmd = exec.Command(command[0], command[1:]...)
+		cmd = exec.Command(execCmd[0], execCmd[1:]...)
 	}
 
 	cmd.Dir = dir

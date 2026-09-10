@@ -298,12 +298,16 @@ func inspectTool(tc ToolCheck) ToolCheck {
 }
 
 func inspectDockerDaemon() ToolCheck {
+	installTip := "Start Docker Desktop or run 'sudo systemctl start docker'"
+	if runtime.GOOS == "windows" {
+		installTip = "Start Docker Desktop"
+	}
 	check := ToolCheck{
 		Name:        "Docker Daemon",
 		Category:    "Containers",
 		Required:    false,
 		Description: "Docker daemon engine state",
-		InstallTip:  "Start Docker Desktop or run 'sudo systemctl start docker'",
+		InstallTip:  installTip,
 	}
 
 	if _, err := exec.LookPath("docker"); err != nil {
@@ -418,7 +422,7 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 			}
 		case id == "bun-elysia":
 			groups["Node/TypeScript"].Total++
-			if isOk(tools, "bun") || (hasNode && hasNpm) {
+			if isOk(tools, "bun") {
 				groups["Node/TypeScript"].Ready++
 			} else {
 				groups["Node/TypeScript"].Missing = appendUnique(groups["Node/TypeScript"].Missing, "bun")

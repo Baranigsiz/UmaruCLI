@@ -118,6 +118,31 @@ func TestDetectProject_NodeFrameworks(t *testing.T) {
 			pkgJSON:   `{"name": "my-elysia", "dependencies": {"elysia": "^1.1.25"}}`,
 			expectedF: "bun-elysia",
 		},
+		{
+			name:      "React",
+			pkgJSON:   `{"name": "my-react-app", "dependencies": {"react": "^18.3.1"}}`,
+			expectedF: "react-vite-ts",
+		},
+		{
+			name:      "Vue",
+			pkgJSON:   `{"name": "my-vue-app", "dependencies": {"vue": "^3.4.0"}}`,
+			expectedF: "vue-vite-ts",
+		},
+		{
+			name:      "Svelte",
+			pkgJSON:   `{"name": "my-svelte-app", "dependencies": {"svelte": "^5.0.0"}}`,
+			expectedF: "svelte-vite-ts",
+		},
+		{
+			name:      "NextJS",
+			pkgJSON:   `{"name": "my-next-app", "dependencies": {"next": "^14.2.0"}}`,
+			expectedF: "nextjs-tailwind",
+		},
+		{
+			name:      "Astro",
+			pkgJSON:   `{"name": "my-astro-app", "dependencies": {"astro": "^4.10.0"}}`,
+			expectedF: "astro-tailwind",
+		},
 	}
 
 	for _, tt := range tests {
@@ -140,6 +165,52 @@ func TestDetectProject_NodeFrameworks(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDetectProject_Monorepos(t *testing.T) {
+	// 1. Fullstack Go + React
+	t.Run("GoReact", func(t *testing.T) {
+		tempDir := t.TempDir()
+		apiDir := filepath.Join(tempDir, "apps", "api")
+		webDir := filepath.Join(tempDir, "apps", "web")
+		_ = os.MkdirAll(apiDir, 0755)
+		_ = os.MkdirAll(webDir, 0755)
+		_ = os.WriteFile(filepath.Join(apiDir, "go.mod"), []byte("module my-api\ngo 1.24\n"), 0644)
+		_ = os.WriteFile(filepath.Join(webDir, "package.json"), []byte(`{"name": "web"}`), 0644)
+
+		proj, err := DetectProject(tempDir)
+		if err != nil {
+			t.Fatalf("DetectProject failed: %v", err)
+		}
+		if proj.Type != ProjectTypeGo {
+			t.Errorf("Expected type go for fullstack-go-react, got %s", proj.Type)
+		}
+		if proj.Framework != "fullstack-go-react" {
+			t.Errorf("Expected framework fullstack-go-react, got %s", proj.Framework)
+		}
+	})
+
+	// 2. Fullstack TS Monorepo
+	t.Run("TSMonorepo", func(t *testing.T) {
+		tempDir := t.TempDir()
+		apiDir := filepath.Join(tempDir, "apps", "api")
+		webDir := filepath.Join(tempDir, "apps", "web")
+		_ = os.MkdirAll(apiDir, 0755)
+		_ = os.MkdirAll(webDir, 0755)
+		_ = os.WriteFile(filepath.Join(apiDir, "package.json"), []byte(`{"name": "api"}`), 0644)
+		_ = os.WriteFile(filepath.Join(webDir, "package.json"), []byte(`{"name": "web"}`), 0644)
+
+		proj, err := DetectProject(tempDir)
+		if err != nil {
+			t.Fatalf("DetectProject failed: %v", err)
+		}
+		if proj.Type != ProjectTypeNode {
+			t.Errorf("Expected type node for fullstack-ts-monorepo, got %s", proj.Type)
+		}
+		if proj.Framework != "fullstack-ts-monorepo" {
+			t.Errorf("Expected framework fullstack-ts-monorepo, got %s", proj.Framework)
+		}
+	})
 }
 
 func TestDetectProject_PythonFastAPI(t *testing.T) {

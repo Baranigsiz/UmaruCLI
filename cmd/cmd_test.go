@@ -70,6 +70,47 @@ func TestListCmd(t *testing.T) {
 	}
 }
 
+func TestListCmd_CategoryFilter(t *testing.T) {
+	// Filter by frontend
+	out, err := executeCommand("list", "-c", "Frontend")
+	if err != nil {
+		t.Fatalf("list -c Frontend failed: %v", err)
+	}
+	if !strings.Contains(out, "react-vite-ts") {
+		t.Errorf("Expected frontend list to contain 'react-vite-ts', got: %s", out)
+	}
+	if strings.Contains(out, "go-fiber") {
+		t.Errorf("Expected frontend list to NOT contain 'go-fiber', got: %s", out)
+	}
+
+	// Filter by backend
+	outBackend, err := executeCommand("list", "--category", "Backend")
+	if err != nil {
+		t.Fatalf("list --category Backend failed: %v", err)
+	}
+	if !strings.Contains(outBackend, "go-fiber") {
+		t.Errorf("Expected backend list to contain 'go-fiber', got: %s", outBackend)
+	}
+	if strings.Contains(outBackend, "react-vite-ts") {
+		t.Errorf("Expected backend list to NOT contain 'react-vite-ts', got: %s", outBackend)
+	}
+}
+
+func TestInitCmd_DockerAndCIFlags(t *testing.T) {
+	dockerFlag := initCmd.Flags().Lookup("docker")
+	if dockerFlag == nil {
+		t.Fatalf("Expected initCmd to have --docker flag")
+	}
+	ciFlag := initCmd.Flags().Lookup("ci")
+	if ciFlag == nil {
+		t.Fatalf("Expected initCmd to have --ci flag")
+	}
+	categoryFlag := listCmd.Flags().Lookup("category")
+	if categoryFlag == nil {
+		t.Fatalf("Expected listCmd to have --category flag")
+	}
+}
+
 func TestInfoCmd(t *testing.T) {
 	out, err := executeCommand("info", "go-fiber")
 	if err != nil {
@@ -240,4 +281,52 @@ func TestAddCmd_CI(t *testing.T) {
 		t.Errorf("Expected .github/workflows/ci.yml to be created, but it doesn't exist")
 	}
 }
+
+func TestConfigCmd_Completions(t *testing.T) {
+	// Test config get completions
+	if configGetCmd.ValidArgsFunction == nil {
+		t.Fatalf("Expected configGetCmd to have ValidArgsFunction")
+	}
+	completions, _ := configGetCmd.ValidArgsFunction(configGetCmd, []string{}, "")
+	if len(completions) != 4 {
+		t.Errorf("Expected 4 config keys in completion, got %d: %v", len(completions), completions)
+	}
+
+	// Test config set completions (key arg)
+	if configSetCmd.ValidArgsFunction == nil {
+		t.Fatalf("Expected configSetCmd to have ValidArgsFunction")
+	}
+	setKeyCompletions, _ := configSetCmd.ValidArgsFunction(configSetCmd, []string{}, "")
+	if len(setKeyCompletions) != 4 {
+		t.Errorf("Expected 4 config keys in set completion, got %d", len(setKeyCompletions))
+	}
+
+	// Test config set completions (value arg for package-manager)
+	pmCompletions, _ := configSetCmd.ValidArgsFunction(configSetCmd, []string{"package-manager"}, "")
+	if len(pmCompletions) != 4 {
+		t.Errorf("Expected 4 package managers in completion, got %d: %v", len(pmCompletions), pmCompletions)
+	}
+}
+
+func TestAddCmd_Completions(t *testing.T) {
+	if addCmd.ValidArgsFunction == nil {
+		t.Fatalf("Expected addCmd to have ValidArgsFunction")
+	}
+	completions, _ := addCmd.ValidArgsFunction(addCmd, []string{}, "")
+	if len(completions) != 6 {
+		t.Errorf("Expected 6 addons in completion, got %d: %v", len(completions), completions)
+	}
+
+	// Filtered completions when redis is already selected
+	filtered, _ := addCmd.ValidArgsFunction(addCmd, []string{"redis"}, "")
+	if len(filtered) != 5 {
+		t.Errorf("Expected 5 addons in completion after selecting redis, got %d", len(filtered))
+	}
+	for _, f := range filtered {
+		if strings.HasPrefix(f, "redis\t") {
+			t.Errorf("redis should be filtered out from completion suggestions")
+		}
+	}
+}
+
 

@@ -18,6 +18,11 @@ func PreFlightChecks(installCommand []string, checkGit bool, checkInstall bool) 
 	if checkInstall && len(installCommand) > 0 {
 		pkgManager := installCommand[0]
 		if _, err := exec.LookPath(pkgManager); err != nil {
+			if pkgManager == "pip" {
+				if _, errPip3 := exec.LookPath("pip3"); errPip3 == nil {
+					return nil
+				}
+			}
 			return fmt.Errorf("'%s' is required for this template but was not found in PATH", pkgManager)
 		}
 	}

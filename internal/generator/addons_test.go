@@ -402,3 +402,113 @@ func TestGenerateAddons_EnvVariables(t *testing.T) {
 	}
 }
 
+func TestAppendDockerCompose_ExistingServiceVolumes(t *testing.T) {
+	tempDir := t.TempDir()
+	composePath := filepath.Join(tempDir, "docker-compose.yml")
+
+	initialYAML := `version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+`
+	if err := os.WriteFile(composePath, []byte(initialYAML), 0644); err != nil {
+		t.Fatalf("failed to write initial compose: %v", err)
+	}
+
+	cfg := ProjectConfig{
+		TargetDir: tempDir,
+		SafeName:  "test-app",
+		Addons: AddonConfig{
+			Database: "postgres",
+			Redis:    true,
+		},
+	}
+
+	if err := appendDockerComposeServices(tempDir, cfg); err != nil {
+		t.Fatalf("appendDockerComposeServices failed: %v", err)
+	}
+
+	updated, err := os.ReadFile(composePath)
+	if err != nil {
+		t.Fatalf("failed to read updated compose: %v", err)
+	}
+	updatedStr := string(updated)
+
+	// Verify chromadb service volume was NOT mangled
+	if !strings.Contains(updatedStr, "- chroma_data:/chroma/chroma") {
+		t.Errorf("chromadb service volumes mount was corrupted/lost:\n%s", updatedStr)
+	}
+
+	// Verify top-level volumes contains chroma_data AND test-app_pgdata AND test-app_redisdata
+	if !strings.Contains(updatedStr, "chroma_data:") {
+		t.Errorf("top-level chroma_data was lost:\n%s", updatedStr)
+	}
+	if !strings.Contains(updatedStr, "test-app_pgdata:") {
+		t.Errorf("test-app_pgdata was not added to volumes:\n%s", updatedStr)
+	}
+	if !strings.Contains(updatedStr, "test-app_redisdata:") {
+		t.Errorf("test-app_redisdata was not added to volumes:\n%s", updatedStr)
+	}
+
+	// Verify services were added
+	if !strings.Contains(updatedStr, "postgres:") || !strings.Contains(updatedStr, "redis:") {
+		t.Errorf("postgres or redis service was not added:\n%s", updatedStr)
+	}
+}
+
+func TestGenerateAddons_MonorepoCILocation(t *testing.T) {
+	tempDir := t.TempDir()
+	projPath := filepath.Join(tempDir, "monorepo-ci-test")
+
+	cfg, err := ResolveProjectConfig(projPath, "fullstack-go-react")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+	cfg.Addons = AddonConfig{
+		CI:       true,
+		Database: "postgres",
+	}
+
+	if err := Generate(cfg); err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	// CI workflow MUST be at repository root
+	rootCI := filepath.Join(projPath, ".github", "workflows", "ci.yml")
+	if _, err := os.Stat(rootCI); os.IsNotExist(err) {
+		t.Errorf("Expected root CI workflow %s to exist", rootCI)
+	}
+
+	// CI workflow MUST NOT be nested in apps/api
+	wrongCI := filepath.Join(projPath, "apps", "api", ".github", "workflows", "ci.yml")
+	if _, err := os.Stat(wrongCI); err == nil {
+		t.Errorf("CI workflow was incorrectly placed in apps/api: %s", wrongCI)
+	}
+
+	// Root docker-compose.yml should be updated with postgres
+	rootCompose := filepath.Join(projPath, "docker-compose.yml")
+	content, err := os.ReadFile(rootCompose)
+	if err != nil {
+		t.Fatalf("failed to read root compose: %v", err)
+	}
+	if !strings.Contains(string(content), "postgres:") {
+		t.Errorf("root docker-compose.yml was not updated with postgres service:\n%s", string(content))
+	}
+}
+
+

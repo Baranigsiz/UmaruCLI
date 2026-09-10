@@ -268,5 +268,28 @@ func init() {
 	addCmd.Flags().StringVarP(&addDirFlag, "dir", "d", ".", "Target project directory")
 	addCmd.Flags().BoolVarP(&addForceFlag, "force", "f", false, "Overwrite existing files if present")
 
+	addCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		allAddons := []string{
+			"postgres\tPostgreSQL connection pool & health check",
+			"sqlite\tSQLite embedded lightweight database",
+			"jwt\tJSON Web Token authentication middleware",
+			"redis\tRedis in-memory caching client",
+			"docker\tMulti-stage Dockerfile & docker-compose.yml",
+			"ci\tGitHub Actions CI/CD workflow pipeline",
+		}
+		selected := make(map[string]bool)
+		for _, arg := range args {
+			selected[strings.ToLower(arg)] = true
+		}
+		var available []string
+		for _, a := range allAddons {
+			key := strings.Split(a, "\t")[0]
+			if !selected[key] {
+				available = append(available, a)
+			}
+		}
+		return available, cobra.ShellCompDirectiveNoFileComp
+	}
+
 	rootCmd.AddCommand(addCmd)
 }

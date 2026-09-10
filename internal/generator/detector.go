@@ -59,6 +59,36 @@ func DetectProject(dir string) (*DetectedProject, error) {
 		}
 	}
 
+	// 0. Check for Fullstack Monorepos (apps/api and apps/web)
+	appsApiDir := filepath.Join(targetDir, "apps", "api")
+	appsWebDir := filepath.Join(targetDir, "apps", "web")
+	if isDir(appsApiDir) && isDir(appsWebDir) {
+		if fileExists(filepath.Join(appsApiDir, "go.mod")) {
+			modData, _ := os.ReadFile(filepath.Join(appsApiDir, "go.mod"))
+			moduleName := extractGoModuleName(string(modData))
+			if moduleName == "" {
+				moduleName = Slugify(baseName)
+			}
+			return &DetectedProject{
+				Type:        ProjectTypeGo,
+				Framework:   "fullstack-go-react",
+				TargetDir:   targetDir,
+				ModuleName:  moduleName,
+				ProjectName: baseName,
+			}, nil
+		}
+
+		if fileExists(filepath.Join(appsApiDir, "package.json")) {
+			return &DetectedProject{
+				Type:        ProjectTypeNode,
+				Framework:   "fullstack-ts-monorepo",
+				TargetDir:   targetDir,
+				ModuleName:  Slugify(baseName),
+				ProjectName: baseName,
+			}, nil
+		}
+	}
+
 	// 1. Check for Go (go.mod)
 	goModPath := filepath.Join(targetDir, "go.mod")
 	if modData, err := os.ReadFile(goModPath); err == nil {
@@ -124,6 +154,16 @@ func DetectProject(dir string) (*DetectedProject, error) {
 			framework = "nestjs-api"
 		} else if allDeps["express"] {
 			framework = "node-express"
+		} else if allDeps["next"] {
+			framework = "nextjs-tailwind"
+		} else if allDeps["astro"] {
+			framework = "astro-tailwind"
+		} else if allDeps["svelte"] {
+			framework = "svelte-vite-ts"
+		} else if allDeps["vue"] {
+			framework = "vue-vite-ts"
+		} else if allDeps["react"] {
+			framework = "react-vite-ts"
 		}
 
 		return &DetectedProject{
@@ -223,4 +263,10 @@ func fileExists(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && !info.IsDir()
 }
+
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
 

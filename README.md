@@ -374,6 +374,9 @@ umaru init test-app -t node-express --dry-run
 
 # 7. Stream live dependency installation output
 umaru init payment-service -t nestjs-api -p pnpm -v
+
+# 8. Scaffold complete production stack with Docker & CI/CD out of the box
+umaru init my-prod-service -t go-fiber --docker --ci --db postgres --redis
 ```
 
 ---
@@ -428,6 +431,11 @@ umaru upgrade --check
 # View all available starter templates in a formatted table
 umaru list
 
+# Filter templates by category (Frontend, Backend, Fullstack, CLI)
+umaru list -c frontend
+umaru list -c backend
+umaru list -c fullstack
+
 # Display Umaru CLI version and build metadata
 umaru version
 ```
@@ -444,6 +452,8 @@ umaru version
 | `--db` | | `""` | Inject database driver addon (`postgres`, `sqlite`, `none`) |
 | `--auth` | | `""` | Inject authentication middleware addon (`jwt`, `none`) |
 | `--redis` | | `false` | Inject Redis caching client module |
+| `--docker` | | `false` | Inject Docker multi-stage build & Docker Compose containerization |
+| `--ci` | | `false` | Inject GitHub Actions CI/CD pipeline workflow |
 | `--no-addons` | | `false` | Skip interactive addon configuration wizard |
 | `--dry-run` | | `false` | Simulate generation and list files without creating them |
 | `--verbose` | `-v` | `false` | Stream live installation outputs to stdout/stderr |

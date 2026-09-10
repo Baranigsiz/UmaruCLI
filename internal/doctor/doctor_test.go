@@ -46,6 +46,7 @@ func TestCalculateReadiness_AllTools(t *testing.T) {
 		"go":           {Status: StatusOk},
 		"node.js":      {Status: StatusOk},
 		"npm":          {Status: StatusOk},
+		"bun":          {Status: StatusOk},
 		"python":       {Status: StatusOk},
 		"pip":          {Status: StatusOk},
 		"cargo (rust)": {Status: StatusOk},
@@ -60,6 +61,36 @@ func TestCalculateReadiness_AllTools(t *testing.T) {
 		if !r.IsReady {
 			t.Errorf("category %s should be ready when all tools present, but got %d/%d (missing: %v)",
 				r.Category, r.Ready, r.Total, r.Missing)
+		}
+	}
+}
+
+func TestCalculateReadiness_MissingBun(t *testing.T) {
+	mockTools := map[string]ToolCheck{
+		"go":           {Status: StatusOk},
+		"node.js":      {Status: StatusOk},
+		"npm":          {Status: StatusOk},
+		"python":       {Status: StatusOk},
+		"pip":          {Status: StatusOk},
+		"cargo (rust)": {Status: StatusOk},
+	}
+
+	readiness := calculateReadiness(mockTools)
+	for _, r := range readiness {
+		if r.Category == "Node/TypeScript (Express, Fastify, Hono, NestJS, React, Vue, Svelte, Next, Astro)" {
+			if r.IsReady {
+				t.Errorf("expected Node/TypeScript not to be fully ready when bun is missing")
+			}
+			foundBun := false
+			for _, m := range r.Missing {
+				if m == "bun" {
+					foundBun = true
+					break
+				}
+			}
+			if !foundBun {
+				t.Errorf("expected 'bun' in missing tools list, got %v", r.Missing)
+			}
 		}
 	}
 }

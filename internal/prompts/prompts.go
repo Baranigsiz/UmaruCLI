@@ -172,6 +172,8 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 			selectedAuth = "none"
 		}
 		enableRedis := selectedAddons.Redis
+		enableDocker := selectedAddons.Docker
+		enableCI := selectedAddons.CI
 
 		dbOptions := []huh.Option[string]{
 			huh.NewOption("None (Skip database setup)", "none"),
@@ -197,6 +199,12 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 				huh.NewConfirm().
 					Title("Include Redis cache support?").
 					Value(&enableRedis),
+				huh.NewConfirm().
+					Title("Include Docker & Compose containerization?").
+					Value(&enableDocker),
+				huh.NewConfirm().
+					Title("Include GitHub Actions CI workflow?").
+					Value(&enableCI),
 			),
 		)
 
@@ -207,6 +215,8 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 		selectedAddons.Database = selectedDB
 		selectedAddons.Auth = selectedAuth
 		selectedAddons.Redis = enableRedis
+		selectedAddons.Docker = enableDocker
+		selectedAddons.CI = enableCI
 	}
 
 	return &PromptResult{

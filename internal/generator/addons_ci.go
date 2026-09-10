@@ -15,6 +15,59 @@ func generateCIAddon(config ProjectConfig, baseDir string) error {
 	var content string
 
 	switch {
+	case config.Template == "fullstack-go-react":
+		content = `name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-api:
+    name: Test & Build Go API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Verify Dependencies
+        run: go mod verify
+
+      - name: Run Tests
+        run: go test -v -race ./...
+
+  test-web:
+    name: Test & Build Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Application
+        run: npm run build --if-present
+`
 	case isGoTemplate(config.Template):
 		content = `name: CI
 
