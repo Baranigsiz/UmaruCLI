@@ -1,0 +1,123 @@
+package handlers
+
+import (
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+type Todo struct {
+	ID        int
+	Title     string
+	CreatedAt string
+}
+
+type Handler struct {
+	mu      sync.RWMutex
+	counter int
+	todos   []Todo
+	nextID  int
+}
+
+func New() *Handler {
+	return &Handler{
+		counter: 42,
+		nextID:  3,
+		todos: []Todo{
+			{ID: 1, Title: "Explore Go Fiber & HTMX architecture", CreatedAt: "Just now"},
+			{ID: 2, Title: "Build hypermedia-driven micro-interactions", CreatedAt: "5m ago"},
+		},
+	}
+}
+
+// Index renders the main fullstack dashboard page
+func (h *Handler) Index(c *fiber.Ctx) error {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	return c.Render("pages/index", fiber.Map{
+		"Title":   "{{.ProjectName}}",
+		"Counter": h.counter,
+		"Todos":   h.todos,
+		"Year":    time.Now().Year(),
+	})
+}
+
+// HealthCheck returns a JSON health payload
+func (h *Handler) HealthCheck(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":    "healthy",
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
+		"version":   "1.0.0",
+	})
+}
+
+// IncrementCounter handles HTMX counter increment
+func (h *Handler) IncrementCounter(c *fiber.Ctx) error {
+	h.mu.Lock()
+	h.counter++
+	current := h.counter
+	h.mu.Unlock()
+
+	return c.Render("partials/counter", fiber.Map{
+		"Counter": current,
+	}, "")
+}
+
+// DecrementCounter handles HTMX counter decrement
+func (h *Handler) DecrementCounter(c *fiber.Ctx) error {
+	h.mu.Lock()
+	h.counter--
+	current := h.counter
+	h.mu.Unlock()
+
+	return c.Render("partials/counter", fiber.Map{
+		"Counter": current,
+	}, "")
+}
+
+// AddTodo handles HTMX inline task creation
+func (h *Handler) AddTodo(c *fiber.Ctx) error {
+	title := strings.TrimSpace(c.FormValue("title"))
+	if title == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("Title cannot be empty")
+	}
+
+	h.mu.Lock()
+	todo := Todo{
+		ID:        h.nextID,
+		Title:     title,
+		CreatedAt: "Just now",
+	}
+	h.nextID++
+	h.todos = append(h.todos, todo)
+	h.mu.Unlock()
+
+	return c.Render("partials/todo_item", fiber.Map{
+		"Todo": todo,
+	}, "")
+}
+
+// DeleteTodo handles HTMX inline task removal
+func (h *Handler) DeleteTodo(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid ID")
+	}
+
+	h.mu.Lock()
+	for i, t := range h.todos {
+		if t.ID == id {
+			h.todos = append(h.todos[:i], h.todos[i+1:]...)
+			break
+		}
+	}
+	h.mu.Unlock()
+
+	// Return empty 200 OK so HTMX removes the element with hx-swap="outerHTML"
+	return c.SendStatus(fiber.StatusOK)
+}

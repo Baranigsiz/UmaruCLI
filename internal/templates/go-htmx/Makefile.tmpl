@@ -1,0 +1,19 @@
+.PHONY: run dev build test docker-up docker-down
+
+run:
+	go run cmd/web/main.go
+
+dev:
+	air || go run cmd/web/main.go
+
+build:
+	go build -o bin/server cmd/web/main.go
+
+test:
+	go test -v ./...
+
+docker-up:
+	docker-compose up --build -d
+
+docker-down:
+	docker-compose down

@@ -1,0 +1,7 @@
+{
+  "name": "Go + HTMX (Modern Hypermedia Stack)",
+  "description": "Interactive fullstack web app with Go Fiber, HTML templates, HTMX 2.0 & Tailwind CSS.",
+  "category": "Fullstack",
+  "installCommand": ["go", "mod", "tidy"],
+  "runCommand": "go run cmd/web/main.go"
+}

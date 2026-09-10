@@ -1,0 +1,81 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"{{.ModuleName}}/internal/handlers"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/template/html/v2"
+	"github.com/joho/godotenv"
+)
+
+func main() {
+	// Load environment variables
+	_ = godotenv.Load()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	// Initialize HTML template engine
+	engine := html.New("./views", ".html")
+	engine.Reload(os.Getenv("APP_ENV") != "production")
+
+	// Create Fiber app
+	app := fiber.New(fiber.Config{
+		Views:       engine,
+		ViewsLayout: "layouts/main",
+		AppName:     "{{.ProjectName}}",
+	})
+
+	// Middleware
+	app.Use(recover.New())
+	app.Use(logger.New(logger.Config{
+		Format: "[${time}] ${status} - ${method} ${path} (${latency})\n",
+	}))
+
+	// Static files
+	app.Static("/static", "./public")
+
+	// Routes
+	h := handlers.New()
+
+	app.Get("/", h.Index)
+	app.Get("/api/health", h.HealthCheck)
+
+	// HTMX Interactive Endpoints
+	app.Post("/api/counter/increment", h.IncrementCounter)
+	app.Post("/api/counter/decrement", h.DecrementCounter)
+	app.Post("/api/todos", h.AddTodo)
+	app.Delete("/api/todos/:id", h.DeleteTodo)
+
+	// Start server in background goroutine
+	go func() {
+		addr := fmt.Sprintf(":%s", port)
+		log.Printf("🚀 Server is running on http://localhost:%s", port)
+		if err := app.Listen(addr); err != nil {
+			log.Printf("Server stopped: %v", err)
+		}
+	}()
+
+	// Graceful shutdown handling
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+
+	log.Println("🛑 Shutting down server gracefully...")
+	if err := app.ShutdownWithTimeout(5 * time.Second); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("✨ Server exited cleanly.")
+}

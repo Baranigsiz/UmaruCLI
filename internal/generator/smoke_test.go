@@ -18,8 +18,8 @@ func TestSmoke_AllTemplatesRenderCleanly(t *testing.T) {
 		t.Fatalf("Failed to fetch available templates: %v", err)
 	}
 
-	if len(allTemplates) < 20 {
-		t.Errorf("Expected at least 20 templates, found %d", len(allTemplates))
+	if len(allTemplates) < 21 {
+		t.Errorf("Expected at least 21 templates, found %d", len(allTemplates))
 	}
 
 	for _, tmpl := range allTemplates {
@@ -69,6 +69,12 @@ func TestSmoke_AllTemplatesRenderCleanly(t *testing.T) {
 					".yml": true, ".yaml": true, ".ts": true, ".tsx": true,
 					".js": true, ".jsx": true, ".py": true, ".html": true,
 					".env": true, ".example": true,
+				}
+
+				// For templates that ship runtime HTML templates (e.g. go-htmx views),
+				// skip checking runtime template tags inside views/
+				if tmpl.ID == "go-htmx" && strings.HasPrefix(filepath.ToSlash(rel), "views/") {
+					return nil
 				}
 
 				if textExtensions[ext] || strings.HasPrefix(filepath.Base(p), ".env") {

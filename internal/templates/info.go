@@ -21,7 +21,7 @@ func GetTemplatePorts(templateID string) []string {
 	switch templateID {
 	case "go-fiber", "go-gin", "go-echo", "rust-actix":
 		return []string{"API: 8080"}
-	case "fastify-api", "hono-api", "node-express", "nestjs-api", "rust-axum", "nextjs-tailwind", "bun-elysia":
+	case "fastify-api", "hono-api", "node-express", "nestjs-api", "rust-axum", "nextjs-tailwind", "bun-elysia", "go-htmx":
 		return []string{"App: 3000"}
 	case "python-fastapi":
 		return []string{"API: 8000"}
@@ -43,7 +43,7 @@ func GetTemplatePorts(templateID string) []string {
 // GetSupportedAddons returns which addons can be injected into this template
 func GetSupportedAddons(templateID string) []string {
 	switch templateID {
-	case "go-fiber", "go-gin", "go-echo", "fastify-api", "hono-api", "node-express", "nestjs-api", "python-fastapi", "ai-fastapi-starter", "fullstack-go-react", "fullstack-ts-monorepo", "bun-elysia":
+	case "go-fiber", "go-gin", "go-echo", "fastify-api", "hono-api", "node-express", "nestjs-api", "python-fastapi", "ai-fastapi-starter", "fullstack-go-react", "fullstack-ts-monorepo", "bun-elysia", "go-htmx":
 		return []string{"🐘 PostgreSQL", "📦 SQLite", "🔴 Redis", "🔐 JWT Auth"}
 	case "go-cli":
 		return []string{"📦 SQLite", "🔴 Redis", "🐳 Docker"}

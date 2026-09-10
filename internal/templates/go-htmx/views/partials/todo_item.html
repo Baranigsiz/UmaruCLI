@@ -1,0 +1,16 @@
+<div id="todo-item-{{.Todo.ID}}" class="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 group hover:border-slate-700 transition-colors animate-fade-in">
+  <div class="flex items-center gap-3">
+    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+    <span class="text-sm font-medium text-slate-200">{{.Todo.Title}}</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="text-xs text-slate-500 font-mono">{{.Todo.CreatedAt}}</span>
+    <button
+      hx-delete="/api/todos/{{.Todo.ID}}"
+      hx-target="#todo-item-{{.Todo.ID}}"
+      hx-swap="outerHTML"
+      class="opacity-60 hover:opacity-100 text-slate-400 hover:text-red-400 text-xs px-2 py-1 rounded transition-colors cursor-pointer">
+      ✕
+    </button>
+  </div>
+</div>

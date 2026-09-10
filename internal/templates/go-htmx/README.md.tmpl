@@ -1,0 +1,71 @@
+# {{.ProjectName}}
+
+A modern, high-performance fullstack web application built with **Go Fiber**, **HTML Templates**, **HTMX 2.0**, and **Tailwind CSS**.
+
+---
+
+## ⚡ Tech Stack
+
+- **Backend:** [Go](https://go.dev) + [Fiber v2](https://gofiber.io)
+- **Templating:** Fiber HTML template engine (`html/template`)
+- **Interactivity:** [HTMX 2.0](https://htmx.org) for zero-JS dynamic updates
+- **Styling:** [Tailwind CSS](https://tailwindcss.com) via Play CDN
+- **Containerization:** Docker & Docker Compose
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- Go 1.22+ installed
+- (Optional) Docker for containerized deployment
+
+### 2. Run Locally
+```bash
+# Install dependencies
+go mod tidy
+
+# Run application
+go run cmd/web/main.go
+# Or via Makefile:
+make run
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 🐳 Docker
+
+```bash
+# Start container
+docker-compose up --build -d
+
+# Stop container
+docker-compose down
+```
+
+---
+
+## 📁 Project Structure
+
+```
+├── cmd/
+│   └── web/
+│       └── main.go          # Application entrypoint & Fiber router setup
+├── internal/
+│   └── handlers/
+│       └── handlers.go      # Page & HTMX partial handlers
+├── views/
+│   ├── layouts/
+│   │   └── main.html        # Base HTML layout with HTMX & Tailwind
+│   ├── pages/
+│   │   └── index.html       # Main landing & dashboard page
+│   └── partials/
+│       ├── counter.html     # HTMX dynamic counter partial
+│       └── todo_item.html   # HTMX dynamic list item partial
+├── .env.example
+├── Dockerfile
+├── docker-compose.yml
+└── Makefile
+```

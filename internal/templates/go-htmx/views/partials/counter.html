@@ -1,0 +1,22 @@
+<div id="counter-box" class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-6 text-center">
+  <span class="text-xs uppercase tracking-widest text-slate-500 font-bold block mb-1">Server Counter</span>
+  <div class="text-5xl font-black text-emerald-400 font-mono my-2">{{.Counter}}</div>
+  <span class="text-xs text-slate-500 font-medium">Rendered via Go Fiber backend</span>
+
+  <div class="flex items-center justify-center gap-3 mt-6">
+    <button
+      hx-post="/api/counter/decrement"
+      hx-target="#counter-box"
+      hx-swap="outerHTML"
+      class="w-12 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold text-slate-200 border border-slate-700 transition-all cursor-pointer">
+      -
+    </button>
+    <button
+      hx-post="/api/counter/increment"
+      hx-target="#counter-box"
+      hx-swap="outerHTML"
+      class="px-6 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 cursor-pointer">
+      <span>Increment</span> <span>+</span>
+    </button>
+  </div>
+</div>
