@@ -232,6 +232,28 @@ curl -fsSL https://raw.githubusercontent.com/Baranigsiz/UmaruCLI/main/install.sh
 irm https://raw.githubusercontent.com/Baranigsiz/UmaruCLI/main/install.ps1 | iex
 ```
 
+### 🍺 Via Homebrew (macOS & Linux)
+
+```bash
+# Install directly via tap
+brew install Baranigsiz/UmaruCLI/umaru
+
+# Or add the tap first and install
+brew tap Baranigsiz/umaru https://github.com/Baranigsiz/UmaruCLI
+brew install umaru
+```
+
+### 🍨 Via Scoop (Windows)
+
+```powershell
+# Install directly via manifest URL
+scoop install https://raw.githubusercontent.com/Baranigsiz/UmaruCLI/main/bucket/umaru.json
+
+# Or add as bucket and install
+scoop bucket add umaru https://github.com/Baranigsiz/UmaruCLI
+scoop install umaru
+```
+
 ### 1. Via Go Install (Any Platform with Go)
 ```bash
 go install github.com/Baranigsiz/UmaruCLI@latest
