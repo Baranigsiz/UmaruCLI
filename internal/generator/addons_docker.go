@@ -168,9 +168,7 @@ func appendDockerComposeServices(baseDir string, config ProjectConfig) error {
 		for _, dep := range dependsOn {
 			depBlock.WriteString(fmt.Sprintf("      - %s\n", dep))
 		}
-		if strings.Contains(content, "restart: unless-stopped") {
-			content = strings.Replace(content, "restart: unless-stopped", depBlock.String()+"    restart: unless-stopped", 1)
-		}
+		content = strings.Replace(content, "restart: unless-stopped", depBlock.String()+"    restart: unless-stopped", 1)
 	}
 
 	if toAppend.Len() == 0 {
