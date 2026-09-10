@@ -237,17 +237,17 @@ irm https://raw.githubusercontent.com/Baranigsiz/UmaruCLI/main/install.ps1 | iex
 go install github.com/Baranigsiz/UmaruCLI@latest
 ```
 
-### 2. Pre-Compiled Binaries (Latest: [v1.8.0](https://github.com/Baranigsiz/UmaruCLI/releases/tag/v1.8.0))
+### 2. Pre-Compiled Binaries (Latest: [v1.9.0](https://github.com/Baranigsiz/UmaruCLI/releases/tag/v1.9.0))
 Download pre-built binary archives directly from the [GitHub Releases](https://github.com/Baranigsiz/UmaruCLI/releases):
 
 | Platform | Architecture | Binary Archive | Direct Download |
 |---|---|---|---|
-| **Windows** | `x86_64` (amd64) | `.zip` (`umaru.exe`) | [umaru_1.8.0_windows_amd64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_windows_amd64.zip) |
-| **Windows** | `ARM64` | `.zip` (`umaru.exe`) | [umaru_1.8.0_windows_arm64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_windows_arm64.zip) |
-| **macOS** | Apple Silicon (`arm64`) | `.tar.gz` (`umaru`) | [umaru_1.8.0_darwin_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_darwin_arm64.tar.gz) |
-| **macOS** | Intel (`x86_64`) | `.tar.gz` (`umaru`) | [umaru_1.8.0_darwin_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_darwin_amd64.tar.gz) |
-| **Linux** | `x86_64` (amd64) | `.tar.gz` (`umaru`) | [umaru_1.8.0_linux_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_linux_amd64.tar.gz) |
-| **Linux** | `ARM64` | `.tar.gz` (`umaru`) | [umaru_1.8.0_linux_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_linux_arm64.tar.gz) |
+| **Windows** | `x86_64` (amd64) | `.zip` (`umaru.exe`) | [umaru_1.9.0_windows_amd64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.9.0/umaru_1.9.0_windows_amd64.zip) |
+| **Windows** | `ARM64` | `.zip` (`umaru.exe`) | [umaru_1.9.0_windows_arm64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.9.0/umaru_1.9.0_windows_arm64.zip) |
+| **macOS** | Apple Silicon (`arm64`) | `.tar.gz` (`umaru`) | [umaru_1.9.0_darwin_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.9.0/umaru_1.9.0_darwin_arm64.tar.gz) |
+| **macOS** | Intel (`x86_64`) | `.tar.gz` (`umaru`) | [umaru_1.9.0_darwin_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.9.0/umaru_1.9.0_darwin_amd64.tar.gz) |
+| **Linux** | `x86_64` (amd64) | `.tar.gz` (`umaru`) | [umaru_1.9.0_linux_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.9.0/umaru_1.9.0_linux_amd64.tar.gz) |
+| **Linux** | `ARM64` | `.tar.gz` (`umaru`) | [umaru_1.9.0_linux_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.9.0/umaru_1.9.0_linux_arm64.tar.gz) |
 
 ### 3. Build from Source
 ```bash
