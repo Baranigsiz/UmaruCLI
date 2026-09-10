@@ -17,7 +17,8 @@ func TestAddonConfig_HasAddons(t *testing.T) {
 		{AddonConfig{Database: "postgres"}, true},
 		{AddonConfig{Auth: "jwt"}, true},
 		{AddonConfig{Redis: true}, true},
-		{AddonConfig{Database: "sqlite", Auth: "jwt", Redis: true}, true},
+		{AddonConfig{Docker: true}, true},
+		{AddonConfig{Database: "sqlite", Auth: "jwt", Redis: true, Docker: true}, true},
 	}
 
 	for _, tt := range tests {
@@ -214,3 +215,55 @@ func TestGenerateAddons_FrameworkSpecificAuth(t *testing.T) {
 		t.Errorf("Fastify auth middleware should NOT import from 'express'")
 	}
 }
+
+func TestGenerateAddons_Docker(t *testing.T) {
+	tempDir := t.TempDir()
+
+	testCases := []struct {
+		framework string
+		needle    string
+	}{
+		{"go-fiber", "golang:1.24-alpine"},
+		{"node-express", "node:20-alpine"},
+		{"bun-elysia", "oven/bun:1"},
+		{"python-fastapi", "python:3.11-slim"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.framework, func(t *testing.T) {
+			projPath := filepath.Join(tempDir, tc.framework+"-docker")
+			cfg, err := ResolveProjectConfig(projPath, tc.framework)
+			if err != nil {
+				t.Fatalf("ResolveProjectConfig failed: %v", err)
+			}
+			cfg.Addons = AddonConfig{Docker: true}
+
+			if err := Generate(cfg); err != nil {
+				t.Fatalf("Generate failed: %v", err)
+			}
+
+			// Verify Dockerfile
+			dockerfilePath := filepath.Join(projPath, "Dockerfile")
+			dfContent, err := os.ReadFile(dockerfilePath)
+			if err != nil {
+				t.Fatalf("Dockerfile not found: %v", err)
+			}
+			if !strings.Contains(string(dfContent), tc.needle) {
+				t.Errorf("Dockerfile for %s should contain '%s'", tc.framework, tc.needle)
+			}
+
+			// Verify docker-compose.yml
+			composePath := filepath.Join(projPath, "docker-compose.yml")
+			if _, err := os.Stat(composePath); err != nil {
+				t.Errorf("docker-compose.yml not found: %v", err)
+			}
+
+			// Verify .dockerignore
+			ignorePath := filepath.Join(projPath, ".dockerignore")
+			if _, err := os.Stat(ignorePath); err != nil {
+				t.Errorf(".dockerignore not found: %v", err)
+			}
+		})
+	}
+}
+

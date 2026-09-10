@@ -33,9 +33,9 @@ function Get-LatestTag {
             return $release.tag_name
         }
     } catch {
-        Write-Host "  [!] Could not query GitHub API for latest release, falling back to v1.7.0" -ForegroundColor Yellow
+        Write-Host "  [!] Could not query GitHub API for latest release, falling back to v1.8.0" -ForegroundColor Yellow
     }
-    return "v1.7.0"
+    return "v1.8.0"
 }
 
 try {

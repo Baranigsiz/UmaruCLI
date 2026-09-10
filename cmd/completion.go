@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -46,15 +44,16 @@ PowerShell:
 	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 	Run: func(cmd *cobra.Command, args []string) {
+		out := cmd.OutOrStdout()
 		switch args[0] {
 		case "bash":
-			_ = cmd.Root().GenBashCompletion(os.Stdout)
+			_ = cmd.Root().GenBashCompletion(out)
 		case "zsh":
-			_ = cmd.Root().GenZshCompletion(os.Stdout)
+			_ = cmd.Root().GenZshCompletion(out)
 		case "fish":
-			_ = cmd.Root().GenFishCompletion(os.Stdout, true)
+			_ = cmd.Root().GenFishCompletion(out, true)
 		case "powershell":
-			_ = cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+			_ = cmd.Root().GenPowerShellCompletionWithDesc(out)
 		}
 	},
 }

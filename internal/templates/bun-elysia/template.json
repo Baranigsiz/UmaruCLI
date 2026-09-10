@@ -1,0 +1,7 @@
+{
+  "name": "Bun Elysia API (High-Performance)",
+  "description": "Ultra-fast TypeScript REST API with Bun, Elysia.js, Swagger OpenAPI & Docker",
+  "category": "Backend",
+  "installCommand": ["bun", "install"],
+  "runCommand": "bun run dev"
+}

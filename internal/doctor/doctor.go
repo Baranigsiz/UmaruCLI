@@ -408,6 +408,13 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 					groups["Fullstack"].Missing = appendUnique(groups["Fullstack"].Missing, "node")
 				}
 			}
+		case id == "bun-elysia":
+			groups["Node/TypeScript"].Total++
+			if isOk(tools, "bun") || (hasNode && hasNpm) {
+				groups["Node/TypeScript"].Ready++
+			} else {
+				groups["Node/TypeScript"].Missing = appendUnique(groups["Node/TypeScript"].Missing, "bun")
+			}
 		default: // All frontend & node backend
 			groups["Node/TypeScript"].Total++
 			if hasNode && hasNpm {

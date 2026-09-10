@@ -39,3 +39,24 @@ func TestBuildCommand_Nil(t *testing.T) {
 	}
 }
 
+func TestCommitGit(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not found in PATH, skipping TestCommitGit")
+	}
+
+	tempDir := t.TempDir()
+	if err := InitGit(tempDir); err != nil {
+		t.Fatalf("InitGit() failed: %v", err)
+	}
+
+	dummyFile := filepath.Join(tempDir, "README.md")
+	if err := os.WriteFile(dummyFile, []byte("# Test Project"), 0644); err != nil {
+		t.Fatalf("Failed to write dummy file: %v", err)
+	}
+
+	err := CommitGit(tempDir, "chore: initial commit")
+	if err != nil {
+		t.Fatalf("CommitGit() failed: %v", err)
+	}
+}
+

@@ -12,7 +12,7 @@ var doctorCmd = &cobra.Command{
 	Use:   "doctor",
 	Short: "Inspect developer environment and verify template readiness",
 	Long: `Doctor checks your system for required tools, programming runtimes (Go, Node, Python, Rust),
-package managers, containers (Docker & Compose), and reports readiness across all 17 templates.`,
+package managers, containers (Docker & Compose), and reports readiness across all starter templates.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		report := doctor.RunDiagnostics(Version)
 		doctor.RenderReport(report, verboseDoctor)

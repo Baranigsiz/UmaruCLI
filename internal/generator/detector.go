@@ -111,7 +111,9 @@ func DetectProject(dir string) (*DetectedProject, error) {
 		}
 
 		framework := "node-express"
-		if allDeps["hono"] {
+		if allDeps["elysia"] {
+			framework = "bun-elysia"
+		} else if allDeps["hono"] {
 			framework = "hono-api"
 		} else if allDeps["fastify"] {
 			framework = "fastify-api"

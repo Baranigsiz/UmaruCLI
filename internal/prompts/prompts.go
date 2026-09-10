@@ -43,6 +43,9 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 			return nil, err
 		}
 		preSelectedTmpl = tmpl
+		if selectedPkgManager == "" && len(tmpl.InstallCommand) > 0 && tmpl.InstallCommand[0] == "bun" {
+			selectedPkgManager = "bun"
+		}
 	}
 
 	// If non-interactive full arguments are provided, return immediately
@@ -80,7 +83,7 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 
 	if selectedTemplateID == "" {
 		categoryOptions := []huh.Option[string]{
-			huh.NewOption("🌟 All Templates (Show all 17 starters)", "all"),
+			huh.NewOption(fmt.Sprintf("🌟 All Templates (Show all %d starters)", len(availableTemplates)), "all"),
 			huh.NewOption("🌐 Frontend Frameworks (React, Vue 3, Svelte 5, Next.js, Astro)", "Frontend"),
 			huh.NewOption("⚙️ Backend APIs (Go, NestJS, Express, Hono, Fastify, Echo, FastAPI, Rust)", "Backend"),
 			huh.NewOption("📦 Fullstack Monorepos (Go + React, TypeScript Monorepo)", "Fullstack"),
@@ -135,21 +138,25 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 
 	// 3. Third Group: If template is Node-based and package manager is not specified, ask for it
 	if tmpl.IsNodeBased() && selectedPkgManager == "" {
-		pkgOptions := []huh.Option[string]{
-			huh.NewOption("npm (Standard Node Package Manager)", "npm"),
-			huh.NewOption("pnpm (Fast, disk space efficient)", "pnpm"),
-			huh.NewOption("yarn (Classic Yarn Package Manager)", "yarn"),
-			huh.NewOption("bun (Ultra-fast all-in-one JavaScript runtime)", "bun"),
-		}
+		if len(tmpl.InstallCommand) > 0 && tmpl.InstallCommand[0] == "bun" {
+			selectedPkgManager = "bun"
+		} else {
+			pkgOptions := []huh.Option[string]{
+				huh.NewOption("npm (Standard Node Package Manager)", "npm"),
+				huh.NewOption("pnpm (Fast, disk space efficient)", "pnpm"),
+				huh.NewOption("yarn (Classic Yarn Package Manager)", "yarn"),
+				huh.NewOption("bun (Ultra-fast all-in-one JavaScript runtime)", "bun"),
+			}
 
-		pkgSelect := huh.NewSelect[string]().
-			Title("Choose a package manager").
-			Options(pkgOptions...).
-			Value(&selectedPkgManager)
+			pkgSelect := huh.NewSelect[string]().
+				Title("Choose a package manager").
+				Options(pkgOptions...).
+				Value(&selectedPkgManager)
 
-		pkgForm := huh.NewForm(huh.NewGroup(pkgSelect))
-		if err := pkgForm.Run(); err != nil {
-			return nil, err
+			pkgForm := huh.NewForm(huh.NewGroup(pkgSelect))
+			if err := pkgForm.Run(); err != nil {
+				return nil, err
+			}
 		}
 	}
 

@@ -34,7 +34,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 
 <p align="center">
   <a href="#-features">✨ Features</a> •
-  <a href="#-supported-starters">📦 Starters (18)</a> •
+  <a href="#-supported-starters">📦 Starters (19)</a> •
   <a href="#-interactive-addon-wizard">🧩 Addon Wizard</a> •
   <a href="#️-global-configuration">⚙️ Global Config</a> •
   <a href="#-installation">🚀 Installation</a> •
@@ -67,7 +67,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 ## ✨ Features
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
-- 🔌 **Zero Network Reliance:** All 18 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🔌 **Zero Network Reliance:** All 19 starter boilerplates are compiled directly into the binary via `//go:embed`.
 - 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
@@ -86,7 +86,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 
 ## 📦 Supported Starters
 
-Umaru CLI includes 18 production-ready architectures organized across 3 categories:
+Umaru CLI includes 19 production-ready architectures organized across 3 categories:
 
 ### ⚙️ Backend APIs
 | Template ID | Technology Stack | Architecture & Included Features |
@@ -94,6 +94,7 @@ Umaru CLI includes 18 production-ready architectures organized across 3 categori
 | `go-fiber` | **Go + Fiber v2** | Layered Clean Architecture (`cmd/`, `internal/`), Docker Multi-Stage, `docker-compose`, Graceful Shutdown, CORS, Makefile. |
 | `go-gin` | **Go 1.24 + Gin** | Enterprise Clean Architecture, Gin Recovery & Logger, CORS, Graceful Shutdown, Docker & Compose. |
 | `go-echo` | **Go + Echo v4** | Clean Architecture (`cmd/`, `internal/routes`, `handlers`, `config`), Docker Multi-Stage, `docker-compose`, Graceful Shutdown, CORS, Makefile. |
+| `bun-elysia` | **Bun + Elysia.js + TS** | Ultra-fast TypeScript API, OpenAPI Swagger (`/docs`), CORS, Docker Multi-Stage, `docker-compose`. |
 | `fastify-api` | **Fastify + TypeScript** | High-throughput backend, OpenAPI Swagger UI (`/docs`), Strict TS, Docker Multi-Stage, `docker-compose`. |
 | `hono-api` | **Hono + TypeScript** | Ultrafast lightweight TypeScript API (Node.js/Bun adapter), CORS, Logger, Docker & Compose. |
 | `node-express` | **Node.js + TypeScript** | Modular Express architecture (`controllers/`, `routes/`, `middlewares/`), Helmet, Morgan, CORS, Global Error Handler. |
@@ -127,6 +128,7 @@ When scaffolding backend or fullstack projects, Umaru CLI can automatically inje
 - 🐘 **Database Driver:** `PostgreSQL` (connection pool & healthcheck) or `SQLite` (embedded WAL mode).
 - 🔐 **Authentication:** `JWT` (claim generation & verification middleware).
 - 🔴 **Cache:** `Redis` (client connection pool & ping).
+- 🐳 **Containerization:** `Docker` (multi-stage `Dockerfile`, `docker-compose.yml`, `.dockerignore`).
 
 ```bash
 # Non-interactive addon specification
@@ -138,22 +140,26 @@ umaru init my-backend --no-addons
 
 ### ➕ Inject Addons into Existing Projects (`umaru add`)
 
-Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Python) and injects modular addons into your existing codebase. You can even stack multiple addons simultaneously in a single pass:
+Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Bun, Python) and injects modular addons into your existing codebase. You can even stack multiple addons simultaneously in a single pass:
 
 ```bash
 # Interactive multi-select addon wizard
 umaru add
 
+# Add containerization to your project
+umaru add docker
+
 # Stack multiple addons at once
-umaru add postgres redis jwt
+umaru add postgres redis jwt docker
 
 # Direct single addon injection
 umaru add redis
 umaru add jwt
 umaru add sqlite
+umaru add docker
 
 # Overwrite existing addon files
-umaru add redis --force
+umaru add docker --force
 ```
 
 ---
@@ -195,7 +201,7 @@ umaru doctor --verbose
 - ⚡ **Runtimes:** Go, Node.js, Python, Cargo (Rust).
 - 📦 **Package Managers:** npm, pnpm, yarn, bun, pip.
 - 🐳 **Containers:** Docker CLI, Docker Compose, and live Docker Daemon status.
-- 📊 **Template Readiness:** Percentage calculation of ready vs. missing tooling across all 18 templates.
+- 📊 **Template Readiness:** Percentage calculation of ready vs. missing tooling across all starter templates.
 - 💡 **Actionable Tips:** Direct installation links and commands for any missing tools.
 
 ---
@@ -221,17 +227,17 @@ irm https://raw.githubusercontent.com/Baranigsiz/UmaruCLI/main/install.ps1 | iex
 go install github.com/Baranigsiz/UmaruCLI@latest
 ```
 
-### 2. Pre-Compiled Binaries (Latest: [v1.7.0](https://github.com/Baranigsiz/UmaruCLI/releases/tag/v1.7.0))
+### 2. Pre-Compiled Binaries (Latest: [v1.8.0](https://github.com/Baranigsiz/UmaruCLI/releases/tag/v1.8.0))
 Download pre-built binary archives directly from the [GitHub Releases](https://github.com/Baranigsiz/UmaruCLI/releases):
 
 | Platform | Architecture | Binary Archive | Direct Download |
 |---|---|---|---|
-| **Windows** | `x86_64` (amd64) | `.zip` (`umaru.exe`) | [umaru_1.7.0_windows_amd64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.7.0/umaru_1.7.0_windows_amd64.zip) |
-| **Windows** | `ARM64` | `.zip` (`umaru.exe`) | [umaru_1.7.0_windows_arm64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.7.0/umaru_1.7.0_windows_arm64.zip) |
-| **macOS** | Apple Silicon (`arm64`) | `.tar.gz` (`umaru`) | [umaru_1.7.0_darwin_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.7.0/umaru_1.7.0_darwin_arm64.tar.gz) |
-| **macOS** | Intel (`x86_64`) | `.tar.gz` (`umaru`) | [umaru_1.7.0_darwin_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.7.0/umaru_1.7.0_darwin_amd64.tar.gz) |
-| **Linux** | `x86_64` (amd64) | `.tar.gz` (`umaru`) | [umaru_1.7.0_linux_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.7.0/umaru_1.7.0_linux_amd64.tar.gz) |
-| **Linux** | `ARM64` | `.tar.gz` (`umaru`) | [umaru_1.7.0_linux_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.7.0/umaru_1.7.0_linux_arm64.tar.gz) |
+| **Windows** | `x86_64` (amd64) | `.zip` (`umaru.exe`) | [umaru_1.8.0_windows_amd64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_windows_amd64.zip) |
+| **Windows** | `ARM64` | `.zip` (`umaru.exe`) | [umaru_1.8.0_windows_arm64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_windows_arm64.zip) |
+| **macOS** | Apple Silicon (`arm64`) | `.tar.gz` (`umaru`) | [umaru_1.8.0_darwin_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_darwin_arm64.tar.gz) |
+| **macOS** | Intel (`x86_64`) | `.tar.gz` (`umaru`) | [umaru_1.8.0_darwin_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_darwin_amd64.tar.gz) |
+| **Linux** | `x86_64` (amd64) | `.tar.gz` (`umaru`) | [umaru_1.8.0_linux_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_linux_amd64.tar.gz) |
+| **Linux** | `ARM64` | `.tar.gz` (`umaru`) | [umaru_1.8.0_linux_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v1.8.0/umaru_1.8.0_linux_arm64.tar.gz) |
 
 ### 3. Build from Source
 ```bash
@@ -300,16 +306,23 @@ Provide arguments to bypass prompts for automated workflows:
 # 1. Initialize a Go Fiber API with Postgres & JWT in the current folder
 umaru init . -t go-fiber --db postgres --auth jwt --no-git --skip-install
 
-# 2. Scaffold a React + Vite application with Bun package manager
+# 2. Scaffold with automatic initial Git commit
+umaru init my-elysia-api -t bun-elysia --commit
+
+# 3. Use command aliases ('umaru new' or 'umaru create')
+umaru new my-backend -t go-fiber
+umaru create my-frontend -t react-vite-ts
+
+# 4. Scaffold a React + Vite application with Bun package manager
 umaru init my-frontend -t react-vite-ts -p bun
 
-# 3. Scaffold directly from a remote GitHub repository
+# 5. Scaffold directly from a remote GitHub repository
 umaru init my-custom-app --from username/my-custom-starter
 
-# 4. Simulate file generation without writing to disk
+# 6. Simulate file generation without writing to disk
 umaru init test-app -t node-express --dry-run
 
-# 5. Stream live dependency installation output
+# 7. Stream live dependency installation output
 umaru init payment-service -t nestjs-api -p pnpm -v
 ```
 

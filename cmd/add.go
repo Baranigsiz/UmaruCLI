@@ -28,13 +28,15 @@ var addCmd = &cobra.Command{
   - sqlite   : SQLite embedded database setup
   - jwt      : JWT authentication middleware/guard
   - redis    : Redis cache client configuration
+  - docker   : Multi-stage Dockerfile, docker-compose.yml & .dockerignore
 
 Usage:
   umaru add                       # Interactive multi-select wizard
   umaru add redis                 # Add a single addon
+  umaru add docker                # Add Docker & Compose containerization
   umaru add postgres redis jwt    # Add multiple addons in one pass
   umaru add sqlite redis -f       # Overwrite existing addon files`,
-	ValidArgs: []string{"redis", "jwt", "postgres", "sqlite"},
+	ValidArgs: []string{"redis", "jwt", "postgres", "sqlite", "docker"},
 	Args:      cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		targetDir := addDirFlag
@@ -54,6 +56,8 @@ Usage:
 			for _, rawArg := range args {
 				arg := strings.ToLower(strings.TrimSpace(rawArg))
 				switch arg {
+				case "docker", "container", "compose":
+					addonConfig.Docker = true
 				case "redis", "cache":
 					addonConfig.Redis = true
 				case "jwt", "auth":
@@ -71,7 +75,7 @@ Usage:
 					}
 					addonConfig.Database = "sqlite"
 				default:
-					fmt.Printf("❌ Unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis\n", arg)
+					fmt.Printf("❌ Unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis, docker\n", arg)
 					os.Exit(1)
 				}
 			}
@@ -83,6 +87,7 @@ Usage:
 				huh.NewOption("📦 SQLite (Embedded file-based DB)", "sqlite"),
 				huh.NewOption("🔐 JWT (Authentication middleware & claims)", "jwt"),
 				huh.NewOption("🔴 Redis (In-memory caching client)", "redis"),
+				huh.NewOption("🐳 Docker (Multi-stage Dockerfile & Compose)", "docker"),
 			}
 
 			prompt := huh.NewMultiSelect[string]().
@@ -129,6 +134,8 @@ Usage:
 					addonConfig.Auth = "jwt"
 				case "redis":
 					addonConfig.Redis = true
+				case "docker":
+					addonConfig.Docker = true
 				}
 			}
 		}
@@ -208,6 +215,9 @@ Usage:
 		}
 		if addonConfig.Redis {
 			addonsList = append(addonsList, "Cache: Redis")
+		}
+		if addonConfig.Docker {
+			addonsList = append(addonsList, "Docker: Containerized")
 		}
 
 		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("Injected:   "), valueStyle.Render(strings.Join(addonsList, ", "))))

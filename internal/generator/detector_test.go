@@ -82,6 +82,11 @@ func TestDetectProject_NodeFrameworks(t *testing.T) {
 			pkgJSON:   `{"name": "my-nest", "dependencies": {"@nestjs/core": "^10.0.0"}}`,
 			expectedF: "nestjs-api",
 		},
+		{
+			name:      "Elysia",
+			pkgJSON:   `{"name": "my-elysia", "dependencies": {"elysia": "^1.1.25"}}`,
+			expectedF: "bun-elysia",
+		},
 	}
 
 	for _, tt := range tests {

@@ -1,0 +1,39 @@
+# {{.ProjectName}} ⚡
+
+A high-performance, developer-friendly TypeScript REST API built with [Bun](https://bun.sh) and [Elysia.js](https://elysiajs.com).
+
+## ✨ Features
+
+- 🏎️ **Ultra-Fast Runtime:** Powered by Bun, providing near-instant startup and high throughput.
+- 📚 **Interactive Swagger OpenAPI:** Available at `/docs` out of the box via `@elysiajs/swagger`.
+- 🛡️ **CORS & Type Safety:** End-to-end type safety and cross-origin security configured.
+- 🐳 **Docker & Docker Compose:** Multi-stage production container setup ready to deploy.
+
+## 🚀 Getting Started
+
+### Prerequisites
+- [Bun](https://bun.sh) installed:
+  ```bash
+  curl -fsSL https://bun.sh/install | bash
+  ```
+
+### Development
+```bash
+bun install
+bun run dev
+```
+
+The API will start at: `http://localhost:3000`  
+Swagger Documentation: `http://localhost:3000/docs`  
+Healthcheck: `http://localhost:3000/health`
+
+### Production Build
+```bash
+bun run build
+bun start
+```
+
+### Docker
+```bash
+docker-compose up --build
+```

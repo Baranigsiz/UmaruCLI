@@ -33,6 +33,7 @@ var (
 	forceFlag          bool
 	verboseFlag        bool
 	dryRunFlag         bool
+	commitFlag         bool
 )
 
 func runScaffoldWorkflow(
@@ -40,6 +41,7 @@ func runScaffoldWorkflow(
 	generateFn func() (*templates.TemplateConfig, error),
 	defaultInstallCmd []string,
 	noGit bool,
+	commit bool,
 	skipInstall bool,
 	verbose bool,
 	templateTitle string,
@@ -68,6 +70,11 @@ func runScaffoldWorkflow(
 			fmt.Println("📦 Initializing Git repository...")
 			if err := actions.InitGit(projConfig.TargetDir); err != nil {
 				fmt.Printf("⚠️ Git init warning: %v\n", err)
+			} else if commit {
+				fmt.Println("📝 Creating initial Git commit...")
+				if err := actions.CommitGit(projConfig.TargetDir, "chore: initial commit via umaru"); err != nil {
+					fmt.Printf("⚠️ Git commit warning: %v\n", err)
+				}
 			}
 		}
 		if !skipInstall && len(installCmd) > 0 {
@@ -103,6 +110,9 @@ func runScaffoldWorkflow(
 
 				if !noGit {
 					gitErr = actions.InitGit(projConfig.TargetDir)
+					if gitErr == nil && commit {
+						gitErr = actions.CommitGit(projConfig.TargetDir, "chore: initial commit via umaru")
+					}
 				}
 
 				if !skipInstall && len(installCmd) > 0 {
@@ -133,8 +143,9 @@ func runScaffoldWorkflow(
 }
 
 var initCmd = &cobra.Command{
-	Use:   "init [project-name]",
-	Short: "Initialize a new project",
+	Use:     "init [project-name]",
+	Aliases: []string{"new", "create"},
+	Short:   "Initialize a new project",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var initialName string
@@ -184,7 +195,7 @@ var initCmd = &cobra.Command{
 				return generator.GenerateFromRemote(fromFlag, projConfig)
 			}
 
-			runScaffoldWorkflow(projConfig, generateRemote, nil, noGitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), "")
+			runScaffoldWorkflow(projConfig, generateRemote, nil, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), "")
 			return
 		}
 
@@ -252,7 +263,7 @@ var initCmd = &cobra.Command{
 			return &result.Template, nil
 		}
 
-		runScaffoldWorkflow(projConfig, generateLocal, installCmd, noGitFlag, skipInstallFlag, verboseFlag, result.Template.Name, runCmd)
+		runScaffoldWorkflow(projConfig, generateLocal, installCmd, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, result.Template.Name, runCmd)
 	},
 }
 
@@ -265,6 +276,7 @@ func init() {
 	initCmd.Flags().BoolVar(&redisFlag, "redis", false, "Include Redis caching client addon")
 	initCmd.Flags().BoolVar(&noAddonsFlag, "no-addons", false, "Skip interactive addon configuration wizard")
 	initCmd.Flags().BoolVar(&noGitFlag, "no-git", false, "Skip git repository initialization")
+	initCmd.Flags().BoolVar(&commitFlag, "commit", false, "Create an initial git commit after scaffolding")
 	initCmd.Flags().BoolVar(&skipInstallFlag, "skip-install", false, "Skip installing dependencies")
 	initCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Overwrite existing files in target directory")
 	initCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Show detailed installation command logs")
