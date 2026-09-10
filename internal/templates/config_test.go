@@ -27,6 +27,15 @@ func TestGetAvailableTemplates(t *testing.T) {
 	}
 }
 
+func BenchmarkGetAvailableTemplates(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := GetAvailableTemplates()
+		if err != nil {
+			b.Fatalf("unexpected error: %v", err)
+		}
+	}
+}
+
 func TestTemplateConfig_NodeHelpers(t *testing.T) {
 	nodeTmpl := TemplateConfig{
 		ID:             "react-vite-ts",

@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"path"
 	"strings"
+	"sync"
 )
 
 type TemplateConfig struct {
@@ -34,38 +35,53 @@ func (t TemplateConfig) GetCategory() string {
 	}
 }
 
-// GetAvailableTemplates scans the embedded FS for template.json files
+var (
+	cachedTemplates []TemplateConfig
+	templatesOnce   sync.Once
+	templatesErr    error
+)
+
+// GetAvailableTemplates scans the embedded FS for template.json files (cached after first read)
 func GetAvailableTemplates() ([]TemplateConfig, error) {
-	var templates []TemplateConfig
-
-	entries, err := fs.ReadDir(FS, ".")
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		// Try to read template.json inside this directory
-		configPath := path.Join(entry.Name(), "template.json")
-		content, err := FS.ReadFile(configPath)
+	templatesOnce.Do(func() {
+		entries, err := fs.ReadDir(FS, ".")
 		if err != nil {
-			// If template.json doesn't exist, skip this directory
-			continue
+			templatesErr = err
+			return
 		}
 
-		var config TemplateConfig
-		if err := json.Unmarshal(content, &config); err != nil {
-			return nil, err
-		}
-		config.ID = entry.Name()
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
 
-		templates = append(templates, config)
+			// Try to read template.json inside this directory
+			configPath := path.Join(entry.Name(), "template.json")
+			content, err := FS.ReadFile(configPath)
+			if err != nil {
+				// If template.json doesn't exist, skip this directory
+				continue
+			}
+
+			var config TemplateConfig
+			if err := json.Unmarshal(content, &config); err != nil {
+				templatesErr = err
+				return
+			}
+			config.ID = entry.Name()
+
+			cachedTemplates = append(cachedTemplates, config)
+		}
+	})
+
+	if templatesErr != nil {
+		return nil, templatesErr
 	}
 
-	return templates, nil
+	// Return a copy so callers cannot mutate the cache
+	result := make([]TemplateConfig, len(cachedTemplates))
+	copy(result, cachedTemplates)
+	return result, nil
 }
 
 // FindTemplateByID looks for a template matching the given ID.

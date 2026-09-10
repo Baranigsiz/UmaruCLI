@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 	"umaru/internal/templates"
 )
@@ -208,32 +209,32 @@ func RunDiagnostics(umaruVersion string) DoctorReport {
 		},
 	}
 
-	var results []ToolCheck
-	toolMap := make(map[string]ToolCheck)
+	results := make([]ToolCheck, len(toolDefs))
+	var daemonStatus ToolCheck
+	var wg sync.WaitGroup
+	wg.Add(len(toolDefs) + 1)
 
-	for _, tc := range toolDefs {
-		checked := inspectTool(tc)
-		results = append(results, checked)
+	for i, tc := range toolDefs {
+		go func(idx int, check ToolCheck) {
+			defer wg.Done()
+			results[idx] = inspectTool(check)
+		}(i, tc)
+	}
+
+	go func() {
+		defer wg.Done()
+		daemonStatus = inspectDockerDaemon()
+	}()
+
+	wg.Wait()
+
+	toolMap := make(map[string]ToolCheck, len(results)+1)
+	for _, checked := range results {
 		toolMap[strings.ToLower(checked.Name)] = checked
 	}
 
-	// Extra check: Docker Daemon status if Docker CLI is installed
-	dockerCLI, hasDocker := toolMap["docker cli"]
-	if hasDocker && dockerCLI.Status == StatusOk {
-		daemonStatus := inspectDockerDaemon()
-		results = append(results, daemonStatus)
-		toolMap["docker daemon"] = daemonStatus
-	} else {
-		results = append(results, ToolCheck{
-			Name:        "Docker Daemon",
-			Category:    "Containers",
-			Status:      StatusMissing,
-			Required:    false,
-			Description: "Docker daemon engine state",
-			Notes:       "Docker CLI not found",
-			InstallTip:  "Install Docker Desktop",
-		})
-	}
+	results = append(results, daemonStatus)
+	toolMap["docker daemon"] = daemonStatus
 
 	// Calculate Template Readiness Matrix
 	readiness := calculateReadiness(toolMap)
@@ -303,6 +304,13 @@ func inspectDockerDaemon() ToolCheck {
 		Required:    false,
 		Description: "Docker daemon engine state",
 		InstallTip:  "Start Docker Desktop or run 'sudo systemctl start docker'",
+	}
+
+	if _, err := exec.LookPath("docker"); err != nil {
+		check.Status = StatusMissing
+		check.Notes = "Docker CLI not found"
+		check.InstallTip = "Install Docker Desktop"
+		return check
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
