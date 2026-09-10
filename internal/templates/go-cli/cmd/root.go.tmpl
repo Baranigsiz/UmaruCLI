@@ -1,0 +1,57 @@
+package cmd
+
+import (
+	"fmt"
+	"os"
+
+	"{{ .ModuleName }}/internal/config"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+var (
+	cfgFile string
+	verbose bool
+)
+
+var bannerStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("#FF79C6")).
+	MarginBottom(1)
+
+var rootCmd = &cobra.Command{
+	Use:   "{{ .SafeName }}",
+	Short: "{{ .ProjectName }} — Modern CLI & TUI application",
+	Long: bannerStyle.Render("⚡ {{ .ProjectName }}") + "\n" +
+		"A blazing fast, modern Command-Line Interface and interactive TUI built with Go, Cobra & Bubble Tea.",
+	Run: func(cmd *cobra.Command, args []string) {
+		// If no subcommands are provided, display help
+		_ = cmd.Help()
+	},
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func init() {
+	cobra.OnInitialize(initConfig)
+
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.{{ .SafeName }}.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
+}
+
+func initConfig() {
+	if err := config.LoadConfig(cfgFile); err != nil {
+		if verbose {
+			fmt.Printf("Config notice: %v\n", err)
+		}
+	}
+	viper.Set("verbose", verbose)
+}

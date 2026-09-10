@@ -1,0 +1,50 @@
+package config
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/viper"
+)
+
+type Config struct {
+	AppName string `mapstructure:"app_name"`
+	Theme   string `mapstructure:"theme"`
+	Verbose bool   `mapstructure:"verbose"`
+}
+
+var Current Config
+
+// LoadConfig initializes Viper to read environment variables and optional configuration files
+func LoadConfig(cfgFile string) error {
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			viper.AddConfigPath(home)
+		}
+		viper.AddConfigPath(".")
+		viper.SetConfigType("yaml")
+		viper.SetConfigName(".{{ .SafeName }}")
+	}
+
+	viper.SetDefault("app_name", "{{ .ProjectName }}")
+	viper.SetDefault("theme", "dracula")
+	viper.SetDefault("verbose", false)
+
+	viper.SetEnvPrefix("{{ .SafeName }}")
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return fmt.Errorf("failed to read config file: %w", err)
+		}
+	}
+
+	if err := viper.Unmarshal(&Current); err != nil {
+		return fmt.Errorf("failed unmarshaling config: %w", err)
+	}
+
+	return nil
+}

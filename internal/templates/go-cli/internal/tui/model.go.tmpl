@@ -1,0 +1,136 @@
+package tui
+
+import (
+	"fmt"
+	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+var (
+	titleStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#FFFFFF")).
+			Background(lipgloss.Color("#7D56F4")).
+			Padding(0, 1).
+			MarginBottom(1)
+
+	itemStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#E2E8F0")).
+			PaddingLeft(2)
+
+	selectedItemStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#50FA7B")).
+				PaddingLeft(1)
+
+	descStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#6272A4")).
+			Italic(true)
+
+	cardStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#BD93F9")).
+			Padding(1, 2).
+			MarginTop(1)
+
+	helpStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#6272A4")).
+			MarginTop(1)
+)
+
+type Item struct {
+	Title       string
+	Description string
+}
+
+type Model struct {
+	Items    []Item
+	Cursor   int
+	Selected map[int]bool
+	Quitting bool
+}
+
+func InitialModel() Model {
+	return Model{
+		Items: []Item{
+			{Title: "🚀 Quick Diagnostic", Description: "Inspect your developer environment & CLI tools"},
+			{Title: "⚡ Scaffolding Engine", Description: "Generate full-stack boilerplates with ease"},
+			{Title: "📦 Dependency Manager", Description: "Synchronize and update project packages"},
+			{Title: "🔐 Security Audit", Description: "Run vulnerability scans on target binaries"},
+			{Title: "🐳 Container Status", Description: "Check Docker daemon readiness and running containers"},
+		},
+		Selected: make(map[int]bool),
+	}
+}
+
+func (m Model) Init() tea.Cmd {
+	return nil
+}
+
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q", "esc":
+			m.Quitting = true
+			return m, tea.Quit
+		case "up", "k":
+			if m.Cursor > 0 {
+				m.Cursor--
+			}
+		case "down", "j":
+			if m.Cursor < len(m.Items)-1 {
+				m.Cursor++
+			}
+		case "enter", " ":
+			m.Selected[m.Cursor] = !m.Selected[m.Cursor]
+		}
+	}
+	return m, nil
+}
+
+func (m Model) View() string {
+	if m.Quitting {
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Render("\n  ✨ Thank you for using {{ .ProjectName }}!\n\n")
+	}
+
+	var b strings.Builder
+
+	b.WriteString(titleStyle.Render("⚡ {{ .ProjectName }} Interactive TUI"))
+	b.WriteString("\n\n")
+
+	for i, item := range m.Items {
+		cursor := " "
+		checked := "[ ]"
+		if m.Selected[i] {
+			checked = "[✓]"
+		}
+
+		if m.Cursor == i {
+			cursor = "❯"
+			line := fmt.Sprintf("%s %s %s", cursor, checked, item.Title)
+			b.WriteString(selectedItemStyle.Render(line))
+			b.WriteString("\n   " + descStyle.Render(item.Description) + "\n")
+		} else {
+			line := fmt.Sprintf("%s %s %s", cursor, checked, item.Title)
+			b.WriteString(itemStyle.Render(line))
+			b.WriteString("\n")
+		}
+	}
+
+	activeItem := m.Items[m.Cursor]
+	detailCard := cardStyle.Render(fmt.Sprintf(
+		"Active Item: %s\nDetails:     %s",
+		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FF79C6")).Render(activeItem.Title),
+		activeItem.Description,
+	))
+
+	b.WriteString(detailCard)
+	b.WriteString("\n")
+	b.WriteString(helpStyle.Render("↑/↓, k/j: navigate • space/enter: toggle • q/esc: exit"))
+	b.WriteString("\n")
+
+	return b.String()
+}

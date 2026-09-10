@@ -1,0 +1,58 @@
+# {{ .ProjectName }} ⚡
+
+> Modern Command-Line Interface and Interactive TUI built in Go with [Cobra](https://github.com/spf13/cobra), [Bubble Tea](https://github.com/charmbracelet/bubbletea), [Lipgloss](https://github.com/charmbracelet/lipgloss), and [Viper](https://github.com/spf13/viper).
+
+---
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies
+```bash
+go mod tidy
+```
+
+### 2. Run CLI Help
+```bash
+go run main.go --help
+```
+
+### 3. Launch Interactive Terminal UI
+```bash
+go run main.go interactive
+```
+
+---
+
+## 📦 Project Architecture
+
+```text
+├── cmd/
+│   ├── root.go         # Cobra root command & persistent flags
+│   ├── interactive.go  # Bubble Tea interactive TUI trigger
+│   └── version.go      # Version & build info command
+├── internal/
+│   ├── config/         # Viper configuration loader
+│   └── tui/            # Bubble Tea models & Lipgloss styling
+├── Makefile            # Build and development commands
+└── main.go             # Application entry point
+```
+
+---
+
+## 🛠️ Build & Development
+
+- **Build binary:**
+  ```bash
+  make build
+  # Generates executable in bin/{{ .SafeName }}
+  ```
+
+- **Run tests:**
+  ```bash
+  make test
+  ```
+
+- **Run directly:**
+  ```bash
+  ./bin/{{ .SafeName }} interactive
+  ```

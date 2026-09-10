@@ -69,7 +69,9 @@ func DetectProject(dir string) (*DetectedProject, error) {
 		}
 
 		framework := "go-fiber"
-		if strings.Contains(modContent, "github.com/labstack/echo") {
+		if strings.Contains(modContent, "github.com/spf13/cobra") {
+			framework = "go-cli"
+		} else if strings.Contains(modContent, "github.com/labstack/echo") {
 			framework = "go-echo"
 		} else if strings.Contains(modContent, "github.com/gin-gonic/gin") {
 			framework = "go-gin"

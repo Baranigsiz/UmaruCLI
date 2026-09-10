@@ -45,6 +45,8 @@ func GetSupportedAddons(templateID string) []string {
 	switch templateID {
 	case "go-fiber", "go-gin", "go-echo", "fastify-api", "hono-api", "node-express", "nestjs-api", "python-fastapi", "ai-fastapi-starter", "fullstack-go-react", "fullstack-ts-monorepo", "bun-elysia":
 		return []string{"🐘 PostgreSQL", "📦 SQLite", "🔴 Redis", "🔐 JWT Auth"}
+	case "go-cli":
+		return []string{"📦 SQLite", "🔴 Redis", "🐳 Docker"}
 	case "rust-actix", "rust-axum":
 		return []string{"Docker Compose Services"}
 	default:

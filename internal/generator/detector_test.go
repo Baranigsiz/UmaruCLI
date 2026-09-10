@@ -34,6 +34,37 @@ require github.com/gofiber/fiber/v2 v2.52.5
 	}
 }
 
+func TestDetectProject_GoCLI(t *testing.T) {
+	tempDir := t.TempDir()
+	goModContent := `module my-cli-tool
+
+go 1.23
+
+require (
+	github.com/spf13/cobra v1.8.1
+	github.com/charmbracelet/bubbletea v1.2.4
+)
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(goModContent), 0644); err != nil {
+		t.Fatalf("failed to write go.mod: %v", err)
+	}
+
+	proj, err := DetectProject(tempDir)
+	if err != nil {
+		t.Fatalf("DetectProject failed: %v", err)
+	}
+
+	if proj.Type != ProjectTypeGo {
+		t.Errorf("Expected type %v, got %v", ProjectTypeGo, proj.Type)
+	}
+	if proj.Framework != "go-cli" {
+		t.Errorf("Expected framework go-cli, got %s", proj.Framework)
+	}
+	if proj.ModuleName != "my-cli-tool" {
+		t.Errorf("Expected moduleName my-cli-tool, got %s", proj.ModuleName)
+	}
+}
+
 func TestDetectProject_GoEcho(t *testing.T) {
 	tempDir := t.TempDir()
 	goModContent := `module echo-service

@@ -1,0 +1,28 @@
+package cmd
+
+import (
+	"fmt"
+	"os"
+
+	"{{ .ModuleName }}/internal/tui"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/spf13/cobra"
+)
+
+var interactiveCmd = &cobra.Command{
+	Use:     "interactive",
+	Aliases: []string{"tui", "ui"},
+	Short:   "Launch the interactive Terminal UI",
+	Run: func(cmd *cobra.Command, args []string) {
+		p := tea.NewProgram(tui.InitialModel(), tea.WithAltScreen())
+		if _, err := p.Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error running TUI: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(interactiveCmd)
+}
