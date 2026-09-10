@@ -14,9 +14,10 @@ type AddonConfig struct {
 	Auth     string `json:"auth,omitempty"`     // "none", "jwt"
 	Redis    bool   `json:"redis,omitempty"`    // true/false
 	Docker   bool   `json:"docker,omitempty"`   // true/false
+	CI       bool   `json:"ci,omitempty"`       // true/false
 }
 
-// TemplateSupportsAddons checks if the template supports the optional addons (DB, Auth, Redis, Docker)
+// TemplateSupportsAddons checks if the template supports the optional addons (DB, Auth, Redis, Docker, CI)
 func TemplateSupportsAddons(templateID string) bool {
 	return strings.HasPrefix(templateID, "go-") ||
 		templateID == "fullstack-go-react" ||
@@ -27,14 +28,15 @@ func TemplateSupportsAddons(templateID string) bool {
 		strings.HasPrefix(templateID, "fastify-") ||
 		strings.HasPrefix(templateID, "bun-") ||
 		strings.HasPrefix(templateID, "python-") ||
-		strings.HasPrefix(templateID, "ai-")
+		strings.HasPrefix(templateID, "ai-") ||
+		strings.HasPrefix(templateID, "rust-")
 }
 
 // HasAddons returns true if any addon is enabled
 func (a AddonConfig) HasAddons() bool {
 	db := strings.ToLower(strings.TrimSpace(a.Database))
 	auth := strings.ToLower(strings.TrimSpace(a.Auth))
-	return (db != "" && db != "none") || (auth != "" && auth != "none") || a.Redis || a.Docker
+	return (db != "" && db != "none") || (auth != "" && auth != "none") || a.Redis || a.Docker || a.CI
 }
 
 // GetAddonFiles returns the list of file paths that will be generated for the selected addons
@@ -57,6 +59,9 @@ func GetAddonFiles(config ProjectConfig) []string {
 	}
 	if config.Addons.Docker {
 		files = append(files, getDockerFiles(baseDir)...)
+	}
+	if config.Addons.CI {
+		files = append(files, getCIFiles(baseDir)...)
 	}
 
 	return files
@@ -81,6 +86,11 @@ func GenerateAddons(config ProjectConfig) error {
 	}
 	if config.Addons.Docker {
 		if err := generateDockerAddon(config, baseDir); err != nil {
+			return err
+		}
+	}
+	if config.Addons.CI {
+		if err := generateCIAddon(config, baseDir); err != nil {
 			return err
 		}
 	}
@@ -120,6 +130,10 @@ func isNodeTemplate(templateID string) bool {
 
 func isPythonTemplate(templateID string) bool {
 	return strings.HasPrefix(templateID, "python-") || strings.HasPrefix(templateID, "ai-")
+}
+
+func isRustTemplate(templateID string) bool {
+	return strings.HasPrefix(templateID, "rust-")
 }
 
 // injectPythonDependencies appends missing packages to requirements.txt

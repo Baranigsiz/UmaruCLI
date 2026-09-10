@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -149,3 +150,29 @@ func TestCompletionCmd(t *testing.T) {
 		}
 	}
 }
+
+func TestAddCmd_CI(t *testing.T) {
+	tempDir := t.TempDir()
+	goMod := "module test-app\ngo 1.24\n"
+	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(goMod), 0644); err != nil {
+		t.Fatalf("failed to write go.mod: %v", err)
+	}
+
+	out, err := executeCommand("add", "ci", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("add ci failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Addon(s) Injected Successfully") {
+		t.Errorf("Expected success output, got: %s", out)
+	}
+	if !strings.Contains(out, "CI/CD: GitHub Actions") {
+		t.Errorf("Expected output to mention CI/CD: GitHub Actions, got: %s", out)
+	}
+
+	ciPath := filepath.Join(tempDir, ".github", "workflows", "ci.yml")
+	if _, err := os.Stat(ciPath); os.IsNotExist(err) {
+		t.Errorf("Expected .github/workflows/ci.yml to be created, but it doesn't exist")
+	}
+}
+

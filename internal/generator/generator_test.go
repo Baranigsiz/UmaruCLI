@@ -208,8 +208,8 @@ func TestCheckDestination(t *testing.T) {
 }
 
 func TestTemplateSupportsAddons(t *testing.T) {
-	supported := []string{"go-fiber", "go-gin", "go-echo", "fullstack-go-react", "node-express", "nestjs-api", "hono-api", "fastify-api", "python-fastapi"}
-	unsupported := []string{"react-vite-ts", "vue-vite-ts", "svelte-vite-ts", "nextjs-tailwind", "astro-tailwind", "rust-actix", "rust-axum"}
+	supported := []string{"go-fiber", "go-gin", "go-echo", "fullstack-go-react", "node-express", "nestjs-api", "hono-api", "fastify-api", "python-fastapi", "rust-actix", "rust-axum"}
+	unsupported := []string{"react-vite-ts", "vue-vite-ts", "svelte-vite-ts", "nextjs-tailwind", "astro-tailwind"}
 
 	for _, id := range supported {
 		if !TemplateSupportsAddons(id) {

@@ -17,7 +17,7 @@ type TemplateConfig struct {
 	RunCommand     string   `json:"runCommand"`
 }
 
-// GetCategory returns the category of the template (Frontend, Backend, Fullstack)
+// GetCategory returns the category of the template (Frontend, Backend, Fullstack, CLI)
 func (t TemplateConfig) GetCategory() string {
 	if t.Category != "" {
 		return t.Category
@@ -27,6 +27,8 @@ func (t TemplateConfig) GetCategory() string {
 		return "Frontend"
 	case "fullstack-go-react", "fullstack-ts-monorepo":
 		return "Fullstack"
+	case "go-cli":
+		return "CLI"
 	default:
 		return "Backend"
 	}

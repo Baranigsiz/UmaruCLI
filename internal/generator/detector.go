@@ -16,12 +16,13 @@ const (
 	ProjectTypeGo      ProjectType = "go"
 	ProjectTypeNode    ProjectType = "node"
 	ProjectTypePython  ProjectType = "python"
+	ProjectTypeRust    ProjectType = "rust"
 	ProjectTypeUnknown ProjectType = "unknown"
 )
 
 type DetectedProject struct {
-	Type        ProjectType // "go", "node", "python"
-	Framework   string      // "go-fiber", "go-gin", "go-echo", "node-express", "fastify-api", "hono-api", "nestjs-api", "python-fastapi"
+	Type        ProjectType // "go", "node", "python", "rust"
+	Framework   string      // "go-fiber", "go-gin", "go-echo", "node-express", "fastify-api", "hono-api", "nestjs-api", "python-fastapi", "rust-axum", "rust-actix"
 	TargetDir   string      // Cleaned target directory
 	ModuleName  string      // Go module name or safe identifier
 	ProjectName string      // Base directory or package name
@@ -152,7 +153,56 @@ func DetectProject(dir string) (*DetectedProject, error) {
 		}, nil
 	}
 
-	return nil, fmt.Errorf("no supported project found in '%s' (must contain go.mod, package.json, or requirements.txt/pyproject.toml)", targetDir)
+	// 4. Check for Rust (Cargo.toml)
+	cargoPath := filepath.Join(targetDir, "Cargo.toml")
+	if cargoData, err := os.ReadFile(cargoPath); err == nil {
+		cargoData = bytes.TrimPrefix(cargoData, []byte("\xef\xbb\xbf"))
+		cargoContent := string(cargoData)
+		pkgName := extractCargoPackageName(cargoContent)
+		if pkgName == "" {
+			pkgName = baseName
+		}
+
+		framework := "rust-axum"
+		if strings.Contains(cargoContent, "actix-web") {
+			framework = "rust-actix"
+		} else if strings.Contains(cargoContent, "axum") {
+			framework = "rust-axum"
+		}
+
+		return &DetectedProject{
+			Type:        ProjectTypeRust,
+			Framework:   framework,
+			TargetDir:   targetDir,
+			ModuleName:  Slugify(pkgName),
+			ProjectName: pkgName,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("no supported project found in '%s' (must contain go.mod, package.json, requirements.txt/pyproject.toml, or Cargo.toml)", targetDir)
+}
+
+func extractCargoPackageName(cargoContent string) string {
+	scanner := bufio.NewScanner(strings.NewReader(cargoContent))
+	inPackage := false
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "[") {
+			inPackage = (line == "[package]")
+			continue
+		}
+		if inPackage && strings.HasPrefix(line, "name") {
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 {
+				val := strings.TrimSpace(parts[1])
+				val = strings.Trim(val, `"'`)
+				if val != "" {
+					return val
+				}
+			}
+		}
+	}
+	return ""
 }
 
 func extractGoModuleName(modContent string) string {
@@ -173,3 +223,4 @@ func fileExists(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && !info.IsDir()
 }
+

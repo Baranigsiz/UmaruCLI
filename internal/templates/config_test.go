@@ -121,5 +121,23 @@ func TestFindTemplateByID(t *testing.T) {
 	}
 }
 
+func TestTemplateConfig_GetCategory(t *testing.T) {
+	tests := []struct {
+		config   TemplateConfig
+		expected string
+	}{
+		{TemplateConfig{ID: "react-vite-ts"}, "Frontend"},
+		{TemplateConfig{ID: "nextjs-tailwind"}, "Frontend"},
+		{TemplateConfig{ID: "fullstack-go-react"}, "Fullstack"},
+		{TemplateConfig{ID: "go-cli"}, "CLI"},
+		{TemplateConfig{ID: "go-fiber"}, "Backend"},
+		{TemplateConfig{ID: "custom", Category: "CustomCat"}, "CustomCat"},
+	}
 
-
+	for _, tt := range tests {
+		cat := tt.config.GetCategory()
+		if cat != tt.expected {
+			t.Errorf("For template %s, expected category %s, got %s", tt.config.ID, tt.expected, cat)
+		}
+	}
+}

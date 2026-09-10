@@ -342,7 +342,7 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 
 	groups := map[string]*TemplateReadiness{
 		"Go": {
-			Category: "Go (Fiber, Gin, Echo)",
+			Category: "Go (Fiber, Gin, Echo, Cobra CLI)",
 		},
 		"Node/TypeScript": {
 			Category: "Node/TypeScript (Express, Fastify, Hono, NestJS, React, Vue, Svelte, Next, Astro)",

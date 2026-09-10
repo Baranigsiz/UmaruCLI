@@ -29,14 +29,16 @@ var addCmd = &cobra.Command{
   - jwt      : JWT authentication middleware/guard
   - redis    : Redis cache client configuration
   - docker   : Multi-stage Dockerfile, docker-compose.yml & .dockerignore
+  - ci       : GitHub Actions CI/CD pipeline (.github/workflows/ci.yml)
 
 Usage:
   umaru add                       # Interactive multi-select wizard
   umaru add redis                 # Add a single addon
   umaru add docker                # Add Docker & Compose containerization
+  umaru add ci                    # Add GitHub Actions CI/CD pipeline
   umaru add postgres redis jwt    # Add multiple addons in one pass
   umaru add sqlite redis -f       # Overwrite existing addon files`,
-	ValidArgs: []string{"redis", "jwt", "postgres", "sqlite", "docker"},
+	ValidArgs: []string{"redis", "jwt", "postgres", "sqlite", "docker", "ci"},
 	Args:      cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		targetDir := addDirFlag
@@ -56,6 +58,8 @@ Usage:
 			for _, rawArg := range args {
 				arg := strings.ToLower(strings.TrimSpace(rawArg))
 				switch arg {
+				case "ci", "github-actions", "workflow", "actions":
+					addonConfig.CI = true
 				case "docker", "container", "compose":
 					addonConfig.Docker = true
 				case "redis", "cache":
@@ -75,7 +79,7 @@ Usage:
 					}
 					addonConfig.Database = "sqlite"
 				default:
-					fmt.Printf("❌ Unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis, docker\n", arg)
+					fmt.Printf("❌ Unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis, docker, ci\n", arg)
 					os.Exit(1)
 				}
 			}
@@ -88,6 +92,7 @@ Usage:
 				huh.NewOption("🔐 JWT (Authentication middleware & claims)", "jwt"),
 				huh.NewOption("🔴 Redis (In-memory caching client)", "redis"),
 				huh.NewOption("🐳 Docker (Multi-stage Dockerfile & Compose)", "docker"),
+				huh.NewOption("🤖 GitHub Actions CI/CD (.github/workflows/ci.yml)", "ci"),
 			}
 
 			prompt := huh.NewMultiSelect[string]().
@@ -136,6 +141,8 @@ Usage:
 					addonConfig.Redis = true
 				case "docker":
 					addonConfig.Docker = true
+				case "ci":
+					addonConfig.CI = true
 				}
 			}
 		}
@@ -219,6 +226,9 @@ Usage:
 		if addonConfig.Docker {
 			addonsList = append(addonsList, "Docker: Containerized")
 		}
+		if addonConfig.CI {
+			addonsList = append(addonsList, "CI/CD: GitHub Actions")
+		}
 
 		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("Injected:   "), valueStyle.Render(strings.Join(addonsList, ", "))))
 		sb.WriteString(fmt.Sprintf("%s %s (%s)\n", labelStyle.Render("Project:    "), valueStyle.Render(proj.ProjectName), valueStyle.Render(string(proj.Framework))))
@@ -244,6 +254,9 @@ Usage:
 		case generator.ProjectTypeGo:
 			sb.WriteString("  1. 'go mod tidy' was automatically executed\n")
 			sb.WriteString("  2. Import and initialize the addon in your main entrypoint\n")
+		case generator.ProjectTypeRust:
+			sb.WriteString(fmt.Sprintf("  1. Run %s to verify your project dependencies and builds\n", cmdStyle.Render("cargo check")))
+			sb.WriteString("  2. Review the generated configuration in your project\n")
 		}
 
 		fmt.Println(boxStyle.Render(sb.String()))

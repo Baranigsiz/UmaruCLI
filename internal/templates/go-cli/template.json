@@ -1,6 +1,7 @@
 {
   "name": "Go CLI & Interactive TUI",
   "description": "Modern Command-Line Interface and interactive TUI in Go with Cobra, Bubble Tea, Lipgloss & Viper.",
+  "category": "CLI",
   "installCommand": ["go", "mod", "tidy"],
   "runCommand": "go run main.go --help"
 }

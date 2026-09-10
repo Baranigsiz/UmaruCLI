@@ -18,7 +18,8 @@ func TestAddonConfig_HasAddons(t *testing.T) {
 		{AddonConfig{Auth: "jwt"}, true},
 		{AddonConfig{Redis: true}, true},
 		{AddonConfig{Docker: true}, true},
-		{AddonConfig{Database: "sqlite", Auth: "jwt", Redis: true, Docker: true}, true},
+		{AddonConfig{CI: true}, true},
+		{AddonConfig{Database: "sqlite", Auth: "jwt", Redis: true, Docker: true, CI: true}, true},
 	}
 
 	for _, tt := range tests {
@@ -227,6 +228,7 @@ func TestGenerateAddons_Docker(t *testing.T) {
 		{"node-express", "node:20-alpine"},
 		{"bun-elysia", "oven/bun:1"},
 		{"python-fastapi", "python:3.11-slim"},
+		{"rust-axum", "rust:1.80-slim-bullseye"},
 	}
 
 	for _, tc := range testCases {
@@ -267,3 +269,41 @@ func TestGenerateAddons_Docker(t *testing.T) {
 	}
 }
 
+func TestGenerateAddons_CI(t *testing.T) {
+	tempDir := t.TempDir()
+
+	testCases := []struct {
+		framework string
+		needle    string
+	}{
+		{"go-fiber", "actions/setup-go@v5"},
+		{"node-express", "actions/setup-node@v4"},
+		{"bun-elysia", "oven-sh/setup-bun@v2"},
+		{"python-fastapi", "actions/setup-python@v5"},
+		{"rust-axum", "dtolnay/rust-toolchain@stable"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.framework, func(t *testing.T) {
+			projPath := filepath.Join(tempDir, tc.framework+"-ci")
+			cfg, err := ResolveProjectConfig(projPath, tc.framework)
+			if err != nil {
+				t.Fatalf("ResolveProjectConfig failed: %v", err)
+			}
+			cfg.Addons = AddonConfig{CI: true}
+
+			if err := Generate(cfg); err != nil {
+				t.Fatalf("Generate failed: %v", err)
+			}
+
+			ciWorkflowPath := filepath.Join(projPath, ".github", "workflows", "ci.yml")
+			ciContent, err := os.ReadFile(ciWorkflowPath)
+			if err != nil {
+				t.Fatalf("ci.yml not found: %v", err)
+			}
+			if !strings.Contains(string(ciContent), tc.needle) {
+				t.Errorf("ci.yml for %s should contain '%s'", tc.framework, tc.needle)
+			}
+		})
+	}
+}

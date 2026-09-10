@@ -134,6 +134,7 @@ When scaffolding backend or fullstack projects, Umaru CLI can automatically inje
 - 🔐 **Authentication:** `JWT` (claim generation & verification middleware).
 - 🔴 **Cache:** `Redis` (client connection pool & ping).
 - 🐳 **Containerization:** `Docker` (multi-stage `Dockerfile`, `docker-compose.yml`, `.dockerignore`).
+- 🤖 **CI/CD Pipeline:** `GitHub Actions` (automated test, lint, and build workflows tailored to Go, Node, Python, and Rust).
 
 ```bash
 # Non-interactive addon specification
@@ -145,23 +146,27 @@ umaru init my-backend --no-addons
 
 ### ➕ Inject Addons into Existing Projects (`umaru add`)
 
-Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Bun, Python) and injects modular addons into your existing codebase. You can even stack multiple addons simultaneously in a single pass:
+Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Bun, Python, Rust) and injects modular addons into your existing codebase. You can even stack multiple addons simultaneously in a single pass:
 
 ```bash
 # Interactive multi-select addon wizard
 umaru add
 
+# Add GitHub Actions automated CI/CD pipeline
+umaru add ci
+
 # Add containerization to your project
 umaru add docker
 
 # Stack multiple addons at once
-umaru add postgres redis jwt docker
+umaru add postgres redis jwt docker ci
 
 # Direct single addon injection
 umaru add redis
 umaru add jwt
 umaru add sqlite
 umaru add docker
+umaru add ci
 
 # Overwrite existing addon files
 umaru add docker --force
@@ -443,7 +448,7 @@ The new template will automatically be listed in `umaru list`, the interactive w
 - [x] 🧩 **Interactive Addon Wizard:** Optional feature injection (PostgreSQL, SQLite, Redis, JWT Auth).
 - [x] ⚙️ **Config File Support:** Global `~/.umarurc.json` configuration manager (`umaru config`).
 - [x] 🩺 **System Diagnostics:** Built-in `umaru doctor` to verify developer environments, runtimes, versions, and template readiness.
-- [x] 📦 **18 Production Starters:** Go (Fiber, Gin, Echo), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI, AI & LLM Streaming), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepos (Go + React, TypeScript Monorepo).
+- [x] 📦 **20 Production Starters:** Go (Fiber, Gin, Echo, Cobra CLI), Bun (Elysia), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI, AI & LLM Streaming), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack Monorepos (Go + React, TypeScript Monorepo).
 
 ---
 

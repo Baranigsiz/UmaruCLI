@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 )
@@ -22,6 +23,7 @@ node_modules
 dist
 bin
 tmp
+target
 __pycache__
 *.pyc
 .env
@@ -114,6 +116,40 @@ services:
       - "8000:8000"
     environment:
       - PORT=8000
+    restart: unless-stopped
+`
+	case isRustTemplate(config.Template):
+		dockerfileContent = fmt.Sprintf(`# Multi-Stage Dockerfile for Rust
+FROM rust:1.80-slim-bullseye AS builder
+WORKDIR /app
+
+COPY Cargo.toml ./
+# Create dummy main to cache dependencies
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -rf src
+
+COPY src ./src
+# Touch main.rs to invalidate the build timestamp
+RUN touch src/main.rs && cargo build --release
+
+# Production Stage
+FROM debian:bullseye-slim AS runner
+WORKDIR /app
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/%s /app/server
+EXPOSE 8080
+ENTRYPOINT ["/app/server"]
+`, config.SafeName)
+
+		composeContent = `version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
     restart: unless-stopped
 `
 	default: // Node.js / TypeScript

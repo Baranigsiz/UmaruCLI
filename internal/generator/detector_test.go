@@ -162,6 +162,67 @@ func TestDetectProject_PythonFastAPI(t *testing.T) {
 	}
 }
 
+func TestDetectProject_Rust(t *testing.T) {
+	tests := []struct {
+		name      string
+		cargoTOML string
+		expectedF string
+		pkgName   string
+	}{
+		{
+			name: "Axum",
+			cargoTOML: `[package]
+name = "my-axum-service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+`,
+			expectedF: "rust-axum",
+			pkgName:   "my-axum-service",
+		},
+		{
+			name: "Actix",
+			cargoTOML: `[package]
+name = "my-actix-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+`,
+			expectedF: "rust-actix",
+			pkgName:   "my-actix-app",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			if err := os.WriteFile(filepath.Join(tempDir, "Cargo.toml"), []byte(tt.cargoTOML), 0644); err != nil {
+				t.Fatalf("failed to write Cargo.toml: %v", err)
+			}
+
+			proj, err := DetectProject(tempDir)
+			if err != nil {
+				t.Fatalf("DetectProject failed: %v", err)
+			}
+
+			if proj.Type != ProjectTypeRust {
+				t.Errorf("Expected type rust, got %s", proj.Type)
+			}
+			if proj.Framework != tt.expectedF {
+				t.Errorf("Expected framework %s, got %s", tt.expectedF, proj.Framework)
+			}
+			if proj.ProjectName != tt.pkgName {
+				t.Errorf("Expected projectName %s, got %s", tt.pkgName, proj.ProjectName)
+			}
+		})
+	}
+}
+
 func TestDetectProject_NotFound(t *testing.T) {
 	tempDir := t.TempDir()
 	_, err := DetectProject(tempDir)
