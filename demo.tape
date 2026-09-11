@@ -18,7 +18,7 @@ Enter
 Sleep 1s
 Show
 
-# 1. Show all 20 available starter templates
+# 1. Show all 25 available starter templates
 Type "umaru list"
 Sleep 600ms
 Enter
