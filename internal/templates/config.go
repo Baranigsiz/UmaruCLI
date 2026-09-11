@@ -30,6 +30,8 @@ func (t TemplateConfig) GetCategory() string {
 		return "Fullstack"
 	case "go-cli", "go-tui":
 		return "CLI"
+	case "tauri-desktop":
+		return "Desktop"
 	default:
 		return "Backend"
 	}

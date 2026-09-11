@@ -37,6 +37,8 @@ func GetTemplatePorts(templateID string) []string {
 		return []string{"API: 8080", "Frontend: 3000"}
 	case "hono-cloudflare":
 		return []string{"Dev Server: 8787"}
+	case "tauri-desktop":
+		return []string{"Dev Server: 1420"}
 	default:
 		return []string{"None (CLI Tool)"}
 	}
@@ -53,6 +55,8 @@ func GetSupportedAddons(templateID string) []string {
 		return []string{"📦 SQLite", "🔴 Redis", "🐳 Docker"}
 	case "rust-actix", "rust-axum":
 		return []string{"Docker Compose Services"}
+	case "tauri-desktop":
+		return []string{"🦀 Rust Core Commands", "🔐 Tauri Capabilities"}
 	default:
 		return []string{"Standalone Template (Frontend/CLI)"}
 	}

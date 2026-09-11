@@ -88,6 +88,7 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 			huh.NewOption("⚙️ Backend APIs (Go, NestJS, Express, Hono, Fastify, Echo, FastAPI, Rust)", "Backend"),
 			huh.NewOption("📦 Fullstack Monorepos (Go + React, TypeScript Monorepo)", "Fullstack"),
 			huh.NewOption("⚡ CLI & Terminal Tools (Go Cobra, Bubble Tea, Lipgloss)", "CLI"),
+			huh.NewOption("🖥️ Desktop Applications (Tauri v2, React, Rust)", "Desktop"),
 		}
 
 		firstFields = append(firstFields,

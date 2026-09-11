@@ -1,0 +1,123 @@
+import { useState, useEffect } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+
+interface SystemInfo {
+  app_name: string
+  version: string
+  os: string
+  arch: string
+}
+
+export default function App() {
+  const [greetMsg, setGreetMsg] = useState('')
+  const [name, setName] = useState('')
+  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    async function loadInfo() {
+      try {
+        const info = await invoke<SystemInfo>('get_system_info')
+        setSystemInfo(info)
+      } catch (err) {
+        console.error('Failed to get system info:', err)
+      }
+    }
+    loadInfo()
+  }, [])
+
+  async function handleGreet(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) return
+    setLoading(true)
+    try {
+      const response = await invoke<string>('greet', { name })
+      setGreetMsg(response)
+    } catch (err) {
+      console.error(err)
+      setGreetMsg(`Error: ${String(err)}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-6 selection:bg-cyan-500 selection:text-slate-950">
+      {/* Background glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 max-w-xl w-full flex flex-col items-center text-center space-y-6">
+        {/* Header Badge */}
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+          Tauri v2 + Rust Core
+        </div>
+
+        {/* Title */}
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
+          {{.ProjectName}}
+        </h1>
+        <p className="text-slate-400 text-sm sm:text-base max-w-md">
+          High-performance, lightweight cross-platform desktop application built with Tauri 2.0, React, and Rust.
+        </p>
+
+        {/* Rust IPC Interaction Box */}
+        <div className="w-full p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl backdrop-blur-sm space-y-4">
+          <form onSubmit={handleGreet} className="flex flex-col sm:flex-row gap-3">
+            <input
+              id="greet-input"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your name..."
+              className="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-all"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 disabled:opacity-50 text-slate-950 font-semibold text-sm transition-colors shadow-lg shadow-cyan-500/20 cursor-pointer"
+            >
+              {loading ? 'Calling Rust...' : 'Greet Rust'}
+            </button>
+          </form>
+
+          {greetMsg && (
+            <div className="p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-sm text-left animate-in fade-in duration-200">
+              <span className="font-semibold">Rust IPC Response:</span> {greetMsg}
+            </div>
+          )}
+        </div>
+
+        {/* System & Architecture Info */}
+        {systemInfo && (
+          <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+              <div className="text-xs text-slate-500">App Name</div>
+              <div className="text-sm font-semibold text-slate-200 truncate">{systemInfo.app_name}</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+              <div className="text-xs text-slate-500">Version</div>
+              <div className="text-sm font-semibold text-cyan-400">{systemInfo.version}</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+              <div className="text-xs text-slate-500">OS Target</div>
+              <div className="text-sm font-semibold text-indigo-400 uppercase">{systemInfo.os}</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+              <div className="text-xs text-slate-500">Architecture</div>
+              <div className="text-sm font-semibold text-emerald-400 uppercase">{systemInfo.arch}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer info */}
+        <div className="flex items-center gap-4 text-xs text-slate-500">
+          <span>Scaffolded by <strong className="text-slate-400">UmaruCLI</strong></span>
+          <span>•</span>
+          <span>Hot Reload Enabled</span>
+        </div>
+      </div>
+    </main>
+  )
+}

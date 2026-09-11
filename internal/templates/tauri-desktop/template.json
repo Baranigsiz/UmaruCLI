@@ -1,0 +1,7 @@
+{
+  "name": "Tauri v2 Desktop App (React + Tailwind + Rust)",
+  "description": "Lightweight, cross-platform native desktop app with Tauri v2, React 18, Tailwind CSS & Rust backend.",
+  "category": "Desktop",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run desktop:dev"
+}

@@ -18,8 +18,8 @@ func TestSmoke_AllTemplatesRenderCleanly(t *testing.T) {
 		t.Fatalf("Failed to fetch available templates: %v", err)
 	}
 
-	if len(allTemplates) < 23 {
-		t.Errorf("Expected at least 23 templates, found %d", len(allTemplates))
+	if len(allTemplates) < 24 {
+		t.Errorf("Expected at least 24 templates, found %d", len(allTemplates))
 	}
 
 	for _, tmpl := range allTemplates {
@@ -152,8 +152,11 @@ func TestSmoke_ManifestValidity(t *testing.T) {
 				}
 			}
 
-			// Check Cargo.toml if present
+			// Check Cargo.toml if present (root or src-tauri)
 			cargoPath := filepath.Join(targetPath, "Cargo.toml")
+			if _, err := os.Stat(cargoPath); os.IsNotExist(err) {
+				cargoPath = filepath.Join(targetPath, "src-tauri", "Cargo.toml")
+			}
 			if _, err := os.Stat(cargoPath); err == nil {
 				data, err := os.ReadFile(cargoPath)
 				if err != nil {

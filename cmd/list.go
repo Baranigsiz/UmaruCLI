@@ -36,7 +36,7 @@ var listCmd = &cobra.Command{
 
 		if len(allTemplates) == 0 {
 			if listCategoryFlag != "" {
-				fmt.Printf("No templates found in category '%s'. Available categories: Frontend, Backend, Fullstack, CLI\n", listCategoryFlag)
+				fmt.Printf("No templates found in category '%s'. Available categories: Frontend, Backend, Fullstack, CLI, Desktop\n", listCategoryFlag)
 			} else {
 				fmt.Println("No templates found.")
 			}
@@ -109,13 +109,14 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	listCmd.Flags().StringVarP(&listCategoryFlag, "category", "c", "", "Filter templates by category (Frontend, Backend, Fullstack, CLI)")
+	listCmd.Flags().StringVarP(&listCategoryFlag, "category", "c", "", "Filter templates by category (Frontend, Backend, Fullstack, CLI, Desktop)")
 	_ = listCmd.RegisterFlagCompletionFunc("category", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			"Frontend\tWeb client applications (React, Vue, Svelte, Next.js, Astro)",
 			"Backend\tServer APIs (Go, Node.js, Python, Rust)",
 			"Fullstack\tMonorepos and integrated stacks",
 			"CLI\tTerminal tools and command-line utilities",
+			"Desktop\tCross-platform native desktop apps (Tauri, Rust, Webview)",
 		}, cobra.ShellCompDirectiveNoFileComp
 	})
 	rootCmd.AddCommand(listCmd)

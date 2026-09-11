@@ -35,7 +35,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 <p align="center">
   <a href="#-features">✨ Features</a> •
   <a href="#-real-world-scaffolding-benchmarks">⚡ Benchmarks</a> •
-  <a href="#-supported-starters">📦 Starters (23)</a> •
+  <a href="#-supported-starters">📦 Starters (24)</a> •
   <a href="#-interactive-addon-wizard">🧩 Addon Wizard</a> •
   <a href="#️-global-configuration">⚙️ Global Config</a> •
   <a href="#-installation">🚀 Installation</a> •
@@ -104,7 +104,7 @@ The following real-world measurements compare project scaffolding time with depe
 
 ## 📦 Supported Starters
 
-Umaru CLI includes 23 production-ready architectures organized across 4 categories:
+Umaru CLI includes 24 production-ready architectures organized across 5 categories:
 
 ### ⚙️ Backend APIs
 | Template ID | Technology Stack | Architecture & Included Features |
@@ -144,6 +144,11 @@ Umaru CLI includes 23 production-ready architectures organized across 4 categori
 |---|---|---|
 | `go-tui` | **Go + Bubble Tea + Lipgloss** | Full-screen interactive Terminal User Interface, multi-tab navigation, dynamic resizing, Bubbles & Lipgloss design. |
 | `go-cli` | **Go + Cobra + Bubble Tea + Lipgloss** | Modern CLI & interactive TUI, Viper configuration, Lipgloss Dracula styles, Makefile & multi-stage build. |
+
+### 🖥️ Desktop Applications
+| Template ID | Technology Stack | Architecture & Included Features |
+|---|---|---|
+| `tauri-desktop` | **Tauri v2 + React 18 + Rust** | Lightweight cross-platform native desktop app, type-safe Rust IPC bridge, Vite HMR, Tailwind CSS, system info commands. |
 
 ---
 

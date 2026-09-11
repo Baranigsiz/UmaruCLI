@@ -1,0 +1,44 @@
+# {{.ProjectName}}
+
+A fast, lightweight cross-platform desktop application built with **Tauri v2**, **React 18**, **Tailwind CSS**, and **Rust**.
+
+## 🚀 Features
+
+- **Tauri v2 Core**: Native performance with tiny memory footprint and rapid startup.
+- **Rust IPC Bridge**: Type-safe command invocation (`greet`, `get_system_info`).
+- **React 18 & TypeScript**: Fast UI development with Vite.
+- **Tailwind CSS**: Modern, responsive dark-mode styling out-of-the-box.
+- **Cross-Platform**: Windows, macOS, and Linux support.
+
+## 🛠️ Prerequisites
+
+1. **Node.js** (v18+ recommended)
+2. **Rust** & Cargo: Install via [rustup.rs](https://rustup.rs/)
+3. Platform-specific dependencies:
+   - **Windows**: Microsoft C++ Build Tools or Visual Studio, WebView2 (preinstalled on Windows 10/11)
+   - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
+   - **Linux**: WebKit2GTK and related build packages (see [Tauri Prerequisites](https://tauri.app/start/prerequisites/))
+
+## 📦 Getting Started
+
+### Development Mode
+
+Run both the Vite frontend and Tauri native window with hot reload:
+
+```bash
+npm install
+npm run tauri dev
+```
+
+### Build for Production
+
+Package your application into native installers (`.exe`/`.msi` on Windows, `.dmg`/`.app` on macOS, `.deb`/`.AppImage` on Linux):
+
+```bash
+npm run tauri build
+```
+
+The compiled binaries will be placed in `src-tauri/target/release/bundle/`.
+
+---
+Scaffolded with ❤️ by [UmaruCLI](https://github.com/Baranigsiz/UmaruCLI)
