@@ -36,6 +36,7 @@ var (
 	verboseFlag        bool
 	dryRunFlag         bool
 	commitFlag         bool
+	yesFlag            bool
 )
 
 func runScaffoldWorkflow(
@@ -148,11 +149,48 @@ var initCmd = &cobra.Command{
 	Use:     "init [project-name]",
 	Aliases: []string{"new", "create"},
 	Short:   "Initialize a new project",
-	Args:  cobra.MaximumNArgs(1),
+	Args:    cobra.MaximumNArgs(1),
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if dbFlag != "" {
+			normDB := strings.ToLower(strings.TrimSpace(dbFlag))
+			if normDB != "postgres" && normDB != "sqlite" && normDB != "none" {
+				return fmt.Errorf("invalid database driver '%s'. Supported drivers: postgres, sqlite, none", dbFlag)
+			}
+			dbFlag = normDB
+		}
+
+		if authFlag != "" {
+			normAuth := strings.ToLower(strings.TrimSpace(authFlag))
+			if normAuth != "jwt" && normAuth != "none" {
+				return fmt.Errorf("invalid authentication option '%s'. Supported options: jwt, none", authFlag)
+			}
+			authFlag = normAuth
+		}
+
+		if packageManagerFlag != "" {
+			normPM := strings.ToLower(strings.TrimSpace(packageManagerFlag))
+			if normPM != "npm" && normPM != "pnpm" && normPM != "yarn" && normPM != "bun" {
+				return fmt.Errorf("invalid package manager '%s'. Supported: npm, pnpm, yarn, bun", packageManagerFlag)
+			}
+			packageManagerFlag = normPM
+		}
+
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var initialName string
 		if len(args) > 0 {
 			initialName = args[0]
+		}
+
+		if yesFlag {
+			if initialName == "" {
+				initialName = "umaru-app"
+			}
+			if templateFlag == "" {
+				templateFlag = "go-fiber"
+			}
+			noAddonsFlag = true
 		}
 
 		userCfg := config.LoadUserConfig()
@@ -307,6 +345,7 @@ func init() {
 	initCmd.Flags().BoolVarP(&forceFlag, "force", "f", false, "Overwrite existing files in target directory")
 	initCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Show detailed installation command logs")
 	initCmd.Flags().BoolVar(&dryRunFlag, "dry-run", false, "Simulate project generation without writing files")
+	initCmd.Flags().BoolVarP(&yesFlag, "yes", "y", false, "Automatically accept default choices for non-interactive scaffolding")
 
 	// Dynamic Shell Autocompletions for Flags
 	_ = initCmd.RegisterFlagCompletionFunc("template", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

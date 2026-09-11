@@ -32,8 +32,15 @@ func buildCommand(dir string, command []string) *exec.Cmd {
 		// Direct executables (git, go, etc.) should run directly so Go handles argument quoting natively.
 		first := strings.ToLower(execCmd[0])
 		if first == "npm" || first == "pnpm" || first == "yarn" || first == "bun" {
-			fullCmd := strings.Join(execCmd, " ")
-			cmd = exec.Command("cmd.exe", "/c", fullCmd)
+			var quotedArgs []string
+			for _, arg := range execCmd {
+				if strings.Contains(arg, " ") && !strings.HasPrefix(arg, "\"") {
+					quotedArgs = append(quotedArgs, fmt.Sprintf("%q", arg))
+				} else {
+					quotedArgs = append(quotedArgs, arg)
+				}
+			}
+			cmd = exec.Command("cmd.exe", "/c", strings.Join(quotedArgs, " "))
 		} else {
 			cmd = exec.Command(execCmd[0], execCmd[1:]...)
 		}

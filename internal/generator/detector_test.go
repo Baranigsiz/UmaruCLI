@@ -87,6 +87,50 @@ require github.com/labstack/echo/v4 v4.12.0
 	}
 }
 
+func TestDetectProject_GoTUI(t *testing.T) {
+	tempDir := t.TempDir()
+	goModContent := `module my-tui-app
+
+go 1.22
+
+require github.com/charmbracelet/bubbletea v1.2.4
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(goModContent), 0644); err != nil {
+		t.Fatalf("failed to write go.mod: %v", err)
+	}
+
+	proj, err := DetectProject(tempDir)
+	if err != nil {
+		t.Fatalf("DetectProject failed: %v", err)
+	}
+
+	if proj.Framework != "go-tui" {
+		t.Errorf("Expected framework go-tui, got %s", proj.Framework)
+	}
+}
+
+func TestDetectProject_GoHTMX(t *testing.T) {
+	tempDir := t.TempDir()
+	goModContent := `module my-htmx-app
+
+go 1.24
+
+require github.com/gofiber/template/html/v2 v2.1.2
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(goModContent), 0644); err != nil {
+		t.Fatalf("failed to write go.mod: %v", err)
+	}
+
+	proj, err := DetectProject(tempDir)
+	if err != nil {
+		t.Fatalf("DetectProject failed: %v", err)
+	}
+
+	if proj.Framework != "go-htmx" {
+		t.Errorf("Expected framework go-htmx, got %s", proj.Framework)
+	}
+}
+
 func TestDetectProject_NodeFrameworks(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -142,6 +186,16 @@ func TestDetectProject_NodeFrameworks(t *testing.T) {
 			name:      "Astro",
 			pkgJSON:   `{"name": "my-astro-app", "dependencies": {"astro": "^4.10.0"}}`,
 			expectedF: "astro-tailwind",
+		},
+		{
+			name:      "Tauri",
+			pkgJSON:   `{"name": "my-tauri-app", "dependencies": {"@tauri-apps/api": "^2.2.0", "react": "^18.3.1"}}`,
+			expectedF: "tauri-desktop",
+		},
+		{
+			name:      "HonoCloudflare",
+			pkgJSON:   `{"name": "my-cf-app", "dependencies": {"hono": "^4.6.0"}, "devDependencies": {"wrangler": "^3.0.0"}}`,
+			expectedF: "hono-cloudflare",
 		},
 	}
 

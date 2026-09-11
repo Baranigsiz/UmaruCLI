@@ -65,7 +65,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 
 ### ⚡ Real-World Scaffolding Benchmarks
 
-Unlike `npx` or script-based generators that query remote registries and download packages over the network, Umaru CLI compiles all 23 architectures directly into a single standalone static binary. 
+Unlike `npx` or script-based generators that query remote registries and download packages over the network, Umaru CLI compiles all 25 architectures directly into a single standalone static binary. 
 
 The following real-world measurements compare project scaffolding time with dependency installs skipped (`--skip-install` / `--disable-git`):
 
@@ -85,7 +85,7 @@ The following real-world measurements compare project scaffolding time with depe
 ## ✨ Features
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
-- 🔌 **Zero Network Reliance:** All 23 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🔌 **Zero Network Reliance:** All 25 starter boilerplates are compiled directly into the binary via `//go:embed`.
 - 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
@@ -401,6 +401,9 @@ umaru init payment-service -t nestjs-api -p pnpm -v
 
 # 8. Scaffold complete production stack with Docker & CI/CD out of the box
 umaru init my-prod-service -t go-fiber --docker --ci --db postgres --redis
+
+# 9. Non-interactive automated scaffolding with sensible defaults
+umaru init my-app -y
 ```
 
 ---
@@ -445,6 +448,9 @@ umaru upgrade
 
 # Check if a new version is available without installing
 umaru upgrade --check
+
+# Force upgrade even if currently on dev or latest version
+umaru upgrade --force
 ```
 
 ---
@@ -479,6 +485,7 @@ umaru version
 | `--docker` | | `false` | Inject Docker multi-stage build & Docker Compose containerization |
 | `--ci` | | `false` | Inject GitHub Actions CI/CD pipeline workflow |
 | `--no-addons` | | `false` | Skip interactive addon configuration wizard |
+| `--yes` | `-y` | `false` | Automatically accept default choices for non-interactive scaffolding |
 | `--dry-run` | | `false` | Simulate generation and list files without creating them |
 | `--verbose` | `-v` | `false` | Stream live installation outputs to stdout/stderr |
 | `--no-git` | | `false` | Skip automatic `git init` |

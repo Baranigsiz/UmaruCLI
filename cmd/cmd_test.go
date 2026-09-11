@@ -120,8 +120,8 @@ func TestInfoCmd(t *testing.T) {
 	if !strings.Contains(out, "go-fiber") {
 		t.Errorf("Expected info output to contain 'go-fiber', got: %s", out)
 	}
-	if !strings.Contains(out, "8080") {
-		t.Errorf("Expected info output to contain port '8080', got: %s", out)
+	if !strings.Contains(out, "3000") {
+		t.Errorf("Expected info output to contain port '3000', got: %s", out)
 	}
 }
 
@@ -326,6 +326,69 @@ func TestAddCmd_Completions(t *testing.T) {
 		if strings.HasPrefix(f, "redis\t") {
 			t.Errorf("redis should be filtered out from completion suggestions")
 		}
+	}
+}
+
+func resetInitFlags() {
+	dbFlag = ""
+	authFlag = ""
+	packageManagerFlag = ""
+	templateFlag = ""
+	fromFlag = ""
+	redisFlag = false
+	dockerFlag = false
+	ciFlag = false
+	noAddonsFlag = false
+	noGitFlag = false
+	skipInstallFlag = false
+	forceFlag = false
+	verboseFlag = false
+	dryRunFlag = false
+	commitFlag = false
+	yesFlag = false
+}
+
+func TestInitCmd_YesFlag(t *testing.T) {
+	flag := initCmd.Flags().Lookup("yes")
+	if flag == nil {
+		t.Fatalf("Expected initCmd to have --yes flag")
+	}
+	if flag.Shorthand != "y" {
+		t.Errorf("Expected shorthand 'y', got '%s'", flag.Shorthand)
+	}
+}
+
+func TestInitCmd_FlagValidation(t *testing.T) {
+	defer resetInitFlags()
+
+	// 1. Invalid DB driver
+	resetInitFlags()
+	_, err := executeCommand("init", "--db", "oracle")
+	if err == nil {
+		t.Fatalf("Expected error for invalid --db, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid database driver 'oracle'") {
+		t.Errorf("Expected error to mention invalid database driver, got: %v", err)
+	}
+
+	// 2. Invalid Auth option
+	resetInitFlags()
+	_, err = executeCommand("init", "--auth", "oauth")
+	if err == nil {
+		t.Fatalf("Expected error for invalid --auth, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid authentication option 'oauth'") {
+		t.Errorf("Expected error to mention invalid authentication option, got: %v", err)
+	}
+
+	// 3. Invalid Package Manager
+	resetInitFlags()
+	_, err = executeCommand("init", "--package-manager", "pip")
+	if err == nil {
+		t.Fatalf("Expected error for invalid --package-manager, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid package manager 'pip'") {
+		t.Errorf("Expected error to mention invalid package manager, got: %v", err)
 	}
 }
 

@@ -83,13 +83,13 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
-// ConnectSQLite opens a SQLite database file with WAL mode enabled
+// ConnectSQLite opens a pure-Go SQLite database connection (CGO-free, WAL mode)
 func ConnectSQLite(dbPath string) (*sql.DB, error) {
-	dsn := fmt.Sprintf("%s?_journal_mode=WAL&_busy_timeout=5000", dbPath)
-	db, err := sql.Open("sqlite3", dsn)
+	dsn := fmt.Sprintf("%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)", dbPath)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
 	}

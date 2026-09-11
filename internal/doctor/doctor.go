@@ -280,8 +280,8 @@ func inspectTool(tc ToolCheck) ToolCheck {
 
 	tc.Path = resolvedPath
 
-	// Run version command with a 2-second timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	// Run version command with a 3-second timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, chosenCmd, tc.VersionArgs...)
@@ -317,7 +317,7 @@ func inspectDockerDaemon() ToolCheck {
 		return check
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "docker", "info", "--format", "{{.ServerVersion}}")
@@ -367,6 +367,9 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 		},
 		"Fullstack": {
 			Category: "Fullstack Monorepos (Go+React, Hono+React)",
+		},
+		"Desktop": {
+			Category: "Desktop Applications (Tauri v2 + Rust)",
 		},
 	}
 
@@ -420,6 +423,21 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 					groups["Fullstack"].Missing = appendUnique(groups["Fullstack"].Missing, "node")
 				}
 			}
+		case id == "tauri-desktop":
+			groups["Desktop"].Total++
+			if hasNode && hasNpm && hasRust {
+				groups["Desktop"].Ready++
+			} else {
+				if !hasNode {
+					groups["Desktop"].Missing = appendUnique(groups["Desktop"].Missing, "node")
+				}
+				if !hasNpm {
+					groups["Desktop"].Missing = appendUnique(groups["Desktop"].Missing, "npm/pnpm")
+				}
+				if !hasRust {
+					groups["Desktop"].Missing = appendUnique(groups["Desktop"].Missing, "cargo")
+				}
+			}
 		case id == "bun-elysia":
 			groups["Node/TypeScript"].Total++
 			if isOk(tools, "bun") {
@@ -443,7 +461,7 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 	}
 
 	// Order results nicely
-	order := []string{"Go", "Node/TypeScript", "Python", "Rust", "Fullstack"}
+	order := []string{"Go", "Node/TypeScript", "Python", "Rust", "Fullstack", "Desktop"}
 	var list []TemplateReadiness
 	for _, key := range order {
 		if g, exists := groups[key]; exists && g.Total > 0 {

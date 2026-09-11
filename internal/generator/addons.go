@@ -46,7 +46,7 @@ func GetAddonFiles(config ProjectConfig) []string {
 		return files
 	}
 
-	baseDir := getAddonBaseDir(config)
+	baseDir := GetAddonBaseDir(config)
 
 	if dbFiles := getDatabaseFiles(config, baseDir); len(dbFiles) > 0 {
 		files = append(files, dbFiles...)
@@ -68,6 +68,10 @@ func GetAddonFiles(config ProjectConfig) []string {
 		if !fileExists(envExamplePath) {
 			files = append(files, envExamplePath)
 		}
+		envPath := filepath.Join(baseDir, ".env")
+		if !fileExists(envPath) {
+			files = append(files, envPath)
+		}
 	}
 
 	return files
@@ -79,7 +83,7 @@ func GenerateAddons(config ProjectConfig) error {
 		return nil
 	}
 
-	baseDir := getAddonBaseDir(config)
+	baseDir := GetAddonBaseDir(config)
 
 	if err := generateDatabaseAddon(config, baseDir); err != nil {
 		return err
@@ -109,7 +113,7 @@ func GenerateAddons(config ProjectConfig) error {
 
 // Helper functions shared across addon generators
 
-func getAddonBaseDir(config ProjectConfig) string {
+func GetAddonBaseDir(config ProjectConfig) string {
 	if config.Template == "fullstack-go-react" || config.Template == "fullstack-ts-monorepo" {
 		return filepath.Join(config.TargetDir, "apps", "api")
 	}

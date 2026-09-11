@@ -93,9 +93,9 @@ func FindTemplateByID(id string) (*TemplateConfig, error) {
 		return nil, err
 	}
 
-	for _, t := range templates {
-		if t.ID == id {
-			return &t, nil
+	for i := range templates {
+		if templates[i].ID == id {
+			return &templates[i], nil
 		}
 	}
 

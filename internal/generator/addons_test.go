@@ -42,8 +42,8 @@ func TestGetAddonFiles(t *testing.T) {
 	}
 
 	files := GetAddonFiles(cfg)
-	if len(files) != 4 {
-		t.Fatalf("Expected 4 addon files, got %d: %v", len(files), files)
+	if len(files) != 5 {
+		t.Fatalf("Expected 5 addon files, got %d: %v", len(files), files)
 	}
 
 	expected := []string{
@@ -51,6 +51,7 @@ func TestGetAddonFiles(t *testing.T) {
 		filepath.Join("sample-dir", "internal", "middleware", "auth.go"),
 		filepath.Join("sample-dir", "internal", "cache", "redis.go"),
 		filepath.Join("sample-dir", ".env.example"),
+		filepath.Join("sample-dir", ".env"),
 	}
 
 	for i, f := range files {
@@ -95,6 +96,36 @@ func TestGenerateAddons_GoFiber(t *testing.T) {
 	redisFile := filepath.Join(targetPath, "internal", "cache", "redis.go")
 	if _, err := os.Stat(redisFile); os.IsNotExist(err) {
 		t.Errorf("Expected %s to exist", redisFile)
+	}
+}
+
+func TestGenerateAddons_GoSQLite(t *testing.T) {
+	tempDir := t.TempDir()
+	targetPath := filepath.Join(tempDir, "fiber-with-sqlite")
+
+	config, err := ResolveProjectConfig(targetPath, "go-fiber")
+	if err != nil {
+		t.Fatalf("ResolveProjectConfig failed: %v", err)
+	}
+	config.Addons = AddonConfig{Database: "sqlite"}
+
+	err = Generate(config)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	dbFile := filepath.Join(targetPath, "internal", "database", "sqlite.go")
+	data, err := os.ReadFile(dbFile)
+	if err != nil {
+		t.Fatalf("Expected %s to exist: %v", dbFile, err)
+	}
+
+	content := string(data)
+	if !strings.Contains(content, "modernc.org/sqlite") {
+		t.Errorf("Expected sqlite.go to use pure-Go modernc.org/sqlite, got:\n%s", content)
+	}
+	if strings.Contains(content, "mattn/go-sqlite3") {
+		t.Errorf("sqlite.go should not contain CGO dependency mattn/go-sqlite3")
 	}
 }
 

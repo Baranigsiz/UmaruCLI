@@ -10,7 +10,7 @@ func TestGetTemplatePorts(t *testing.T) {
 		id       string
 		expected string
 	}{
-		{"go-fiber", "8080"},
+		{"go-fiber", "3000"},
 		{"fastify-api", "3000"},
 		{"python-fastapi", "8000"},
 		{"react-vite-ts", "5173"},

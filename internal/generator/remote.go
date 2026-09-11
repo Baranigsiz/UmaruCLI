@@ -97,7 +97,14 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 				return fmt.Errorf("failed to parse remote template file %s: %w", path, err)
 			}
 
-			destFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+			var perm os.FileMode = 0644
+			if info, err := d.Info(); err == nil && (info.Mode()&0111 != 0) {
+				perm = 0755
+			} else if strings.HasSuffix(destPath, ".sh") {
+				perm = 0755
+			}
+
+			destFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
 			if err != nil {
 				return err
 			}

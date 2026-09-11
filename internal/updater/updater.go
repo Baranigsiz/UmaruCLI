@@ -85,6 +85,59 @@ func splitPreRelease(v string) (string, string) {
 	return parts[0], ""
 }
 
+func isNewerPreRelease(currPre, latPre string) bool {
+	if currPre == latPre {
+		return false
+	}
+	currParts := strings.Split(currPre, ".")
+	latParts := strings.Split(latPre, ".")
+
+	maxLen := len(currParts)
+	if len(latParts) > maxLen {
+		maxLen = len(latParts)
+	}
+
+	for i := 0; i < maxLen; i++ {
+		if i >= len(currParts) {
+			return true
+		}
+		if i >= len(latParts) {
+			return false
+		}
+
+		cp := currParts[i]
+		lp := latParts[i]
+
+		if cp == lp {
+			continue
+		}
+
+		var cNum, lNum int
+		cIsNum := false
+		lIsNum := false
+		if _, err := fmt.Sscanf(cp, "%d", &cNum); err == nil && fmt.Sprintf("%d", cNum) == cp {
+			cIsNum = true
+		}
+		if _, err := fmt.Sscanf(lp, "%d", &lNum); err == nil && fmt.Sprintf("%d", lNum) == lp {
+			lIsNum = true
+		}
+
+		if cIsNum && lIsNum {
+			return lNum > cNum
+		}
+		if cIsNum && !lIsNum {
+			return true
+		}
+		if !cIsNum && lIsNum {
+			return false
+		}
+
+		return lp > cp
+	}
+
+	return false
+}
+
 // IsNewerVersion returns true if latest is semantically newer than current
 func IsNewerVersion(current, latest string) bool {
 	curr := CleanVersion(current)
@@ -134,7 +187,7 @@ func IsNewerVersion(current, latest string) bool {
 		return false
 	}
 	if currPre != "" && latPre != "" {
-		return latPre > currPre
+		return isNewerPreRelease(currPre, latPre)
 	}
 
 	return false

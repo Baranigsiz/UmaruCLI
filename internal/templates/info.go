@@ -19,9 +19,9 @@ type TemplateInfo struct {
 // GetTemplatePorts returns the known default network ports for a template
 func GetTemplatePorts(templateID string) []string {
 	switch templateID {
-	case "go-fiber", "go-gin", "go-echo", "rust-actix":
+	case "go-gin", "go-echo", "rust-actix":
 		return []string{"API: 8080"}
-	case "fastify-api", "hono-api", "node-express", "nestjs-api", "rust-axum", "nextjs-tailwind", "bun-elysia", "go-htmx":
+	case "go-fiber", "fastify-api", "hono-api", "node-express", "nestjs-api", "rust-axum", "nextjs-tailwind", "bun-elysia", "go-htmx":
 		return []string{"App: 3000"}
 	case "python-fastapi":
 		return []string{"API: 8000"}

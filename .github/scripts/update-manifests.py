@@ -64,14 +64,17 @@ def main():
         with open("Formula/umaru.rb", "r", encoding="utf-8") as f:
             old_formula = f.read()
 
-        def extract_sha(asset_name, text):
-            m = re.search(rf'{asset_name}".*?\n\s+sha256 "([a-f0-9]+)"', text, re.DOTALL)
+        def extract_sha(arch_suffix, text):
+            m = re.search(rf'umaru_[^"]+_{re.escape(arch_suffix)}".*?\n\s+sha256 "([a-f0-9]+)"', text, re.DOTALL)
             return m.group(1) if m else ""
 
-        sha_darwin_arm64 = hashes.get(darwin_arm64) or extract_sha(darwin_arm64, old_formula)
-        sha_darwin_amd64 = hashes.get(darwin_amd64) or extract_sha(darwin_amd64, old_formula)
-        sha_linux_arm64 = hashes.get(linux_arm64) or extract_sha(linux_arm64, old_formula)
-        sha_linux_amd64 = hashes.get(linux_amd64) or extract_sha(linux_amd64, old_formula)
+        sha_darwin_arm64 = hashes.get(darwin_arm64) or extract_sha("darwin_arm64.tar.gz", old_formula)
+        sha_darwin_amd64 = hashes.get(darwin_amd64) or extract_sha("darwin_amd64.tar.gz", old_formula)
+        sha_linux_arm64 = hashes.get(linux_arm64) or extract_sha("linux_arm64.tar.gz", old_formula)
+        sha_linux_amd64 = hashes.get(linux_amd64) or extract_sha("linux_amd64.tar.gz", old_formula)
+
+        if not all([sha_darwin_arm64, sha_darwin_amd64, sha_linux_arm64, sha_linux_amd64]):
+            print("Warning: One or more Homebrew SHA-256 hashes could not be resolved from checksums or existing formula")
 
         formula_content = f"""class Umaru < Formula
   desc "Blazing-fast CLI to scaffold modern fullstack, backend, frontend & CLI starters"

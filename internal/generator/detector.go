@@ -102,6 +102,10 @@ func DetectProject(dir string) (*DetectedProject, error) {
 		framework := "go-fiber"
 		if strings.Contains(modContent, "github.com/spf13/cobra") {
 			framework = "go-cli"
+		} else if strings.Contains(modContent, "github.com/charmbracelet/bubbletea") {
+			framework = "go-tui"
+		} else if strings.Contains(modContent, "github.com/gofiber/template/html") {
+			framework = "go-htmx"
 		} else if strings.Contains(modContent, "github.com/labstack/echo") {
 			framework = "go-echo"
 		} else if strings.Contains(modContent, "github.com/gin-gonic/gin") {
@@ -144,8 +148,12 @@ func DetectProject(dir string) (*DetectedProject, error) {
 		}
 
 		framework := "node-express"
-		if allDeps["elysia"] {
+		if allDeps["@tauri-apps/api"] || allDeps["@tauri-apps/cli"] {
+			framework = "tauri-desktop"
+		} else if allDeps["elysia"] {
 			framework = "bun-elysia"
+		} else if allDeps["wrangler"] || allDeps["@cloudflare/workers-types"] {
+			framework = "hono-cloudflare"
 		} else if allDeps["hono"] {
 			framework = "hono-api"
 		} else if allDeps["fastify"] {
@@ -183,6 +191,14 @@ func DetectProject(dir string) (*DetectedProject, error) {
 
 	if hasReq || hasPyproj {
 		framework := "python-fastapi"
+		if hasReq {
+			if data, err := os.ReadFile(reqPath); err == nil {
+				reqStr := string(data)
+				if strings.Contains(reqStr, "chromadb") || strings.Contains(reqStr, "google-generativeai") {
+					framework = "ai-rag-agent"
+				}
+			}
+		}
 
 		return &DetectedProject{
 			Type:        ProjectTypePython,
@@ -235,6 +251,9 @@ func extractCargoPackageName(cargoContent string) string {
 			parts := strings.SplitN(line, "=", 2)
 			if len(parts) == 2 {
 				val := strings.TrimSpace(parts[1])
+				if cIdx := strings.Index(val, "#"); cIdx != -1 {
+					val = strings.TrimSpace(val[:cIdx])
+				}
 				val = strings.Trim(val, `"'`)
 				if val != "" {
 					return val

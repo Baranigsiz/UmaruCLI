@@ -125,7 +125,7 @@ func appendDockerComposeServices(baseDir string, config ProjectConfig) error {
 		return err
 	}
 
-	content := string(data)
+	content := strings.ReplaceAll(string(data), "\r\n", "\n")
 	var toAppend strings.Builder
 	var volumesToAppend []string
 
@@ -177,7 +177,13 @@ func appendDockerComposeServices(baseDir string, config ProjectConfig) error {
 			for _, dep := range dependsOn {
 				depBlock.WriteString(fmt.Sprintf("      - %s\n", dep))
 			}
-			content = strings.Replace(content, "restart: unless-stopped", depBlock.String()+"    restart: unless-stopped", 1)
+			if strings.Contains(content, "restart: unless-stopped") {
+				content = strings.Replace(content, "restart: unless-stopped", depBlock.String()+"    restart: unless-stopped", 1)
+			} else if strings.Contains(content, "ports:\n") {
+				content = strings.Replace(content, "ports:\n", depBlock.String()+"    ports:\n", 1)
+			} else if strings.Contains(content, "build:\n") {
+				content = strings.Replace(content, "build:\n", depBlock.String()+"    build:\n", 1)
+			}
 		} else {
 			for _, dep := range dependsOn {
 				depEntry := "- " + dep
@@ -262,23 +268,42 @@ __pycache__
 
 	switch {
 	case isGoTemplate(config.Template):
-		dockerfileContent = `# Multi-Stage Dockerfile for Go
+		entrypoint := "."
+		if fileExists(filepath.Join(baseDir, "cmd", "api", "main.go")) ||
+			fileExists(filepath.Join(config.TargetDir, "cmd", "api", "main.go")) ||
+			config.Template == "go-fiber" ||
+			config.Template == "go-gin" ||
+			config.Template == "go-echo" ||
+			config.Template == "fullstack-go-react" {
+			entrypoint = "cmd/api/main.go"
+		} else if fileExists(filepath.Join(baseDir, "cmd", "web", "main.go")) ||
+			fileExists(filepath.Join(config.TargetDir, "cmd", "web", "main.go")) ||
+			config.Template == "go-htmx" {
+			entrypoint = "cmd/web/main.go"
+		}
+
+		port := "8080"
+		if config.Template == "go-fiber" || config.Template == "go-htmx" {
+			port = "3000"
+		}
+
+		dockerfileContent = fmt.Sprintf(`# Multi-Stage Dockerfile for Go
 FROM golang:1.24-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache git ca-certificates
 COPY go.mod go.sum* ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o server .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o server %s
 
 FROM alpine:3.20 AS runner
 WORKDIR /app
 RUN apk --no-cache add ca-certificates tzdata
 COPY --from=builder /app/server .
-EXPOSE 8080
+EXPOSE %s
 ENTRYPOINT ["./server"]
-`
-		composeContent = buildDockerCompose(config, "app", "8080", nil)
+`, entrypoint, port)
+		composeContent = buildDockerCompose(config, "app", port, nil)
 
 	case strings.HasPrefix(config.Template, "bun-"):
 		dockerfileContent = `# Multi-Stage Dockerfile for Bun
@@ -363,8 +388,11 @@ CMD ["npm", "start"]
 		composeContent = buildDockerCompose(config, "app", "3000", []string{"NODE_ENV=production", "PORT=3000"})
 	}
 
-	if err := writeAddonFile(baseDir, "Dockerfile", dockerfileContent); err != nil {
-		return err
+	dockerfilePath := filepath.Join(baseDir, "Dockerfile")
+	if !fileExists(dockerfilePath) {
+		if err := writeAddonFile(baseDir, "Dockerfile", dockerfileContent); err != nil {
+			return err
+		}
 	}
 
 	composePath := filepath.Join(baseDir, "docker-compose.yml")

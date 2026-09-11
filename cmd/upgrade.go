@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"umaru/internal/updater"
 
@@ -11,7 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var checkOnlyFlag bool
+var (
+	checkOnlyFlag    bool
+	forceUpgradeFlag bool
+)
 
 var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
@@ -47,11 +51,11 @@ var upgradeCmd = &cobra.Command{
 
 		isNewer := updater.IsNewerVersion(current, latest)
 
-		if !isNewer {
+		if !isNewer && !forceUpgradeFlag {
 			if current == "dev" {
-				fmt.Println(warnStyle.Render("ℹ️ You are running a development build. Upgrade is not required."))
+				fmt.Println(warnStyle.Render("ℹ️ You are running a development build. Use 'umaru upgrade --force' to install the official release."))
 			} else {
-				fmt.Println(successStyle.Render("✨ You are already using the latest version of Umaru CLI!"))
+				fmt.Println(successStyle.Render("✨ You are already using the latest version of Umaru CLI! (Use --force to reinstall)"))
 			}
 			return
 		}
@@ -89,6 +93,10 @@ var upgradeCmd = &cobra.Command{
 
 		if err != nil {
 			fmt.Printf("❌ Upgrade installation failed: %v\n", err)
+			errLower := strings.ToLower(err.Error())
+			if strings.Contains(errLower, "permission") || strings.Contains(errLower, "access is denied") {
+				fmt.Println("💡 Tip: Try running the command with administrator or sudo privileges.")
+			}
 			os.Exit(1)
 		}
 
@@ -100,5 +108,6 @@ var upgradeCmd = &cobra.Command{
 
 func init() {
 	upgradeCmd.Flags().BoolVar(&checkOnlyFlag, "check", false, "Only check if a newer version is available without installing")
+	upgradeCmd.Flags().BoolVarP(&forceUpgradeFlag, "force", "f", false, "Force upgrade even if currently on dev or latest version")
 	rootCmd.AddCommand(upgradeCmd)
 }

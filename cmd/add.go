@@ -182,7 +182,7 @@ Usage:
 
 		// Auto-run dependency resolution if applicable
 		if proj.Type == generator.ProjectTypeGo {
-			_ = actions.InstallDependencies(targetDir, []string{"go", "mod", "tidy"}, false)
+			_ = actions.InstallDependencies(generator.GetAddonBaseDir(projConfig), []string{"go", "mod", "tidy"}, false)
 		}
 
 		// Success Card

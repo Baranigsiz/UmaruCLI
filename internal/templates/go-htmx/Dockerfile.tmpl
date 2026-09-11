@@ -18,6 +18,7 @@ RUN apk --no-cache add ca-certificates tzdata
 
 COPY --from=builder /bin/server /app/server
 COPY --from=builder /app/views /app/views
+COPY --from=builder /app/public /app/public
 
 EXPOSE 3000
 
