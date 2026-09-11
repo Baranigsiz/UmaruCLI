@@ -5,10 +5,12 @@
   "license": "MIT",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_windows_amd64.zip"
+      "url": "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_windows_amd64.zip",
+      "hash": "83f1ba1c239ccda029250e48deb239245cf84e6004b37ae8fc3032201299fa9d"
     },
     "arm64": {
-      "url": "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_windows_arm64.zip"
+      "url": "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_windows_arm64.zip",
+      "hash": "3fef8d7a19ef9817bab9f765a2f9a30944b83369dec0689944d30c9d96ebd503"
     }
   },
   "bin": "umaru.exe",
