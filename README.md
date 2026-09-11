@@ -35,7 +35,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 <p align="center">
   <a href="#-features">✨ Features</a> •
   <a href="#-real-world-scaffolding-benchmarks">⚡ Benchmarks</a> •
-  <a href="#-supported-starters">📦 Starters (21)</a> •
+  <a href="#-supported-starters">📦 Starters (22)</a> •
   <a href="#-interactive-addon-wizard">🧩 Addon Wizard</a> •
   <a href="#️-global-configuration">⚙️ Global Config</a> •
   <a href="#-installation">🚀 Installation</a> •
@@ -65,7 +65,7 @@ Most scaffolding tools generate bare-bones, single-file "Hello World" scripts. W
 
 ### ⚡ Real-World Scaffolding Benchmarks
 
-Unlike `npx` or script-based generators that query remote registries and download packages over the network, Umaru CLI compiles all 21 architectures directly into a single standalone static binary. 
+Unlike `npx` or script-based generators that query remote registries and download packages over the network, Umaru CLI compiles all 22 architectures directly into a single standalone static binary. 
 
 The following real-world measurements compare project scaffolding time with dependency installs skipped (`--skip-install` / `--disable-git`):
 
@@ -85,7 +85,7 @@ The following real-world measurements compare project scaffolding time with depe
 ## ✨ Features
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
-- 🔌 **Zero Network Reliance:** All 21 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🔌 **Zero Network Reliance:** All 22 starter boilerplates are compiled directly into the binary via `//go:embed`.
 - 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
@@ -104,7 +104,7 @@ The following real-world measurements compare project scaffolding time with depe
 
 ## 📦 Supported Starters
 
-Umaru CLI includes 21 production-ready architectures organized across 4 categories:
+Umaru CLI includes 22 production-ready architectures organized across 4 categories:
 
 ### ⚙️ Backend APIs
 | Template ID | Technology Stack | Architecture & Included Features |
@@ -141,6 +141,7 @@ Umaru CLI includes 21 production-ready architectures organized across 4 categori
 ### ⚡ CLI & Terminal Tools
 | Template ID | Technology Stack | Architecture & Included Features |
 |---|---|---|
+| `go-tui` | **Go + Bubble Tea + Lipgloss** | Full-screen interactive Terminal User Interface, multi-tab navigation, dynamic resizing, Bubbles & Lipgloss design. |
 | `go-cli` | **Go + Cobra + Bubble Tea + Lipgloss** | Modern CLI & interactive TUI, Viper configuration, Lipgloss Dracula styles, Makefile & multi-stage build. |
 
 ---
@@ -509,7 +510,7 @@ The new template will automatically be listed in `umaru list`, the interactive w
 - [x] 🧩 **Interactive Addon Wizard:** Optional feature injection (PostgreSQL, SQLite, Redis, JWT Auth).
 - [x] ⚙️ **Config File Support:** Global `~/.umarurc.json` configuration manager (`umaru config`).
 - [x] 🩺 **System Diagnostics:** Built-in `umaru doctor` to verify developer environments, runtimes, versions, and template readiness.
-- [x] 📦 **21 Production Starters:** Go (Fiber, Gin, Echo, HTMX, Cobra CLI), Bun (Elysia), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI, AI & LLM Streaming), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack (Go + HTMX, Go + React, TypeScript Monorepo).
+- [x] 📦 **22 Production Starters:** Go (Fiber, Gin, Echo, HTMX, Cobra CLI, Bubble Tea TUI), Bun (Elysia), TypeScript (Hono, NestJS, Express, Fastify), Python (FastAPI, AI & LLM Streaming), Rust (Actix, Axum), Frontend (React, Vue 3, Svelte 5, Next.js, Astro), Fullstack (Go + HTMX, Go + React, TypeScript Monorepo).
 
 ---
 

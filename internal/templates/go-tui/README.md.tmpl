@@ -1,0 +1,54 @@
+# {{.ProjectName}}
+
+A production-grade, full-screen interactive **Terminal User Interface (TUI)** built in Go using Charmbracelet's **Bubble Tea**, **Bubbles**, and **Lipgloss**.
+
+---
+
+## ✨ Features
+
+- 🖥️ **Full-Screen TUI Experience:** Uses terminal alternate screen buffer (`tea.WithAltScreen()`).
+- 🧭 **Multi-Tabbed Navigation:** Seamlessly switch between Dashboard, Explorer, Logs, and Help tabs.
+- 📐 **Responsive Terminal Resizing:** Automatically adapts card grids and layouts to dynamic window dimensions (`tea.WindowSizeMsg`).
+- 🎨 **Modern Lipgloss Styling:** Carefully curated color palettes, elegant borders, and responsive status bar.
+- ⌨️ **Intuitive Keyboard Controls:** Arrow keys, `Tab`, `j/k`, `q` / `Ctrl+C`, and numbered shortcuts.
+
+---
+
+## 🚀 Getting Started
+
+### Run Locally
+```bash
+# Install dependencies
+go mod tidy
+
+# Launch TUI
+go run main.go
+# Or with Makefile:
+make run
+```
+
+### Keybindings
+
+| Key | Action |
+|---|---|
+| `Tab` / `Shift+Tab` | Cycle through tabs |
+| `1` - `4` | Directly switch to tab 1-4 |
+| `↑` / `k` | Move cursor up |
+| `↓` / `j` | Move cursor down |
+| `Space` / `Enter` | Toggle or select item |
+| `?` | Toggle help view |
+| `q` / `Ctrl+C` | Quit application |
+
+---
+
+## 📁 Project Structure
+
+```
+├── internal/
+│   └── ui/
+│       ├── app.go          # Bubble Tea Model (Init, Update, View)
+│       └── styles.go       # Lipgloss theme and design tokens
+├── main.go                 # Program entrypoint & tea.NewProgram
+├── Makefile
+└── README.md
+```

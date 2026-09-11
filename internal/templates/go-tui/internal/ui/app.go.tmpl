@@ -1,0 +1,291 @@
+package ui
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+type ExplorerItem struct {
+	Title    string
+	Status   string
+	Selected bool
+	Desc     string
+}
+
+type Model struct {
+	appName   string
+	tabs      []string
+	activeTab int
+	width     int
+	height    int
+	spinner   spinner.Model
+	cursor    int
+	items     []ExplorerItem
+	logs      []string
+	ticks     int
+	startTime time.Time
+}
+
+func NewModel(appName string) Model {
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = lipgloss.NewStyle().Foreground(SecondaryColor)
+
+	return Model{
+		appName:   appName,
+		tabs:      []string{"1. Dashboard", "2. Explorer", "3. Live Logs", "4. Help"},
+		activeTab: 0,
+		spinner:   s,
+		cursor:    0,
+		startTime: time.Now(),
+		items: []ExplorerItem{
+			{Title: "Authentication Service", Status: "HEALTHY", Desc: "OAuth2 and JWT token validation pipeline"},
+			{Title: "Database Worker Pool", Status: "ACTIVE", Desc: "PostgreSQL connection manager (12 connections)"},
+			{Title: "Event Stream Consumer", Status: "RUNNING", Desc: "Redis Pub/Sub real-time message processor"},
+			{Title: "Edge Cache Layer", Status: "HEALTHY", Desc: "In-memory LRU cache with 99.4% hit rate"},
+			{Title: "Metrics Exporter", Status: "IDLE", Desc: "Prometheus scrape endpoint on :9090"},
+		},
+		logs: []string{
+			"[INFO] Application runtime initialized successfully",
+			"[OK] Terminal buffer switched to alternate screen",
+			"[SYSTEM] Background worker pool started with 4 threads",
+			"[METRIC] Health check passed on all subsystem components",
+		},
+	}
+}
+
+func (m Model) Init() tea.Cmd {
+	return m.spinner.Tick
+}
+
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+
+		case "tab":
+			m.activeTab = (m.activeTab + 1) % len(m.tabs)
+
+		case "shift+tab":
+			m.activeTab = (m.activeTab - 1 + len(m.tabs)) % len(m.tabs)
+
+		case "1", "2", "3", "4":
+			idx := int(msg.String()[0] - '1')
+			if idx >= 0 && idx < len(m.tabs) {
+				m.activeTab = idx
+			}
+
+		case "up", "k":
+			if m.activeTab == 1 && m.cursor > 0 {
+				m.cursor--
+			}
+
+		case "down", "j":
+			if m.activeTab == 1 && m.cursor < len(m.items)-1 {
+				m.cursor++
+			}
+
+		case "enter", " ":
+			if m.activeTab == 1 {
+				m.items[m.cursor].Selected = !m.items[m.cursor].Selected
+				m.logs = append(m.logs, fmt.Sprintf("[USER] Toggled item: %s", m.items[m.cursor].Title))
+			}
+
+		case "?":
+			m.activeTab = 3 // Switch to Help tab
+		}
+
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		cmds = append(cmds, cmd)
+		m.ticks++
+		if m.ticks%50 == 0 {
+			m.logs = append(m.logs, fmt.Sprintf("[HEARTBEAT] System heartbeat tick #%d", m.ticks/50))
+		}
+	}
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m Model) View() string {
+	if m.width == 0 {
+		return "Initializing TUI..."
+	}
+
+	var b strings.Builder
+
+	// 1. Header with App Name & Tabs
+	b.WriteString(HeaderTitleStyle.Render("⚡ " + m.appName))
+	for i, tab := range m.tabs {
+		if i == m.activeTab {
+			b.WriteString(ActiveTabStyle.Render(tab))
+		} else {
+			b.WriteString(InactiveTabStyle.Render(tab))
+		}
+	}
+	b.WriteString("\n\n")
+
+	// 2. Active Tab Content
+	switch m.activeTab {
+	case 0:
+		b.WriteString(m.renderDashboard())
+	case 1:
+		b.WriteString(m.renderExplorer())
+	case 2:
+		b.WriteString(m.renderLogs())
+	case 3:
+		b.WriteString(m.renderHelp())
+	}
+
+	// 3. Status Bar Footer
+	footer := m.renderFooter()
+
+	// Fill remaining vertical space
+	lines := strings.Split(b.String(), "\n")
+	remLines := m.height - len(lines) - 2
+	if remLines > 0 {
+		b.WriteString(strings.Repeat("\n", remLines))
+	} else {
+		b.WriteString("\n")
+	}
+
+	b.WriteString(footer)
+	return b.String()
+}
+
+func (m Model) renderDashboard() string {
+	uptime := time.Since(m.startTime).Truncate(time.Second).String()
+
+	card1 := CardStyle.Render(
+		CardTitleStyle.Render("System Status") + "\n" +
+			fmt.Sprintf("%s All Systems Operational\n", m.spinner.View()) +
+			lipgloss.NewStyle().Foreground(MutedColor).Render("Engine: Bubble Tea v1.2"),
+	)
+
+	card2 := CardStyle.Render(
+		CardTitleStyle.Render("Service Health") + "\n" +
+			CardValueStyle.Render("5 / 5 Active") + "\n" +
+			lipgloss.NewStyle().Foreground(MutedColor).Render("Zero failed healthchecks"),
+	)
+
+	card3 := CardStyle.Render(
+		CardTitleStyle.Render("Runtime Uptime") + "\n" +
+			lipgloss.NewStyle().Bold(true).Foreground(SecondaryColor).Render(uptime) + "\n" +
+			lipgloss.NewStyle().Foreground(MutedColor).Render("Responsive alternate buffer"),
+	)
+
+	row := lipgloss.JoinHorizontal(lipgloss.Top, card1, card2, card3)
+
+	welcomeBox := CardStyle.Width(m.width - 4).Render(
+		lipgloss.NewStyle().Bold(true).Foreground(TextLight).Render("🎉 Welcome to your new Bubble Tea TUI!") + "\n\n" +
+			"This starter template provides a full-featured terminal application architecture:\n" +
+			"  • " + lipgloss.NewStyle().Foreground(SecondaryColor).Render("Elm Architecture:") + " Predictable state updates with Model, Update, and View.\n" +
+			"  • " + lipgloss.NewStyle().Foreground(SecondaryColor).Render("Lipgloss Layouts:") + " Dynamic color palettes, rounded borders, and styled widgets.\n" +
+			"  • " + lipgloss.NewStyle().Foreground(SecondaryColor).Render("Bubbles Components:") + " Animated spinners, tables, and keyboard handlers.\n\n" +
+			lipgloss.NewStyle().Foreground(MutedColor).Render("Press [Tab] to switch views, or [?] for keyboard shortcuts."),
+	)
+
+	return lipgloss.JoinVertical(lipgloss.Left, row, welcomeBox)
+}
+
+func (m Model) renderExplorer() string {
+	var b strings.Builder
+	b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(TextLight).Render("📦 Subsystem Explorer (Use ↑/↓ or j/k to navigate, [Space] to toggle)") + "\n\n")
+
+	for i, itm := range m.items {
+		cursor := "  "
+		style := NormalRowStyle
+		if i == m.cursor {
+			cursor = CursorStyle.String()
+			style = SelectedRowStyle
+		}
+
+		check := "[ ]"
+		if itm.Selected {
+			check = lipgloss.NewStyle().Foreground(SuccessColor).Render("[✔]")
+		}
+
+		statusTag := lipgloss.NewStyle().Foreground(SuccessColor).Render(fmt.Sprintf("[%s]", itm.Status))
+		if itm.Status == "IDLE" {
+			statusTag = lipgloss.NewStyle().Foreground(MutedColor).Render(fmt.Sprintf("[%s]", itm.Status))
+		}
+
+		line := fmt.Sprintf("%s %s %-26s %s - %s", cursor, check, itm.Title, statusTag, lipgloss.NewStyle().Foreground(MutedColor).Render(itm.Desc))
+		b.WriteString(style.Render(line) + "\n")
+	}
+
+	return CardStyle.Width(m.width - 4).Render(b.String())
+}
+
+func (m Model) renderLogs() string {
+	var b strings.Builder
+	b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(TextLight).Render("📜 Realtime Event Stream (Last events)") + "\n\n")
+
+	start := 0
+	if len(m.logs) > 8 {
+		start = len(m.logs) - 8
+	}
+
+	for _, l := range m.logs[start:] {
+		colored := l
+		if strings.HasPrefix(l, "[INFO]") {
+			colored = lipgloss.NewStyle().Foreground(SecondaryColor).Render(l)
+		} else if strings.HasPrefix(l, "[OK]") {
+			colored = lipgloss.NewStyle().Foreground(SuccessColor).Render(l)
+		} else if strings.HasPrefix(l, "[USER]") {
+			colored = lipgloss.NewStyle().Foreground(WarningColor).Render(l)
+		} else {
+			colored = lipgloss.NewStyle().Foreground(MutedColor).Render(l)
+		}
+		b.WriteString("  " + colored + "\n")
+	}
+
+	return CardStyle.Width(m.width - 4).Render(b.String())
+}
+
+func (m Model) renderHelp() string {
+	var b strings.Builder
+	b.WriteString(lipgloss.NewStyle().Bold(true).Foreground(TextLight).Render("⌨️  Keyboard Shortcuts & Navigation") + "\n\n")
+
+	shortcuts := [][]string{
+		{"Tab / Shift+Tab", "Cycle forward / backward between tabs"},
+		{"1, 2, 3, 4", "Direct jump to specific tab view"},
+		{"↑ / k, ↓ / j", "Move cursor in explorer view"},
+		{"Space / Enter", "Toggle selection of active explorer item"},
+		{"?", "Open this Help cheat sheet"},
+		{"q / Ctrl+C", "Quit application gracefully"},
+	}
+
+	for _, s := range shortcuts {
+		key := lipgloss.NewStyle().Bold(true).Foreground(SecondaryColor).Width(20).Render(s[0])
+		desc := lipgloss.NewStyle().Foreground(TextLight).Render(s[1])
+		b.WriteString(fmt.Sprintf("  %s %s\n", key, desc))
+	}
+
+	return CardStyle.Width(m.width - 4).Render(b.String())
+}
+
+func (m Model) renderFooter() string {
+	keys := []string{
+		StatusKeyStyle.Render("Tab") + " " + StatusDescStyle.Render("Next Tab"),
+		StatusKeyStyle.Render("1-4") + " " + StatusDescStyle.Render("Jump"),
+		StatusKeyStyle.Render("↑/↓") + " " + StatusDescStyle.Render("Navigate"),
+		StatusKeyStyle.Render("q") + " " + StatusDescStyle.Render("Quit"),
+	}
+
+	return StatusBarStyle.Width(m.width).Render(strings.Join(keys, "  •  "))
+}

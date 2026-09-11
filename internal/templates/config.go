@@ -28,7 +28,7 @@ func (t TemplateConfig) GetCategory() string {
 		return "Frontend"
 	case "fullstack-go-react", "fullstack-ts-monorepo", "go-htmx":
 		return "Fullstack"
-	case "go-cli":
+	case "go-cli", "go-tui":
 		return "CLI"
 	default:
 		return "Backend"

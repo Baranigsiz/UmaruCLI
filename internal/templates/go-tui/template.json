@@ -1,0 +1,7 @@
+{
+  "name": "Go TUI Application (Bubble Tea + Lipgloss)",
+  "description": "Full-screen interactive Terminal User Interface with Bubble Tea (Elm architecture), Bubbles & Lipgloss styling.",
+  "category": "CLI",
+  "installCommand": ["go", "mod", "tidy"],
+  "runCommand": "go run main.go"
+}
