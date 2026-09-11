@@ -25,7 +25,7 @@ func GetTemplatePorts(templateID string) []string {
 		return []string{"App: 3000"}
 	case "python-fastapi":
 		return []string{"API: 8000"}
-	case "ai-fastapi-starter":
+	case "ai-fastapi-starter", "ai-rag-agent":
 		return []string{"API: 8000", "ChromaDB: 8001"}
 	case "react-vite-ts", "vue-vite-ts", "svelte-vite-ts":
 		return []string{"Dev Server: 5173"}
@@ -49,7 +49,7 @@ func GetSupportedAddons(templateID string) []string {
 	switch templateID {
 	case "hono-cloudflare":
 		return []string{"⚡ Cloudflare KV", "🗄️ Cloudflare D1 (SQL)", "🔐 JWT Auth"}
-	case "go-fiber", "go-gin", "go-echo", "fastify-api", "hono-api", "node-express", "nestjs-api", "python-fastapi", "ai-fastapi-starter", "fullstack-go-react", "fullstack-ts-monorepo", "bun-elysia", "go-htmx":
+	case "go-fiber", "go-gin", "go-echo", "fastify-api", "hono-api", "node-express", "nestjs-api", "python-fastapi", "ai-fastapi-starter", "ai-rag-agent", "fullstack-go-react", "fullstack-ts-monorepo", "bun-elysia", "go-htmx":
 		return []string{"🐘 PostgreSQL", "📦 SQLite", "🔴 Redis", "🔐 JWT Auth"}
 	case "go-cli", "go-tui":
 		return []string{"📦 SQLite", "🔴 Redis", "🐳 Docker"}

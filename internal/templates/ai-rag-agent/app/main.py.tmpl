@@ -1,0 +1,58 @@
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
+from app.api.routes import router
+from app.services.vector_store import vector_store
+
+logging.basicConfig(
+    level=logging.INFO if settings.APP_DEBUG else logging.WARNING,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger("rag_agent")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initializing vector store collection...")
+    try:
+        vector_store.get_collection()
+        logger.info("Vector store initialized successfully.")
+    except Exception as e:
+        logger.warning(f"Could not connect to vector store on startup: {e}")
+    yield
+    logger.info("Shutting down RAG Agent service...")
+
+
+app = FastAPI(
+    title="{{.ProjectName}} - Production RAG API",
+    description="Enterprise-ready Retrieval-Augmented Generation (RAG) backend with ChromaDB and Streaming SSE",
+    version=settings.VERSION,
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount API routes
+app.include_router(router)
+
+
+@app.get("/", tags=["Root"])
+async def root():
+    return {
+        "app": "{{.ProjectName}}",
+        "docs": "/docs",
+        "health": "/health",
+        "version": settings.VERSION
+    }

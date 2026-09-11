@@ -35,7 +35,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 <p align="center">
   <a href="#-features">✨ Features</a> •
   <a href="#-real-world-scaffolding-benchmarks">⚡ Benchmarks</a> •
-  <a href="#-supported-starters">📦 Starters (24)</a> •
+  <a href="#-supported-starters">📦 Starters (25)</a> •
   <a href="#-interactive-addon-wizard">🧩 Addon Wizard</a> •
   <a href="#️-global-configuration">⚙️ Global Config</a> •
   <a href="#-installation">🚀 Installation</a> •
@@ -104,7 +104,7 @@ The following real-world measurements compare project scaffolding time with depe
 
 ## 📦 Supported Starters
 
-Umaru CLI includes 24 production-ready architectures organized across 5 categories:
+Umaru CLI includes 25 production-ready architectures organized across 5 categories:
 
 ### ⚙️ Backend APIs
 | Template ID | Technology Stack | Architecture & Included Features |
@@ -120,6 +120,7 @@ Umaru CLI includes 24 production-ready architectures organized across 5 categori
 | `nestjs-api` | **NestJS 10 + TypeScript** | Enterprise modular backend, Swagger OpenAPI (`/api/docs`), ValidationPipe, Docker & Compose, Jest test suite. |
 | `python-fastapi` | **FastAPI + Pydantic v2** | Versioned API Router (`/api/v1/`), Pydantic models, Interactive OpenAPI Swagger `/docs`, Docker, CORS. |
 | `ai-fastapi-starter` | **FastAPI + OpenAI/Ollama + ChromaDB** | Production AI & LLM Streaming API, Server-Sent Events (SSE), Vector DB, Pydantic v2, Docker Compose. |
+| `ai-rag-agent` | **FastAPI + LangChain + ChromaDB** | Enterprise-grade RAG pipeline, document ingestion & chunking, ChromaDB vector search, citations, streaming SSE. |
 | `rust-actix` | **Rust + Actix-Web 4** | Safe, ultra-high throughput backend, Serde JSON serialization, Health check endpoints. |
 | `rust-axum` | **Rust + Axum 0.7 + Tokio** | Async Tokio runtime, Tower HTTP middleware, Tracing subscriber, Docker Multi-Stage, Graceful Shutdown. |
 

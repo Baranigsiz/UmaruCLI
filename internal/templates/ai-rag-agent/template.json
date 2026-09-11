@@ -1,0 +1,7 @@
+{
+  "name": "Production RAG & AI Agent (FastAPI + LangChain + ChromaDB)",
+  "description": "Production RAG pipeline with document ingestion, ChromaDB vector search, citations, and streaming SSE",
+  "category": "Backend",
+  "installCommand": ["pip", "install", "-r", "requirements.txt"],
+  "runCommand": "uvicorn app.main:app --reload --port 8000"
+}

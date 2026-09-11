@@ -1,0 +1,70 @@
+# {{.ProjectName}}
+
+Production-grade **Retrieval-Augmented Generation (RAG) & AI Agent** API built with **FastAPI**, **LangChain**, and **ChromaDB**.
+
+## 🚀 Features
+
+- **Document Ingestion**: Chunk, embed, and index text, documents, or articles into ChromaDB.
+- **Semantic Vector Search**: High-dimensional cosine similarity search across your private knowledge base.
+- **RAG QA Pipeline**: Context-augmented question answering with exact source citations.
+- **Streaming Tokens (SSE)**: Real-time Server-Sent Events token streaming for chat interfaces.
+- **Modular Vector Store**: Works with local in-process ChromaDB or containerized remote ChromaDB server.
+- **OpenAPI Swagger UI**: Interactive API documentation at `/docs`.
+
+## 🛠️ Prerequisites
+
+- Python 3.10+
+- (Optional) Docker & Docker Compose for multi-container deployment
+- OpenAI API Key (or a locally running Ollama instance)
+
+## 📦 Getting Started
+
+### 1. Setup Environment
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Linux/macOS:
+source venv/bin/activate
+# On Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+```
+
+Set your `OPENAI_API_KEY` in `.env`.
+
+### 2. Run Development Server
+
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+
+Open [http://localhost:8000/docs](http://localhost:8000/docs) in your browser to view the interactive Swagger UI.
+
+### 3. Docker Deployment
+
+```bash
+docker compose up --build -d
+```
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Service health check |
+| `POST` | `/api/v1/rag/ingest` | Ingest raw text or documents into the vector store |
+| `POST` | `/api/v1/rag/query` | Ask questions with context retrieval & source citations |
+| `POST` | `/api/v1/rag/chat-stream` | Stream LLM answer tokens via SSE (`text/event-stream`) |
+| `GET` | `/api/v1/rag/stats` | View total vectors and collection details |
+
+---
+Scaffolded with ❤️ by [UmaruCLI](https://github.com/Baranigsiz/UmaruCLI)
