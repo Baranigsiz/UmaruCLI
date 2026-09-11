@@ -1,0 +1,7 @@
+{
+  "name": "Hono + Cloudflare Workers (Edge API)",
+  "description": "Ultra-fast edge-native serverless API with Hono, Cloudflare Workers, TypeScript & Wrangler.",
+  "category": "Backend",
+  "installCommand": ["npm", "install"],
+  "runCommand": "npm run dev"
+}

@@ -1,0 +1,57 @@
+# {{.ProjectName}}
+
+Ultra-fast, zero cold-start edge-native API built with **Hono** and **Cloudflare Workers**.
+
+---
+
+## ⚡ Tech Stack
+
+- **Framework:** [Hono v4](https://hono.dev)
+- **Runtime:** [Cloudflare Workers](https://workers.cloudflare.com)
+- **Tooling:** [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
+- **Language:** TypeScript 5.7+
+- **Bindings:** Pre-configured for Environment Variables, KV Storage, and D1 Database
+
+---
+
+## 🚀 Getting Started
+
+### 1. Install Dependencies
+```bash
+npm install
+```
+
+### 2. Run Local Development Server
+```bash
+npm run dev
+```
+
+Local server starts on [http://localhost:8787](http://localhost:8787).
+
+---
+
+## 🌐 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Edge greeting & Cloudflare data center (colo) info |
+| `GET` | `/health` | Healthcheck and timestamp |
+| `GET` | `/api/v1/geo` | Incoming client geo-location (Country, City, Region, ASN) |
+| `GET` | `/api/v1/items` | List demo items |
+| `POST` | `/api/v1/items` | Create a new demo item |
+| `GET` | `/api/v1/items/:id` | Get item by ID |
+| `DELETE` | `/api/v1/items/:id` | Delete item by ID |
+
+---
+
+## 🚀 Deploy to Cloudflare
+
+Deploy globally to 300+ Cloudflare edge data centers in seconds:
+
+```bash
+# Log in to your Cloudflare account (first time)
+npx wrangler login
+
+# Deploy production worker
+npm run deploy
+```

@@ -1,0 +1,85 @@
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
+import { logger } from 'hono/logger'
+import { prettyJSON } from 'hono/pretty-json'
+import { itemsRouter } from './routes/items'
+
+type Bindings = {
+  APP_NAME: string
+  APP_ENV: string
+  KV_STORE?: KVNamespace
+  DB?: D1Database
+}
+
+const app = new Hono<{ Bindings: Bindings }>()
+
+// Global Middleware
+app.use('*', logger())
+app.use('*', cors())
+app.use('*', prettyJSON())
+
+// Response timing header
+app.use('*', async (c, next) => {
+  const start = Date.now()
+  await next()
+  const duration = Date.now() - start
+  c.header('X-Response-Time', `${duration}ms`)
+  c.header('Server-Timing', `edge;dur=${duration}`)
+})
+
+// Root Welcome Endpoint
+app.get('/', (c) => {
+  const cf = (c.req.raw as unknown as { cf?: Record<string, unknown> }).cf || {}
+
+  return c.json({
+    message: '⚡ Welcome to Hono on Cloudflare Workers!',
+    app: c.env.APP_NAME || '{{.ProjectName}}',
+    environment: c.env.APP_ENV || 'development',
+    edge: {
+      dataCenter: (cf.colo as string) || 'local',
+      country: (cf.country as string) || 'unknown',
+      timezone: (cf.timezone as string) || 'UTC',
+    },
+    documentation: 'https://hono.dev/getting-started/cloudflare-workers',
+    timestamp: new Date().toISOString(),
+  })
+})
+
+// Healthcheck Endpoint
+app.get('/health', (c) => {
+  return c.json({
+    status: 'healthy',
+    runtime: 'Cloudflare Workers (V8 Isolate)',
+    timestamp: new Date().toISOString(),
+  })
+})
+
+// Geo-location Endpoint (Extracts Cloudflare edge telemetry)
+app.get('/api/v1/geo', (c) => {
+  const cf = (c.req.raw as unknown as { cf?: Record<string, unknown> }).cf || {}
+
+  return c.json({
+    clientIP: c.req.header('cf-connecting-ip') || '127.0.0.1',
+    colo: cf.colo || 'local',
+    country: cf.country || 'unknown',
+    city: cf.city || 'unknown',
+    region: cf.region || 'unknown',
+    asn: cf.asn || null,
+  })
+})
+
+// Mount Sub-routers
+app.route('/api/v1/items', itemsRouter)
+
+// 404 Handler
+app.notFound((c) => {
+  return c.json({ success: false, error: 'Route not found' }, 404)
+})
+
+// Global Error Handler
+app.onError((err, c) => {
+  console.error('Unhandled Edge Error:', err)
+  return c.json({ success: false, error: err.message || 'Internal Server Error' }, 500)
+})
+
+export default app

@@ -18,8 +18,8 @@ func TestSmoke_AllTemplatesRenderCleanly(t *testing.T) {
 		t.Fatalf("Failed to fetch available templates: %v", err)
 	}
 
-	if len(allTemplates) < 22 {
-		t.Errorf("Expected at least 22 templates, found %d", len(allTemplates))
+	if len(allTemplates) < 23 {
+		t.Errorf("Expected at least 23 templates, found %d", len(allTemplates))
 	}
 
 	for _, tmpl := range allTemplates {

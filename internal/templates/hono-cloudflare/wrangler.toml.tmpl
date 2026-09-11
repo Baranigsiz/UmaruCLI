@@ -1,0 +1,19 @@
+name = "{{.SafeName}}"
+main = "src/index.ts"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+APP_NAME = "{{.ProjectName}}"
+APP_ENV = "development"
+
+# KV Storage binding (Uncomment to enable)
+# [[kv_namespaces]]
+# binding = "KV_STORE"
+# id = "your-kv-namespace-id"
+
+# D1 Serverless SQL Database binding (Uncomment to enable)
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "{{.SafeName}}-db"
+# database_id = "your-d1-database-id"

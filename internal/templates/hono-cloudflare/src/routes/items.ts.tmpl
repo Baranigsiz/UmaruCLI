@@ -1,0 +1,68 @@
+import { Hono } from 'hono'
+
+export interface Item {
+  id: string
+  title: string
+  createdAt: string
+}
+
+// In-memory demo data store (resets per worker lifecycle)
+let items: Item[] = [
+  { id: '1', title: 'Deploy to Cloudflare Edge Network', createdAt: new Date().toISOString() },
+  { id: '2', title: 'Integrate KV Storage for caching', createdAt: new Date().toISOString() },
+]
+
+export const itemsRouter = new Hono()
+
+// List all items
+itemsRouter.get('/', (c) => {
+  return c.json({
+    success: true,
+    count: items.length,
+    data: items,
+  })
+})
+
+// Get item by ID
+itemsRouter.get('/:id', (c) => {
+  const id = c.req.param('id')
+  const item = items.find((i) => i.id === id)
+  if (!item) {
+    return c.json({ success: false, error: 'Item not found' }, 404)
+  }
+  return c.json({ success: true, data: item })
+})
+
+// Create new item
+itemsRouter.post('/', async (c) => {
+  try {
+    const body = await c.req.json<{ title?: string }>()
+    if (!body.title || typeof body.title !== 'string') {
+      return c.json({ success: false, error: 'Field "title" is required' }, 400)
+    }
+
+    const newItem: Item = {
+      id: String(Date.now()),
+      title: body.title.trim(),
+      createdAt: new Date().toISOString(),
+    }
+
+    items.push(newItem)
+    return c.json({ success: true, data: newItem }, 201)
+  } catch {
+    return c.json({ success: false, error: 'Invalid JSON body' }, 400)
+  }
+})
+
+// Delete item
+itemsRouter.delete('/:id', (c) => {
+  const id = c.req.param('id')
+  const initialLen = items.length
+  items = items.filter((i) => i.id !== id)
+
+  if (items.length === initialLen) {
+    return c.json({ success: false, error: 'Item not found' }, 404)
+  }
+
+  return c.json({ success: true, message: `Item ${id} deleted successfully` })
+})

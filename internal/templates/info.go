@@ -35,6 +35,8 @@ func GetTemplatePorts(templateID string) []string {
 		return []string{"API: 8080", "Frontend: 5173"}
 	case "fullstack-ts-monorepo":
 		return []string{"API: 8080", "Frontend: 3000"}
+	case "hono-cloudflare":
+		return []string{"Dev Server: 8787"}
 	default:
 		return []string{"None (CLI Tool)"}
 	}
@@ -43,6 +45,8 @@ func GetTemplatePorts(templateID string) []string {
 // GetSupportedAddons returns which addons can be injected into this template
 func GetSupportedAddons(templateID string) []string {
 	switch templateID {
+	case "hono-cloudflare":
+		return []string{"⚡ Cloudflare KV", "🗄️ Cloudflare D1 (SQL)", "🔐 JWT Auth"}
 	case "go-fiber", "go-gin", "go-echo", "fastify-api", "hono-api", "node-express", "nestjs-api", "python-fastapi", "ai-fastapi-starter", "fullstack-go-react", "fullstack-ts-monorepo", "bun-elysia", "go-htmx":
 		return []string{"🐘 PostgreSQL", "📦 SQLite", "🔴 Redis", "🔐 JWT Auth"}
 	case "go-cli", "go-tui":
