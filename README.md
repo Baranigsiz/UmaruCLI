@@ -10,7 +10,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
 [![CI Workflow](https://img.shields.io/github/actions/workflow/status/Baranigsiz/UmaruCLI/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/Baranigsiz/UmaruCLI/actions)
 [![CodeQL Security](https://img.shields.io/github/actions/workflow/status/Baranigsiz/UmaruCLI/codeql.yml?branch=main&style=for-the-badge&label=CodeQL&logo=github&logoColor=white)](https://github.com/Baranigsiz/UmaruCLI/actions/workflows/codeql.yml)
 [![Lint & Quality](https://img.shields.io/github/actions/workflow/status/Baranigsiz/UmaruCLI/lint.yml?branch=main&style=for-the-badge&label=Lint&logo=go&logoColor=white)](https://github.com/Baranigsiz/UmaruCLI/actions/workflows/lint.yml)
-[![Release](https://img.shields.io/github/v/release/Baranigsiz/UmaruCLI?style=for-the-badge&logo=semanticrelease&logoColor=white&color=7D56F4)](https://github.com/Baranigsiz/UmaruCLI/releases)
+[![Release](https://img.shields.io/github/v/release/Baranigsiz/UmaruCLI?sort=semver&style=for-the-badge&logo=semanticrelease&logoColor=white&color=7D56F4)](https://github.com/Baranigsiz/UmaruCLI/releases)
 [![License](https://img.shields.io/badge/License-MIT-emerald?style=for-the-badge)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
 
