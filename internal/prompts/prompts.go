@@ -176,19 +176,22 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 		enableDocker := selectedAddons.Docker
 		enableCI := selectedAddons.CI
 
-		dbOptions := []huh.Option[string]{
-			huh.NewOption("None (Skip database setup)", "none"),
-			huh.NewOption("PostgreSQL (Production-ready relational DB)", "postgres"),
-			huh.NewOption("SQLite (Lightweight file-based embedded DB)", "sqlite"),
-		}
+		isRust := strings.HasPrefix(tmpl.ID, "rust-")
+		var addonFields []huh.Field
 
-		authOptions := []huh.Option[string]{
-			huh.NewOption("None (Public API / Custom Auth)", "none"),
-			huh.NewOption("JWT (JSON Web Token authentication)", "jwt"),
-		}
+		if !isRust {
+			dbOptions := []huh.Option[string]{
+				huh.NewOption("None (Skip database setup)", "none"),
+				huh.NewOption("PostgreSQL (Production-ready relational DB)", "postgres"),
+				huh.NewOption("SQLite (Lightweight file-based embedded DB)", "sqlite"),
+			}
 
-		addonForm := huh.NewForm(
-			huh.NewGroup(
+			authOptions := []huh.Option[string]{
+				huh.NewOption("None (Public API / Custom Auth)", "none"),
+				huh.NewOption("JWT (JSON Web Token authentication)", "jwt"),
+			}
+
+			addonFields = append(addonFields,
 				huh.NewSelect[string]().
 					Title("Choose a database addon (Optional)").
 					Options(dbOptions...).
@@ -197,17 +200,22 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 					Title("Choose an authentication addon (Optional)").
 					Options(authOptions...).
 					Value(&selectedAuth),
-				huh.NewConfirm().
-					Title("Include Redis cache support?").
-					Value(&enableRedis),
-				huh.NewConfirm().
-					Title("Include Docker & Compose containerization?").
-					Value(&enableDocker),
-				huh.NewConfirm().
-					Title("Include GitHub Actions CI workflow?").
-					Value(&enableCI),
-			),
+			)
+		}
+
+		addonFields = append(addonFields,
+			huh.NewConfirm().
+				Title("Include Redis cache support?").
+				Value(&enableRedis),
+			huh.NewConfirm().
+				Title("Include Docker & Compose containerization?").
+				Value(&enableDocker),
+			huh.NewConfirm().
+				Title("Include GitHub Actions CI workflow?").
+				Value(&enableCI),
 		)
+
+		addonForm := huh.NewForm(huh.NewGroup(addonFields...))
 
 		if err := addonForm.Run(); err != nil {
 			return nil, err

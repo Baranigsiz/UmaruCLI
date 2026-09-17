@@ -121,6 +121,39 @@ func TestCalculateReadiness_MissingRust(t *testing.T) {
 	}
 }
 
+func TestCalculateReadiness_MissingNpmInFullstack(t *testing.T) {
+	mockTools := map[string]ToolCheck{
+		"go":      {Status: StatusOk},
+		"node.js": {Status: StatusOk},
+		// npm is missing
+	}
+
+	readiness := calculateReadiness(mockTools)
+	var foundFullstack bool
+	for _, r := range readiness {
+		if r.Category == "Fullstack Monorepos (Go+React, Hono+React)" {
+			foundFullstack = true
+			if r.IsReady {
+				t.Errorf("Fullstack templates should not be ready when npm is missing")
+			}
+			foundMissingNpm := false
+			for _, m := range r.Missing {
+				if m == "npm/pnpm" {
+					foundMissingNpm = true
+					break
+				}
+			}
+			if !foundMissingNpm {
+				t.Errorf("expected 'npm/pnpm' in missing list for Fullstack, got %v", r.Missing)
+			}
+		}
+	}
+
+	if !foundFullstack {
+		t.Errorf("expected Fullstack category in readiness list")
+	}
+}
+
 func TestRunDiagnostics_Sanity(t *testing.T) {
 	report := RunDiagnostics("v1.6.0-test")
 

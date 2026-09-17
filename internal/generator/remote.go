@@ -152,29 +152,13 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 			return os.MkdirAll(targetPath, 0755)
 		}
 
-		srcFile, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer srcFile.Close()
-
 		info, err := d.Info()
 		perm := fs.FileMode(0644)
 		if err == nil {
 			perm = info.Mode().Perm()
 		}
 
-		dstFile, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
-		if err != nil {
-			return err
-		}
-		defer dstFile.Close()
-
-		if _, err := io.Copy(dstFile, srcFile); err != nil {
-			return err
-		}
-
-		return nil
+		return copyFile(path, targetPath, perm)
 	})
 
 	if err != nil {
@@ -182,6 +166,25 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 	}
 
 	return &templateConfig, nil
+}
+
+func copyFile(srcPath, dstPath string, perm fs.FileMode) error {
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return err
+	}
+	return nil
 }
 
 // DryRunRemote clones to a temporary directory to simulate generated files

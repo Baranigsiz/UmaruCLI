@@ -89,3 +89,8 @@ func TestFindAssetForSystem(t *testing.T) {
 		t.Errorf("FindAssetForSystem matched non-archive asset: %s", asset.Name)
 	}
 }
+
+func TestCleanupOldExecutable(t *testing.T) {
+	// Should run cleanly without panicking on any platform
+	CleanupOldExecutable()
+}

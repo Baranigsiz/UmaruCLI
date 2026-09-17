@@ -183,6 +183,11 @@ var initCmd = &cobra.Command{
 			initialName = args[0]
 		}
 
+		userCfg := config.LoadUserConfig()
+		if !cmd.Flags().Changed("no-git") && !userCfg.GitInit {
+			noGitFlag = true
+		}
+
 		if yesFlag {
 			if initialName == "" {
 				initialName = "umaru-app"
@@ -190,12 +195,15 @@ var initCmd = &cobra.Command{
 			if templateFlag == "" {
 				templateFlag = "go-fiber"
 			}
+			if packageManagerFlag == "" {
+				if userCfg.PackageManager != "" {
+					packageManagerFlag = userCfg.PackageManager
+				} else {
+					packageManagerFlag = "npm"
+				}
+			}
 			noAddonsFlag = true
-		}
-
-		userCfg := config.LoadUserConfig()
-		if !cmd.Flags().Changed("no-git") && !userCfg.GitInit {
-			noGitFlag = true
+			forceFlag = true
 		}
 
 		// Handle Remote Template Flow (--from)

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.0.1] - 2026-09-17
+
+### 🛠️ Bug Fixes & Stability Improvements
+
+- **Doctor Monorepo Dependency Reporting**: Fixed an issue where `umaru doctor` calculated fullstack monorepos (`fullstack-go-react`, `fullstack-ts-monorepo`) as unready when Node was installed without `npm/pnpm/yarn/bun`, but omitted `"npm/pnpm"` from the missing tools array.
+- **Remote Scaffolding File Descriptor Leak**: Replaced deferred file closing inside the `filepath.WalkDir` copy loop with an isolated `copyFile` function, eliminating OS file descriptor exhaustion (`too many open files`) when generating projects from large remote repositories.
+- **Non-Interactive Scaffolding Flow (`--yes` / `-y`)**:
+  - Automatically defaults to `userCfg.PackageManager` or `"npm"` for Node-based templates when `--package-manager` is omitted, eliminating blocking TUI prompts in CI/CD environments.
+  - Automatically assumes `--force` when target directories are non-empty in non-interactive mode to prevent TTY hangs.
+- **Rust Addon Prompt Alignment**: Updated the interactive addon wizard (`prompts.go`) for Rust templates (`rust-axum`, `rust-actix`) to only present supported container and CI workflows, eliminating prompts for unsupported code-level DB and JWT generators.
+- **Windows Updater Cleanup**: Added `CleanupOldExecutable()` to automatically purge leftover `umaru.exe.old` binaries on application startup following a self-upgrade on Windows.
+
 ## [v2.0.0] - 2026-09-11
 
 ### 🌟 Major Highlights & New Features

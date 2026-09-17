@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"os"
 	"testing"
 )
 
@@ -40,3 +41,28 @@ func TestDryRunRemote_InvalidURL(t *testing.T) {
 		t.Errorf("Expected error for flag-like remote URL, got nil")
 	}
 }
+
+func TestCopyFile(t *testing.T) {
+	tempDir := t.TempDir()
+	src := tempDir + "/src.txt"
+	dst := tempDir + "/dst.txt"
+
+	content := []byte("Hello Umaru remote copy!")
+	if err := os.WriteFile(src, content, 0644); err != nil {
+		t.Fatalf("Failed to write src file: %v", err)
+	}
+
+	if err := copyFile(src, dst, 0644); err != nil {
+		t.Fatalf("copyFile failed: %v", err)
+	}
+
+	got, err := os.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("Failed to read dst file: %v", err)
+	}
+
+	if string(got) != string(content) {
+		t.Errorf("Content mismatch: got %q, want %q", string(got), string(content))
+	}
+}
+

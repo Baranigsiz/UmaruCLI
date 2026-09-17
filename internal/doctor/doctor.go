@@ -413,6 +413,9 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 				if !hasNode {
 					groups["Fullstack"].Missing = appendUnique(groups["Fullstack"].Missing, "node")
 				}
+				if !hasNpm {
+					groups["Fullstack"].Missing = appendUnique(groups["Fullstack"].Missing, "npm/pnpm")
+				}
 			}
 		case id == "fullstack-ts-monorepo":
 			groups["Fullstack"].Total++
@@ -421,6 +424,9 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 			} else {
 				if !hasNode {
 					groups["Fullstack"].Missing = appendUnique(groups["Fullstack"].Missing, "node")
+				}
+				if !hasNpm {
+					groups["Fullstack"].Missing = appendUnique(groups["Fullstack"].Missing, "npm/pnpm")
 				}
 			}
 		case id == "tauri-desktop":

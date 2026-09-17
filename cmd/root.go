@@ -3,6 +3,8 @@ package cmd
 import (
 	"os"
 
+	"umaru/internal/updater"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +16,7 @@ Umaru helps you kickstart your projects with best practices out of the box.`,
 }
 
 func Execute() {
+	updater.CleanupOldExecutable()
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

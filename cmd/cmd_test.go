@@ -392,4 +392,22 @@ func TestInitCmd_FlagValidation(t *testing.T) {
 	}
 }
 
+func TestInitCmd_YesFlag_NonInteractiveDryRun(t *testing.T) {
+	defer resetInitFlags()
+	resetInitFlags()
+
+	out, err := executeCommand("init", "test-dryrun-app", "-t", "react-vite-ts", "-y", "--dry-run")
+	if err != nil {
+		t.Fatalf("Expected init with -y and --dry-run to succeed, got error: %v", err)
+	}
+
+	if !strings.Contains(out, "Dry-Run Mode") {
+		t.Errorf("Expected dry run output, got: %s", out)
+	}
+	if !strings.Contains(out, "package.json") {
+		t.Errorf("Expected dry run to show package.json, got: %s", out)
+	}
+}
+
+
 

@@ -360,3 +360,21 @@ func ReplaceCurrentExecutable(newBinaryBytes []byte) error {
 
 	return nil
 }
+
+// CleanupOldExecutable silently deletes leftover .old executable from previous Windows upgrades
+func CleanupOldExecutable() {
+	if runtime.GOOS != "windows" {
+		return
+	}
+	execPath, err := os.Executable()
+	if err != nil {
+		return
+	}
+	execPath, err = filepath.EvalSymlinks(execPath)
+	if err != nil {
+		return
+	}
+	oldPath := execPath + ".old"
+	_ = os.Remove(oldPath)
+}
+
