@@ -18,7 +18,8 @@ func getAddonEnvBlocks(config ProjectConfig) []EnvBlock {
 	var blocks []EnvBlock
 
 	db := strings.ToLower(strings.TrimSpace(config.Addons.Database))
-	if db == "postgres" {
+	switch db {
+	case "postgres":
 		dbName := config.SafeName
 		if dbName == "" {
 			dbName = "app_db"
@@ -34,7 +35,7 @@ func getAddonEnvBlocks(config ProjectConfig) []EnvBlock {
 				{"DB_SSLMODE", "disable"},
 			},
 		})
-	} else if db == "sqlite" {
+	case "sqlite":
 		blocks = append(blocks, EnvBlock{
 			Comment: "Database (SQLite)",
 			Vars: [][2]string{
@@ -141,5 +142,39 @@ func injectEnvVariables(baseDir string, config ProjectConfig) error {
 		}
 	}
 
+	ensureEnvIgnored(baseDir, config.TargetDir)
+
 	return nil
+}
+
+// ensureEnvIgnored verifies that .env is listed in .gitignore in the target project
+func ensureEnvIgnored(dirs ...string) {
+	visited := make(map[string]bool)
+	for _, dir := range dirs {
+		if dir == "" || visited[dir] {
+			continue
+		}
+		visited[dir] = true
+		gitignorePath := filepath.Join(dir, ".gitignore")
+		if data, err := os.ReadFile(gitignorePath); err == nil {
+			content := string(data)
+			hasEnv := false
+			for _, line := range strings.Split(content, "\n") {
+				trimmed := strings.TrimSpace(line)
+				if trimmed == ".env" || trimmed == "*.env" || trimmed == ".env*" {
+					hasEnv = true
+					break
+				}
+			}
+			if !hasEnv {
+				var sb strings.Builder
+				sb.WriteString(content)
+				if !strings.HasSuffix(content, "\n") {
+					sb.WriteString("\n")
+				}
+				sb.WriteString("\n# Environment variables\n.env\n")
+				_ = os.WriteFile(gitignorePath, []byte(sb.String()), 0644)
+			}
+		}
+	}
 }

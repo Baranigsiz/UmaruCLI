@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"umaru/internal/config"
@@ -12,9 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var configJSONFlag bool
+
 var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Manage persistent global user preferences",
+	Use:     "config",
+	Short:   "Manage persistent global user preferences",
+	GroupID: "config",
 	Long: `View and modify persistent user configuration stored in ~/.umarurc.json.
 
 Available Keys:
@@ -30,8 +33,17 @@ Available Keys:
 var configListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all user configuration settings",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg := config.LoadUserConfig()
+		if configJSONFlag {
+			data, err := json.MarshalIndent(cfg, "", "  ")
+			if err != nil {
+				return fmt.Errorf("failed to serialize config to json: %w", err)
+			}
+			fmt.Println(string(data))
+			return nil
+		}
+
 		cfgPath, _ := config.GetConfigFilePath()
 
 		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
@@ -63,6 +75,7 @@ var configListCmd = &cobra.Command{
 		fmt.Printf("Config file: %s\n\n", pathStyle.Render(cfgPath))
 		fmt.Println(t)
 		fmt.Println()
+		return nil
 	},
 }
 
@@ -70,7 +83,7 @@ var configGetCmd = &cobra.Command{
 	Use:   "get <key>",
 	Short: "Get the value of a configuration key",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg := config.LoadUserConfig()
 		key := strings.ToLower(strings.TrimSpace(args[0]))
 
@@ -82,11 +95,11 @@ var configGetCmd = &cobra.Command{
 		case "license":
 			fmt.Println(cfg.License)
 		case "git-init", "gitinit", "git":
-			fmt.Println(cfg.GitInit)
+			fmt.Printf("%t\n", cfg.GitInit)
 		default:
-			fmt.Printf("❌ Unknown configuration key '%s'\n", key)
-			os.Exit(1)
+			return fmt.Errorf("unknown configuration key '%s'", key)
 		}
+		return nil
 	},
 }
 
@@ -94,14 +107,13 @@ var configSetCmd = &cobra.Command{
 	Use:   "set <key> <value>",
 	Short: "Set a configuration key",
 	Args:  cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		key := args[0]
 		value := args[1]
 
 		cfg, err := config.SetConfigValue(key, value)
 		if err != nil {
-			fmt.Printf("❌ %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		successStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#10B981"))
@@ -110,22 +122,23 @@ var configSetCmd = &cobra.Command{
 		fmt.Println()
 		fmt.Println(successStyle.Render(fmt.Sprintf("✔ Configuration '%s' updated successfully!", keyStyle.Render(key))))
 		_ = cfg
+		return nil
 	},
 }
 
 var configResetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "Reset all configuration keys to default",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := config.ResetConfig(); err != nil {
-			fmt.Printf("❌ Failed to reset configuration: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to reset configuration: %w", err)
 		}
 
 		successStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#10B981"))
 		fmt.Println()
 		fmt.Println(successStyle.Render("✔ Global configuration reset to default settings."))
 		fmt.Println()
+		return nil
 	},
 }
 
@@ -161,6 +174,7 @@ func init() {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 
+	configListCmd.Flags().BoolVar(&configJSONFlag, "json", false, "Output configuration in JSON format")
 	configCmd.AddCommand(configListCmd)
 	configCmd.AddCommand(configGetCmd)
 	configCmd.AddCommand(configSetCmd)

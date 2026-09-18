@@ -171,7 +171,9 @@ func RenderReport(report DoctorReport, verbose bool) {
 	}
 	scoreStyle := lipgloss.NewStyle().Bold(true).Foreground(scoreColor)
 
-	sb.WriteString(matrixTitle.Render("📦 Template Ecosystem Readiness: ") + scoreStyle.Render(fmt.Sprintf("%d%%", report.TotalScore)) + "\n\n")
+	sb.WriteString(matrixTitle.Render("📦 Template Ecosystem Readiness: "))
+	sb.WriteString(scoreStyle.Render(fmt.Sprintf("%d%%", report.TotalScore)))
+	sb.WriteString("\n\n")
 
 	for _, tmpl := range report.Templates {
 		var icon string
@@ -211,7 +213,9 @@ func RenderReport(report DoctorReport, verbose bool) {
 	}
 
 	if len(tips) > 0 {
-		sb.WriteString("\n" + lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FBBF24")).Render("💡 Recommendations:") + "\n")
+		sb.WriteByte('\n')
+		sb.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FBBF24")).Render("💡 Recommendations:"))
+		sb.WriteByte('\n')
 		for _, tip := range tips {
 			sb.WriteString(fmt.Sprintf("  • %s\n", tip))
 		}

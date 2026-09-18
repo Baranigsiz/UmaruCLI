@@ -129,10 +129,11 @@ export async function connectDatabase(config?: DBConfig) {
 		nodeDeps := make(map[string]string)
 		nodeDevDeps := make(map[string]string)
 
-		if db == "postgres" {
+		switch db {
+		case "postgres":
 			nodeDeps["pg"] = "^8.12.0"
 			nodeDevDeps["@types/pg"] = "^8.11.6"
-		} else if db == "sqlite" {
+		case "sqlite":
 			nodeDeps["sqlite3"] = "^5.1.7"
 			nodeDevDeps["@types/sqlite3"] = "^3.1.11"
 		}

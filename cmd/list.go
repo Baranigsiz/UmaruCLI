@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"umaru/internal/templates"
@@ -12,16 +12,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listCategoryFlag string
+var (
+	listCategoryFlag string
+	listJSONFlag     bool
+)
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all available project templates",
-	Run: func(cmd *cobra.Command, args []string) {
+	Use:     "list",
+	Short:   "List all available project templates",
+	GroupID: "core",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		allTemplates, err := templates.GetAvailableTemplates()
 		if err != nil {
-			fmt.Printf("❌ Failed to load templates: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to load templates: %w", err)
 		}
 
 		if listCategoryFlag != "" {
@@ -34,13 +37,22 @@ var listCmd = &cobra.Command{
 			allTemplates = filtered
 		}
 
+		if listJSONFlag {
+			data, err := json.MarshalIndent(allTemplates, "", "  ")
+			if err != nil {
+				return fmt.Errorf("failed to serialize templates to json: %w", err)
+			}
+			fmt.Println(string(data))
+			return nil
+		}
+
 		if len(allTemplates) == 0 {
 			if listCategoryFlag != "" {
 				fmt.Printf("No templates found in category '%s'. Available categories: Frontend, Backend, Fullstack, CLI, Desktop\n", listCategoryFlag)
 			} else {
 				fmt.Println("No templates found.")
 			}
-			return
+			return nil
 		}
 
 		headerStyle := lipgloss.NewStyle().
@@ -105,11 +117,13 @@ var listCmd = &cobra.Command{
 		fmt.Println(t)
 		fmt.Println(lipgloss.NewStyle().Faint(true).Render("Usage: umaru init <project-name> --template <id>"))
 		fmt.Println()
+		return nil
 	},
 }
 
 func init() {
 	listCmd.Flags().StringVarP(&listCategoryFlag, "category", "c", "", "Filter templates by category (Frontend, Backend, Fullstack, CLI, Desktop)")
+	listCmd.Flags().BoolVar(&listJSONFlag, "json", false, "Output templates list in JSON format")
 	_ = listCmd.RegisterFlagCompletionFunc("category", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			"Frontend\tWeb client applications (React, Vue, Svelte, Next.js, Astro)",

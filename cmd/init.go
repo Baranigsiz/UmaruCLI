@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"umaru/internal/actions"
@@ -49,7 +48,7 @@ func runScaffoldWorkflow(
 	verbose bool,
 	templateTitle string,
 	defaultRunCmd string,
-) {
+) error {
 	installCmd := defaultInstallCmd
 	runCmd := defaultRunCmd
 
@@ -57,8 +56,7 @@ func runScaffoldWorkflow(
 		fmt.Printf("🚀 Scaffolding %s using %s...\n", projConfig.SafeName, templateTitle)
 		tmplCfg, err := generateFn()
 		if err != nil {
-			fmt.Printf("\n❌ Failed to generate project files: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to generate project files: %w", err)
 		}
 		if tmplCfg != nil {
 			if len(installCmd) == 0 && len(tmplCfg.InstallCommand) > 0 {
@@ -128,8 +126,7 @@ func runScaffoldWorkflow(
 			if genErr != nil {
 				err = genErr
 			}
-			fmt.Printf("\n❌ Failed to generate project files:\n%v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to generate project files: %w", err)
 		}
 
 		if gitErr != nil {
@@ -143,12 +140,14 @@ func runScaffoldWorkflow(
 	}
 
 	ui.PrintSuccessCard(projConfig, templateTitle, runCmd, installCmd, skipInstall)
+	return nil
 }
 
 var initCmd = &cobra.Command{
 	Use:     "init [project-name]",
 	Aliases: []string{"new", "create"},
 	Short:   "Initialize a new project",
+	GroupID: "core",
 	Args:    cobra.MaximumNArgs(1),
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if dbFlag != "" {
@@ -177,7 +176,7 @@ var initCmd = &cobra.Command{
 
 		return nil
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var initialName string
 		if len(args) > 0 {
 			initialName = args[0]
@@ -213,8 +212,7 @@ var initCmd = &cobra.Command{
 			}
 			projConfig, err := generator.ResolveProjectConfig(initialName, "remote")
 			if err != nil {
-				fmt.Printf("\n❌ Failed to resolve project config: %v\n", err)
-				os.Exit(1)
+				return fmt.Errorf("failed to resolve project config: %w", err)
 			}
 			projConfig.Author = userCfg.Author
 			projConfig.License = userCfg.License
@@ -222,11 +220,10 @@ var initCmd = &cobra.Command{
 			if dryRunFlag {
 				files, err := generator.DryRunRemote(fromFlag, projConfig)
 				if err != nil {
-					fmt.Printf("\n❌ Remote dry-run failed: %v\n", err)
-					os.Exit(1)
+					return fmt.Errorf("remote dry-run failed: %w", err)
 				}
 				ui.PrintDryRunCard(projConfig, fmt.Sprintf("Remote (%s)", fromFlag), files)
-				return
+				return nil
 			}
 
 			if err := generator.CheckDestination(projConfig.TargetDir, forceFlag); err != nil {
@@ -240,24 +237,22 @@ var initCmd = &cobra.Command{
 					forceFlag = true
 				} else {
 					fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
-					return
+					return nil
 				}
 			}
 
 			if err := checks.PreFlightChecks([]string{"git"}, true, false); err != nil {
-				fmt.Printf("\n❌ Pre-flight check failed: %v\n", err)
-				os.Exit(1)
+				return fmt.Errorf("pre-flight check failed: %w", err)
 			}
 
 			generateRemote := func() (*templates.TemplateConfig, error) {
 				return generator.GenerateFromRemote(fromFlag, projConfig)
 			}
 
-			runScaffoldWorkflow(projConfig, generateRemote, nil, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), "")
-			return
+			return runScaffoldWorkflow(projConfig, generateRemote, nil, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), "")
 		}
 
-		if initialName == "" && templateFlag == "" {
+		if initialName == "" && templateFlag == "" && !quietFlag {
 			ui.PrintBanner()
 		}
 
@@ -273,17 +268,15 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			if errors.Is(err, huh.ErrUserAborted) {
 				fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
-				return
+				return nil
 			}
-			fmt.Printf("❌ %v\n", err)
-			return
+			return err
 		}
 
 		// Resolve safe naming and target directory
 		projConfig, err := generator.ResolveProjectConfig(result.ProjectName, result.Template.ID)
 		if err != nil {
-			fmt.Printf("\n❌ Failed to resolve project config: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to resolve project config: %w", err)
 		}
 		projConfig.Author = userCfg.Author
 		projConfig.License = userCfg.License
@@ -293,11 +286,10 @@ var initCmd = &cobra.Command{
 		if dryRunFlag {
 			files, err := generator.DryRun(projConfig)
 			if err != nil {
-				fmt.Printf("\n❌ Dry-run failed: %v\n", err)
-				os.Exit(1)
+				return fmt.Errorf("dry-run failed: %w", err)
 			}
 			ui.PrintDryRunCard(projConfig, result.Template.Name, files)
-			return
+			return nil
 		}
 
 		// Check target destination directory
@@ -312,7 +304,7 @@ var initCmd = &cobra.Command{
 				forceFlag = true
 			} else {
 				fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
-				return
+				return nil
 			}
 		}
 
@@ -321,9 +313,8 @@ var initCmd = &cobra.Command{
 
 		// Run pre-flight checks
 		if err := checks.PreFlightChecks(installCmd, !noGitFlag, !skipInstallFlag); err != nil {
-			fmt.Printf("\n❌ Pre-flight check failed: %v\n", err)
 			fmt.Println("Please install the missing dependency or use flags (e.g. --no-git, --skip-install) to skip.")
-			os.Exit(1)
+			return fmt.Errorf("pre-flight check failed: %w", err)
 		}
 
 		generateLocal := func() (*templates.TemplateConfig, error) {
@@ -333,7 +324,7 @@ var initCmd = &cobra.Command{
 			return &result.Template, nil
 		}
 
-		runScaffoldWorkflow(projConfig, generateLocal, installCmd, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, result.Template.Name, runCmd)
+		return runScaffoldWorkflow(projConfig, generateLocal, installCmd, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, result.Template.Name, runCmd)
 	},
 }
 

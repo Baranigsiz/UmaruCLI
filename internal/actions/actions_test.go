@@ -60,3 +60,50 @@ func TestCommitGit(t *testing.T) {
 	}
 }
 
+func TestBuildCommand_Variants(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// JS package manager variants (covers Windows cmd.exe /c quoting)
+	pms := [][]string{
+		{"npm", "install"},
+		{"pnpm", "install", "arg with spaces"},
+		{"yarn", "add", "react"},
+		{"bun", "install"},
+		{"pip", "install", "-r", "requirements.txt"},
+		{"go", "version"},
+	}
+
+	for _, cmdList := range pms {
+		cmd := buildCommand(tempDir, cmdList)
+		if cmd == nil {
+			t.Fatalf("buildCommand returned nil for %v", cmdList)
+		}
+		if cmd.Dir != tempDir {
+			t.Errorf("cmd.Dir = %s, expected %s", cmd.Dir, tempDir)
+		}
+	}
+}
+
+func TestInstallDependencies_Execution(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not found in PATH, skipping TestInstallDependencies_Execution")
+	}
+
+	tempDir := t.TempDir()
+
+	// 1. Success silent
+	if err := InstallDependencies(tempDir, []string{"git", "--version"}, false); err != nil {
+		t.Errorf("InstallDependencies failed for git --version: %v", err)
+	}
+
+	// 2. Success verbose
+	if err := InstallDependencies(tempDir, []string{"git", "--version"}, true); err != nil {
+		t.Errorf("InstallDependencies (verbose) failed for git --version: %v", err)
+	}
+
+	// 3. Failure branch
+	if err := InstallDependencies(tempDir, []string{"git", "invalid-subcommand-xyz"}, false); err == nil {
+		t.Errorf("Expected InstallDependencies to fail for invalid subcommand, got nil")
+	}
+}
+

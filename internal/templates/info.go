@@ -152,17 +152,20 @@ func sortTree(node *treeNode) {
 
 func renderTree(node *treeNode, prefix string, isLast bool, sb *strings.Builder, isRoot bool) {
 	if isRoot {
-		sb.WriteString(node.name + "/\n")
+		sb.WriteString(node.name)
+		sb.WriteString("/\n")
 	} else {
 		marker := "├── "
 		if isLast {
 			marker = "└── "
 		}
-		suffix := ""
+		sb.WriteString(prefix)
+		sb.WriteString(marker)
+		sb.WriteString(node.name)
 		if node.isDir {
-			suffix = "/"
+			sb.WriteByte('/')
 		}
-		sb.WriteString(prefix + marker + node.name + suffix + "\n")
+		sb.WriteByte('\n')
 	}
 
 	childPrefix := prefix

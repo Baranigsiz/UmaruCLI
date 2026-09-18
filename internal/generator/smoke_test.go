@@ -84,6 +84,11 @@ func TestSmoke_AllTemplatesRenderCleanly(t *testing.T) {
 						if strings.Contains(str, "{{.") || strings.Contains(str, "}}") {
 							t.Errorf("[%s] Unrendered template tag found in %s:\n%s", tmpl.ID, rel, str)
 						}
+
+						// 4. TSX/JSX files must not contain HTML comments (<!--)
+						if (ext == ".tsx" || ext == ".jsx") && strings.Contains(str, "<!--") {
+							t.Errorf("[%s] Invalid HTML comment syntax <!-- found in JSX/TSX file %s", tmpl.ID, rel)
+						}
 					}
 				}
 
@@ -133,6 +138,13 @@ func TestSmoke_ManifestValidity(t *testing.T) {
 				}
 				if name, ok := parsed["name"].(string); !ok || name == "" {
 					t.Errorf("[%s] package.json is missing 'name' field", tmpl.ID)
+				}
+
+				if tmpl.ID == "svelte-vite-ts" {
+					devDeps, _ := parsed["devDependencies"].(map[string]interface{})
+					if pluginVer, ok := devDeps["@sveltejs/vite-plugin-svelte"].(string); !ok || strings.HasPrefix(pluginVer, "^3") {
+						t.Errorf("[svelte-vite-ts] @sveltejs/vite-plugin-svelte must be version 4+ for Svelte 5, got %s", pluginVer)
+					}
 				}
 			}
 

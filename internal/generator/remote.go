@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,8 +11,12 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 	"umaru/internal/templates"
 )
+
+// CloneTimeout is the maximum duration allowed for a git clone operation
+const CloneTimeout = 2 * time.Minute
 
 // NormalizeGitURL converts GitHub shorthands (e.g., "owner/repo") to full git clone URLs
 func NormalizeGitURL(raw string) string {
@@ -50,8 +55,14 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 	defer os.RemoveAll(tempDir)
 
 	// Clone repo with depth 1 into temporary directory
-	cloneCmd := exec.Command("git", "clone", "--depth", "1", normalizedURL, tempDir)
+	ctx, cancel := context.WithTimeout(context.Background(), CloneTimeout)
+	defer cancel()
+
+	cloneCmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1", normalizedURL, tempDir)
 	if out, err := cloneCmd.CombinedOutput(); err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return nil, fmt.Errorf("git clone timed out after %s — check your network or repository URL", CloneTimeout)
+		}
 		outStr := strings.TrimSpace(string(out))
 		if outStr != "" {
 			return nil, fmt.Errorf("git clone failed: %s", outStr)
@@ -199,8 +210,14 @@ func DryRunRemote(repoURL string, config ProjectConfig) ([]string, error) {
 	if normalizedURL == "" {
 		return nil, fmt.Errorf("invalid or empty remote repository URL")
 	}
-	cloneCmd := exec.Command("git", "clone", "--depth", "1", normalizedURL, tempDir)
+	ctx, cancel := context.WithTimeout(context.Background(), CloneTimeout)
+	defer cancel()
+
+	cloneCmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1", normalizedURL, tempDir)
 	if out, err := cloneCmd.CombinedOutput(); err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return nil, fmt.Errorf("git clone timed out after %s — check your network or repository URL", CloneTimeout)
+		}
 		return nil, fmt.Errorf("remote dry-run clone failed: %s", string(out))
 	}
 

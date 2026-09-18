@@ -45,7 +45,8 @@ func PrintDryRunCard(config generator.ProjectConfig, templateName string, files 
 		MarginTop(1)
 
 	var sb strings.Builder
-	sb.WriteString(titleStyle.Render("🔍 Dry-Run Mode (Simulation - No files written)") + "\n\n")
+	sb.WriteString(titleStyle.Render("🔍 Dry-Run Mode (Simulation - No files written)"))
+	sb.WriteString("\n\n")
 	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📁 Target:   "), config.TargetDir))
 	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📦 Template: "), templateName))
 
@@ -101,7 +102,8 @@ func PrintSuccessCard(config generator.ProjectConfig, templateName string, runCo
 		MarginTop(1)
 
 	var sb strings.Builder
-	sb.WriteString(titleStyle.Render("✨ Project Scaffolding Complete!") + "\n\n")
+	sb.WriteString(titleStyle.Render("✨ Project Scaffolding Complete!"))
+	sb.WriteString("\n\n")
 	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📁 Project:   "), valueStyle.Render(config.SafeName)))
 	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📦 Template:  "), valueStyle.Render(templateName)))
 	sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("📍 Directory: "), valueStyle.Render(config.TargetDir)))
@@ -126,7 +128,9 @@ func PrintSuccessCard(config generator.ProjectConfig, templateName string, runCo
 		sb.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("🧩 Addons:    "), valueStyle.Render(strings.Join(addonsList, ", "))))
 	}
 
-	sb.WriteString("\n" + labelStyle.Render("Next steps to get started:") + "\n")
+	sb.WriteByte('\n')
+	sb.WriteString(labelStyle.Render("Next steps to get started:"))
+	sb.WriteByte('\n')
 	if config.TargetDir != "." {
 		cdDir := config.TargetDir
 		if strings.Contains(cdDir, " ") {
@@ -148,7 +152,8 @@ func PrintSuccessCard(config generator.ProjectConfig, templateName string, runCo
 		sb.WriteString(fmt.Sprintf("  %d. %s\n", step, cmdStyle.Render(runCommand)))
 	}
 
-	sb.WriteString("\n" + starStyle.Render("⭐ Love Umaru? Give us a star: https://github.com/Baranigsiz/UmaruCLI"))
+	sb.WriteByte('\n')
+	sb.WriteString(starStyle.Render("⭐ Love Umaru? Give us a star: https://github.com/Baranigsiz/UmaruCLI"))
 
 	fmt.Println(boxStyle.Render(sb.String()))
 	fmt.Println()

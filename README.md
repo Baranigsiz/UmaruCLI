@@ -98,6 +98,10 @@ The following real-world measurements compare project scaffolding time with depe
 - 🛡️ **Pre-Flight Verification:** Proactively checks system dependencies (`git`, `go`, `cargo`, `pnpm`, etc.) beforehand so generation never fails halfway through.
 - 🔍 **Dry-Run Mode:** Simulate and inspect every file that would be generated without writing anything to disk.
 - 🔤 **Unicode & Transliteration Engine:** Native slugification for Turkish and accented characters (e.g. `Çalışma Projesi` ➔ `calisma-projesi`) for compliant `package.json`, `go.mod`, and `Cargo.toml`.
+- 🤖 **Machine-Readable Output:** Instant `--json` export across `list`, `info`, `doctor`, and `config list` for CI/CD scripting and automation.
+- 🛑 **Signal Handling & Timeouts:** Graceful cancellation via `Ctrl+C` (`SIGINT`/`SIGTERM`) and strict 2-minute timeouts on remote git operations.
+- 🎨 **NO_COLOR Standard Compliant:** Respects `NO_COLOR` environment variable and supports `--no-color` for clean, uncolored logs in CI pipelines.
+- 🤫 **Quiet Logging Mode:** Optional `--quiet` (`-q`) flag to suppress decorative banners and non-essential logs.
 - 📜 **Verbose Streaming Logs:** Optional live command streaming to monitor dependency installations in real-time.
 
 ---
@@ -286,17 +290,17 @@ scoop install umaru
 go install github.com/Baranigsiz/UmaruCLI@latest
 ```
 
-### 2. Pre-Compiled Binaries (Latest: [v2.0.0](https://github.com/Baranigsiz/UmaruCLI/releases/tag/v2.0.0))
+### 2. Pre-Compiled Binaries (Latest: [v2.0.1](https://github.com/Baranigsiz/UmaruCLI/releases/tag/v2.0.1))
 Download pre-built binary archives directly from the [GitHub Releases](https://github.com/Baranigsiz/UmaruCLI/releases):
 
 | Platform | Architecture | Binary Archive | Direct Download |
 |---|---|---|---|
-| **Windows** | `x86_64` (amd64) | `.zip` (`umaru.exe`) | [umaru_2.0.0_windows_amd64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_windows_amd64.zip) |
-| **Windows** | `ARM64` | `.zip` (`umaru.exe`) | [umaru_2.0.0_windows_arm64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_windows_arm64.zip) |
-| **macOS** | Apple Silicon (`arm64`) | `.tar.gz` (`umaru`) | [umaru_2.0.0_darwin_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_darwin_arm64.tar.gz) |
-| **macOS** | Intel (`x86_64`) | `.tar.gz` (`umaru`) | [umaru_2.0.0_darwin_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_darwin_amd64.tar.gz) |
-| **Linux** | `x86_64` (amd64) | `.tar.gz` (`umaru`) | [umaru_2.0.0_linux_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_linux_amd64.tar.gz) |
-| **Linux** | `ARM64` | `.tar.gz` (`umaru`) | [umaru_2.0.0_linux_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.0/umaru_2.0.0_linux_arm64.tar.gz) |
+| **Windows** | `x86_64` (amd64) | `.zip` (`umaru.exe`) | [umaru_2.0.1_windows_amd64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.1/umaru_2.0.1_windows_amd64.zip) |
+| **Windows** | `ARM64` | `.zip` (`umaru.exe`) | [umaru_2.0.1_windows_arm64.zip](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.1/umaru_2.0.1_windows_arm64.zip) |
+| **macOS** | Apple Silicon (`arm64`) | `.tar.gz` (`umaru`) | [umaru_2.0.1_darwin_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.1/umaru_2.0.1_darwin_arm64.tar.gz) |
+| **macOS** | Intel (`x86_64`) | `.tar.gz` (`umaru`) | [umaru_2.0.1_darwin_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.1/umaru_2.0.1_darwin_amd64.tar.gz) |
+| **Linux** | `x86_64` (amd64) | `.tar.gz` (`umaru`) | [umaru_2.0.1_linux_amd64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.1/umaru_2.0.1_linux_amd64.tar.gz) |
+| **Linux** | `ARM64` | `.tar.gz` (`umaru`) | [umaru_2.0.1_linux_arm64.tar.gz](https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.1/umaru_2.0.1_linux_arm64.tar.gz) |
 
 ### 3. Build from Source
 ```bash
@@ -405,6 +409,38 @@ umaru init my-prod-service -t go-fiber --docker --ci --db postgres --redis
 # 9. Non-interactive automated scaffolding with sensible defaults
 umaru init my-app -y
 ```
+
+---
+
+### 🤖 Machine-Readable JSON Output (`--json`)
+
+Integrate Umaru CLI directly into CI/CD pipelines, automated scripts, and editor extensions using structured JSON outputs:
+
+```bash
+# List all 25 starter templates with metadata as a JSON array
+umaru list --json
+
+# Inspect a specific template's full architecture and directory tree as JSON
+umaru info go-fiber --json
+
+# Run system environment diagnostics and receive structured JSON report
+umaru doctor --json
+
+# Inspect global user preferences as JSON
+umaru config list --json
+```
+
+---
+
+### 🌐 Global CLI Flags & Standards
+
+| Flag | Shorthand | Description |
+|---|:---:|---|
+| `--json` | — | Output command results in machine-readable JSON format (`list`, `info`, `doctor`, `config list`) |
+| `--no-color` | — | Disable ANSI colors and styling (strictly adheres to the [no-color.org](https://no-color.org/) standard) |
+| `--quiet` | `-q` | Quiet mode: suppress decorative banners and non-essential log messages |
+| `--help` | `-h` | Display help and usage information for any command or subcommand |
+| `--version` | `-v` | Display the installed Umaru CLI version and build metadata |
 
 ---
 

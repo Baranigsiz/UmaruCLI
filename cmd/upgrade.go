@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"umaru/internal/updater"
@@ -18,27 +17,30 @@ var (
 )
 
 var upgradeCmd = &cobra.Command{
-	Use:   "upgrade",
-	Short: "Check for updates and upgrade Umaru CLI to the latest release",
-	Run: func(cmd *cobra.Command, args []string) {
+	Use:     "upgrade",
+	Short:   "Check for updates and upgrade Umaru CLI to the latest release",
+	GroupID: "util",
+	RunE: func(cmd *cobra.Command, args []string) error {
 		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
 		successStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#10B981"))
 		infoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00D8F6"))
-		warnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#FBBF24"))
+		warnStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FBBF24"))
 
 		var release *updater.ReleaseInfo
-		var err error
+		var fetchErr error
 
-		err = spinner.New().
+		spinnerErr := spinner.New().
 			Title("Checking for latest Umaru CLI releases...").
 			Action(func() {
-				release, err = updater.FetchLatestRelease()
+				release, fetchErr = updater.FetchLatestReleaseContext(cmd.Context())
 			}).
 			Run()
 
-		if err != nil {
-			fmt.Printf("❌ Failed to check for updates: %v\n", err)
-			os.Exit(1)
+		if spinnerErr != nil {
+			return fmt.Errorf("failed to check for updates: %w", spinnerErr)
+		}
+		if fetchErr != nil {
+			return fmt.Errorf("failed to check for updates: %w", fetchErr)
 		}
 
 		current := Version
@@ -57,52 +59,60 @@ var upgradeCmd = &cobra.Command{
 			} else {
 				fmt.Println(successStyle.Render("✨ You are already using the latest version of Umaru CLI! (Use --force to reinstall)"))
 			}
-			return
+			return nil
 		}
 
 		if checkOnlyFlag {
 			fmt.Println(warnStyle.Render(fmt.Sprintf("⚡ A new version (%s) is available! Run 'umaru upgrade' to install it.", latest)))
-			return
+			return nil
 		}
 
 		asset, err := release.FindAssetForSystem()
 		if err != nil {
-			fmt.Printf("❌ %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		var binaryBytes []byte
-		err = spinner.New().
+		var downloadErr error
+
+		spinnerErr = spinner.New().
 			Title(fmt.Sprintf("Downloading %s (%s)...", asset.Name, latest)).
 			Action(func() {
-				binaryBytes, err = updater.DownloadAndExtractBinary(asset.BrowserDownloadURL)
+				binaryBytes, downloadErr = updater.DownloadAndExtractBinaryContext(cmd.Context(), asset.BrowserDownloadURL)
 			}).
 			Run()
 
-		if err != nil {
-			fmt.Printf("❌ Download failed: %v\n", err)
-			os.Exit(1)
+		if spinnerErr != nil {
+			return fmt.Errorf("download failed: %w", spinnerErr)
+		}
+		if downloadErr != nil {
+			return fmt.Errorf("download failed: %w", downloadErr)
 		}
 
-		err = spinner.New().
+		var installErr error
+
+		spinnerErr = spinner.New().
 			Title("Installing update...").
 			Action(func() {
-				err = updater.ReplaceCurrentExecutable(binaryBytes)
+				installErr = updater.ReplaceCurrentExecutable(binaryBytes)
 			}).
 			Run()
 
-		if err != nil {
-			fmt.Printf("❌ Upgrade installation failed: %v\n", err)
-			errLower := strings.ToLower(err.Error())
+		if spinnerErr != nil {
+			return fmt.Errorf("upgrade installation failed: %w", spinnerErr)
+		}
+		if installErr != nil {
+			errLower := strings.ToLower(installErr.Error())
 			if strings.Contains(errLower, "permission") || strings.Contains(errLower, "access is denied") {
 				fmt.Println("💡 Tip: Try running the command with administrator or sudo privileges.")
 			}
-			os.Exit(1)
+			return fmt.Errorf("upgrade installation failed: %w", installErr)
 		}
 
 		fmt.Println()
 		fmt.Println(successStyle.Render(fmt.Sprintf("🎉 Successfully upgraded Umaru CLI to %s!", latest)))
 		fmt.Println()
+		return nil
 	},
 }
 

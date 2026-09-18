@@ -28,7 +28,7 @@ func TestGetAvailableTemplates(t *testing.T) {
 }
 
 func BenchmarkGetAvailableTemplates(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, err := GetAvailableTemplates()
 		if err != nil {
 			b.Fatalf("unexpected error: %v", err)

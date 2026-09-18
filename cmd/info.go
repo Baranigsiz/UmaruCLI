@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
 	"umaru/internal/templates"
 	"umaru/internal/ui"
 
@@ -10,9 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var infoJSONFlag bool
+
 var infoCmd = &cobra.Command{
-	Use:   "info [template-id]",
-	Short: "Inspect template architecture, directory tree, ports, and metadata",
+	Use:     "info [template-id]",
+	Short:   "Inspect template architecture, directory tree, ports, and metadata",
+	GroupID: "core",
 	Long: `Inspect provides in-depth technical details about any starter template,
 including its default ports, install/run commands, supported addons, and a full
 ASCII directory tree of the generated project structure.`,
@@ -27,7 +30,7 @@ ASCII directory tree of the generated project structure.`,
 		}
 		return ids, cobra.ShellCompDirectiveNoFileComp
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var selectedID string
 
 		if len(args) > 0 {
@@ -36,13 +39,12 @@ ASCII directory tree of the generated project structure.`,
 			// Interactive Selection
 			allTemplates, err := templates.GetAvailableTemplates()
 			if err != nil {
-				fmt.Printf("❌ Failed to load templates: %v\n", err)
-				os.Exit(1)
+				return fmt.Errorf("failed to load templates: %w", err)
 			}
 
 			if len(allTemplates) == 0 {
 				fmt.Println("No templates found.")
-				return
+				return nil
 			}
 
 			var options []huh.Option[string]
@@ -64,20 +66,30 @@ ASCII directory tree of the generated project structure.`,
 			err = form.Run()
 			if err != nil {
 				// User cancelled prompt
-				return
+				return nil
 			}
 		}
 
 		info, err := templates.GetTemplateInfo(selectedID)
 		if err != nil {
-			fmt.Printf("❌ Template '%s' not found.\nRun 'umaru list' to see all available templates.\n", selectedID)
-			os.Exit(1)
+			return fmt.Errorf("template '%s' not found. Run 'umaru list' to see all available templates", selectedID)
+		}
+
+		if infoJSONFlag {
+			data, err := json.MarshalIndent(info, "", "  ")
+			if err != nil {
+				return fmt.Errorf("failed to serialize template info to json: %w", err)
+			}
+			fmt.Println(string(data))
+			return nil
 		}
 
 		ui.PrintTemplateInfoCard(info)
+		return nil
 	},
 }
 
 func init() {
+	infoCmd.Flags().BoolVar(&infoJSONFlag, "json", false, "Output template details in JSON format")
 	rootCmd.AddCommand(infoCmd)
 }

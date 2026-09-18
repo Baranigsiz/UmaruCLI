@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -50,6 +51,26 @@ func TestVersionCmd(t *testing.T) {
 
 	if !strings.Contains(out, "Umaru CLI") {
 		t.Errorf("Expected version output to contain 'Umaru CLI', got: %s", out)
+	}
+}
+
+func TestVersionFlag(t *testing.T) {
+	out, err := executeCommand("--version")
+	if err != nil {
+		t.Fatalf("--version flag failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Umaru CLI") {
+		t.Errorf("Expected --version output to contain 'Umaru CLI', got: %s", out)
+	}
+
+	outShort, err := executeCommand("-v")
+	if err != nil {
+		t.Fatalf("-v flag failed: %v", err)
+	}
+
+	if !strings.Contains(outShort, "Umaru CLI") {
+		t.Errorf("Expected -v output to contain 'Umaru CLI', got: %s", outShort)
 	}
 }
 
@@ -176,6 +197,51 @@ func TestConfigCmd_GetAndList(t *testing.T) {
 	}
 	if !strings.Contains(outGet, "MIT") {
 		t.Errorf("Expected config get license to return 'MIT', got: %s", outGet)
+	}
+}
+
+func TestConfigCmd_SetAndReset(t *testing.T) {
+	// Set author
+	outSet, err := executeCommand("config", "set", "author", "Test Author Name")
+	if err != nil {
+		t.Fatalf("config set author failed: %v", err)
+	}
+	if !strings.Contains(outSet, "updated successfully") {
+		t.Errorf("Expected success message for config set, got: %s", outSet)
+	}
+
+	// Reset
+	outReset, err := executeCommand("config", "reset")
+	if err != nil {
+		t.Fatalf("config reset failed: %v", err)
+	}
+	if !strings.Contains(outReset, "reset to default") {
+		t.Errorf("Expected reset message, got: %s", outReset)
+	}
+}
+
+func TestDoctorCmd(t *testing.T) {
+	out, err := executeCommand("doctor")
+	if err != nil {
+		t.Fatalf("doctor command failed: %v", err)
+	}
+
+	if !strings.Contains(out, "UMARU DOCTOR") {
+		t.Errorf("Expected doctor output to contain 'UMARU DOCTOR', got: %s", out)
+	}
+	if !strings.Contains(out, "Template Ecosystem Readiness") {
+		t.Errorf("Expected doctor output to contain template readiness, got: %s", out)
+	}
+}
+
+func TestDoctorCmd_Verbose(t *testing.T) {
+	out, err := executeCommand("doctor", "-v")
+	if err != nil {
+		t.Fatalf("doctor -v command failed: %v", err)
+	}
+
+	if !strings.Contains(out, "BINARY PATH") {
+		t.Errorf("Expected verbose doctor output to contain 'BINARY PATH', got: %s", out)
 	}
 }
 
@@ -406,6 +472,73 @@ func TestInitCmd_YesFlag_NonInteractiveDryRun(t *testing.T) {
 	}
 	if !strings.Contains(out, "package.json") {
 		t.Errorf("Expected dry run to show package.json, got: %s", out)
+	}
+}
+
+func TestListCmd_JSON(t *testing.T) {
+	out, err := executeCommand("list", "--json")
+	if err != nil {
+		t.Fatalf("list --json failed: %v", err)
+	}
+
+	var tmpls []map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &tmpls); err != nil {
+		t.Fatalf("list --json did not return valid JSON array: %v\nOutput: %s", err, out)
+	}
+	if len(tmpls) == 0 {
+		t.Errorf("Expected templates array to be non-empty")
+	}
+}
+
+func TestInfoCmd_JSON(t *testing.T) {
+	out, err := executeCommand("info", "react-vite-ts", "--json")
+	if err != nil {
+		t.Fatalf("info --json failed: %v", err)
+	}
+
+	var info map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &info); err != nil {
+		t.Fatalf("info --json did not return valid JSON: %v\nOutput: %s", err, out)
+	}
+	if info["Config"] == nil {
+		t.Errorf("Expected info JSON to contain Config field")
+	}
+}
+
+func TestDoctorCmd_JSON(t *testing.T) {
+	out, err := executeCommand("doctor", "--json")
+	if err != nil {
+		t.Fatalf("doctor --json failed: %v", err)
+	}
+
+	var report map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &report); err != nil {
+		t.Fatalf("doctor --json did not return valid JSON: %v\nOutput: %s", err, out)
+	}
+	if report["System"] == nil {
+		t.Errorf("Expected doctor JSON to contain System info")
+	}
+}
+
+func TestConfigListCmd_JSON(t *testing.T) {
+	out, err := executeCommand("config", "list", "--json")
+	if err != nil {
+		t.Fatalf("config list --json failed: %v", err)
+	}
+
+	var cfg map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &cfg); err != nil {
+		t.Fatalf("config list --json did not return valid JSON: %v\nOutput: %s", err, out)
+	}
+}
+
+func TestGlobalFlags_NoColorAndQuiet(t *testing.T) {
+	out, err := executeCommand("--no-color", "--quiet", "version")
+	if err != nil {
+		t.Fatalf("version with --no-color --quiet failed: %v", err)
+	}
+	if !strings.Contains(out, "Umaru CLI") {
+		t.Errorf("Expected version output to contain 'Umaru CLI', got: %s", out)
 	}
 }
 

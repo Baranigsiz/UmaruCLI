@@ -170,3 +170,59 @@ func TestRunDiagnostics_Sanity(t *testing.T) {
 		t.Errorf("expected non-empty templates readiness list")
 	}
 }
+
+func TestRenderReport(t *testing.T) {
+	report := RunDiagnostics("v2.1.0-test")
+
+	// 1. Standard report
+	RenderReport(report, false)
+
+	// 2. Verbose report
+	RenderReport(report, true)
+
+	// 3. Perfect score report (score == 100)
+	perfectReport := report
+	perfectReport.TotalScore = 100
+	RenderReport(perfectReport, false)
+
+	// 4. Low score report (score < 70) with missing required tools and warnings
+	lowReport := report
+	lowReport.TotalScore = 40
+	lowReport.Tools = []ToolCheck{
+		{
+			Name:       "Git",
+			Status:     StatusMissing,
+			Required:   true,
+			InstallTip: "https://git-scm.com",
+		},
+		{
+			Name:       "Docker CLI",
+			Status:     StatusWarning,
+			Notes:      "Docker daemon is not running",
+			InstallTip: "https://docker.com",
+		},
+		{
+			Name:       "Python",
+			Status:     StatusMissing,
+			Required:   false,
+			InstallTip: "https://python.org",
+		},
+	}
+	lowReport.Templates = []TemplateReadiness{
+		{
+			Category: "Frontend",
+			Total:    5,
+			Ready:    0,
+			Missing:  []string{"node.js"},
+			IsReady:  false,
+		},
+		{
+			Category: "Backend",
+			Total:    8,
+			Ready:    4,
+			Missing:  []string{"python"},
+			IsReady:  false,
+		},
+	}
+	RenderReport(lowReport, false)
+}

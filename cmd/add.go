@@ -23,6 +23,7 @@ var (
 var addCmd = &cobra.Command{
 	Use:   "add [addons...]",
 	Short: "Inject modular infrastructure addons into an existing project",
+	GroupID: "core",
 	Long: `Detects the current project type and injects modular infrastructure addons:
   - postgres : PostgreSQL connection pool & config
   - sqlite   : SQLite embedded database setup
@@ -40,7 +41,7 @@ Usage:
   umaru add sqlite redis -f       # Overwrite existing addon files`,
 	ValidArgs: []string{"redis", "jwt", "postgres", "sqlite", "docker", "ci"},
 	Args:      cobra.ArbitraryArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		targetDir := addDirFlag
 		if targetDir == "" {
 			targetDir = "."
@@ -48,8 +49,7 @@ Usage:
 
 		proj, err := generator.DetectProject(targetDir)
 		if err != nil {
-			fmt.Printf("❌ %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		addonConfig := generator.AddonConfig{}
@@ -68,19 +68,16 @@ Usage:
 					addonConfig.Auth = "jwt"
 				case "postgres", "postgresql", "pg":
 					if addonConfig.Database == "sqlite" {
-						fmt.Println("❌ Cannot select both PostgreSQL and SQLite. Choose one database driver.")
-						os.Exit(1)
+						return fmt.Errorf("cannot select both PostgreSQL and SQLite. Choose one database driver")
 					}
 					addonConfig.Database = "postgres"
 				case "sqlite", "sqlite3":
 					if addonConfig.Database == "postgres" {
-						fmt.Println("❌ Cannot select both PostgreSQL and SQLite. Choose one database driver.")
-						os.Exit(1)
+						return fmt.Errorf("cannot select both PostgreSQL and SQLite. Choose one database driver")
 					}
 					addonConfig.Database = "sqlite"
 				default:
-					fmt.Printf("❌ Unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis, docker, ci\n", arg)
-					os.Exit(1)
+					return fmt.Errorf("unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis, docker, ci", arg)
 				}
 			}
 		} else {
@@ -123,10 +120,9 @@ Usage:
 			if err := prompt.Run(); err != nil {
 				if errors.Is(err, huh.ErrUserAborted) {
 					fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
-					return
+					return nil
 				}
-				fmt.Printf("❌ %v\n", err)
-				os.Exit(1)
+				return err
 			}
 
 			for _, choice := range selectedChoices {
@@ -149,7 +145,7 @@ Usage:
 
 		if !addonConfig.HasAddons() {
 			fmt.Println("No addons selected.")
-			return
+			return nil
 		}
 
 		projConfig := proj.ToProjectConfig(addonConfig)
@@ -170,14 +166,13 @@ Usage:
 					fmt.Printf("  - %s\n", f)
 				}
 				fmt.Println("Use '--force' (-f) to overwrite existing files.")
-				os.Exit(1)
+				return fmt.Errorf("addon files already exist (use --force to overwrite)")
 			}
 		}
 
 		// Generate Addons
 		if err := generator.GenerateAddons(projConfig); err != nil {
-			fmt.Printf("❌ Failed to generate addon: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to generate addon: %w", err)
 		}
 
 		// Auto-run dependency resolution if applicable
@@ -211,7 +206,8 @@ Usage:
 			MarginTop(1)
 
 		var sb strings.Builder
-		sb.WriteString(titleStyle.Render("🧩 Addon(s) Injected Successfully!") + "\n\n")
+		sb.WriteString(titleStyle.Render("🧩 Addon(s) Injected Successfully!"))
+		sb.WriteString("\n\n")
 
 		var addonsList []string
 		if addonConfig.Database != "" && addonConfig.Database != "none" {
@@ -234,7 +230,8 @@ Usage:
 		sb.WriteString(fmt.Sprintf("%s %s (%s)\n", labelStyle.Render("Project:    "), valueStyle.Render(proj.ProjectName), valueStyle.Render(string(proj.Framework))))
 		sb.WriteString(fmt.Sprintf("%s %s\n\n", labelStyle.Render("Target:     "), valueStyle.Render(targetDir)))
 
-		sb.WriteString(labelStyle.Render("Generated Addon Files:") + "\n")
+		sb.WriteString(labelStyle.Render("Generated Addon Files:"))
+		sb.WriteByte('\n')
 		for _, f := range addonFiles {
 			rel, err := filepath.Rel(targetDir, f)
 			if err != nil {
@@ -243,7 +240,9 @@ Usage:
 			sb.WriteString(fmt.Sprintf("  📄 %s\n", fileStyle.Render(rel)))
 		}
 
-		sb.WriteString("\n" + labelStyle.Render("Next steps:") + "\n")
+		sb.WriteByte('\n')
+		sb.WriteString(labelStyle.Render("Next steps:"))
+		sb.WriteByte('\n')
 		switch proj.Type {
 		case generator.ProjectTypeNode:
 			sb.WriteString(fmt.Sprintf("  1. Run %s to install the updated dependencies in package.json\n", cmdStyle.Render("npm install (or pnpm/yarn/bun)")))
@@ -261,6 +260,7 @@ Usage:
 
 		fmt.Println(boxStyle.Render(sb.String()))
 		fmt.Println()
+		return nil
 	},
 }
 

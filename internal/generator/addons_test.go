@@ -431,6 +431,16 @@ func TestGenerateAddons_EnvVariables(t *testing.T) {
 			t.Errorf(".env should contain '%s'", v)
 		}
 	}
+
+	// Verify .gitignore was updated to ignore .env
+	gitignorePath := filepath.Join(projPath, ".gitignore")
+	dataGitignore, err := os.ReadFile(gitignorePath)
+	if err != nil {
+		t.Fatalf(".gitignore not found: %v", err)
+	}
+	if !strings.Contains(string(dataGitignore), ".env") {
+		t.Errorf("Expected .gitignore to contain '.env', got:\n%s", string(dataGitignore))
+	}
 }
 
 func TestAppendDockerCompose_ExistingServiceVolumes(t *testing.T) {

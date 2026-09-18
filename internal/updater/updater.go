@@ -5,6 +5,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -43,7 +44,12 @@ var httpClient = &http.Client{
 
 // FetchLatestRelease queries the GitHub Releases API for the latest version metadata
 func FetchLatestRelease() (*ReleaseInfo, error) {
-	req, err := http.NewRequest("GET", APIURL, nil)
+	return FetchLatestReleaseContext(context.Background())
+}
+
+// FetchLatestReleaseContext queries the GitHub Releases API with context support
+func FetchLatestReleaseContext(ctx context.Context) (*ReleaseInfo, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", APIURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +64,9 @@ func FetchLatestRelease() (*ReleaseInfo, error) {
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("no releases found for %s/%s", RepoOwner, RepoName)
+	}
+	if resp.StatusCode == http.StatusForbidden {
+		return nil, fmt.Errorf("GitHub API rate limit exceeded. Please try again later")
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GitHub API returned HTTP %d", resp.StatusCode)
@@ -234,7 +243,12 @@ func (r *ReleaseInfo) FindAssetForSystem() (*ReleaseAsset, error) {
 
 // DownloadAndExtractBinary downloads the archive asset and extracts the umaru binary bytes
 func DownloadAndExtractBinary(assetURL string) ([]byte, error) {
-	req, err := http.NewRequest("GET", assetURL, nil)
+	return DownloadAndExtractBinaryContext(context.Background(), assetURL)
+}
+
+// DownloadAndExtractBinaryContext downloads the archive asset and extracts the umaru binary bytes with context support
+func DownloadAndExtractBinaryContext(ctx context.Context, assetURL string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", assetURL, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -3,5 +3,6 @@
 
 internal/templates/** linguist-vendored
 install.ps1 linguist-documentation
-install.sh linguist-documentation
+install.sh linguist-documentation eol=lf
+*.sh text eol=lf
 demo.tape linguist-documentation

@@ -3,6 +3,7 @@ package generator
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -85,6 +86,9 @@ func GenerateAddons(config ProjectConfig) error {
 
 	baseDir := GetAddonBaseDir(config)
 
+	// Warn about unsupported addons for the current template type
+	warnUnsupportedAddons(config)
+
 	if err := generateDatabaseAddon(config, baseDir); err != nil {
 		return err
 	}
@@ -109,6 +113,33 @@ func GenerateAddons(config ProjectConfig) error {
 	}
 
 	return nil
+}
+
+// warnUnsupportedAddons prints a warning if addons are requested for a template
+// that has no addon generator implementation (e.g. Rust for DB, Auth, Redis).
+func warnUnsupportedAddons(config ProjectConfig) {
+	supported := isGoTemplate(config.Template) || isNodeTemplate(config.Template) || isPythonTemplate(config.Template)
+
+	if !supported {
+		db := strings.ToLower(strings.TrimSpace(config.Addons.Database))
+		auth := strings.ToLower(strings.TrimSpace(config.Addons.Auth))
+
+		var skipped []string
+		if db != "" && db != "none" {
+			skipped = append(skipped, "database ("+db+")")
+		}
+		if auth != "" && auth != "none" {
+			skipped = append(skipped, "auth ("+auth+")")
+		}
+		if config.Addons.Redis {
+			skipped = append(skipped, "redis")
+		}
+
+		if len(skipped) > 0 {
+			fmt.Printf("⚠️ Addon code generation for %s is not yet supported for '%s' templates. Skipped: %s\n",
+				strings.Join(skipped, ", "), config.Template, strings.Join(skipped, ", "))
+		}
+	}
 }
 
 // Helper functions shared across addon generators

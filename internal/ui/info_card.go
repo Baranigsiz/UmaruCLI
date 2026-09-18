@@ -65,28 +65,43 @@ func PrintTemplateInfoCard(info *templates.TemplateInfo) {
 	))
 
 	// 2. Description
-	sb.WriteString(labelStyle.Render("Description: ") + valueStyle.Render(info.Config.Description) + "\n\n")
+	sb.WriteString(labelStyle.Render("Description: "))
+	sb.WriteString(valueStyle.Render(info.Config.Description))
+	sb.WriteString("\n\n")
 
 	// 3. Ports & Addons
-	sb.WriteString(labelStyle.Render("🌐 Network Ports:      ") + valueStyle.Render(strings.Join(info.Ports, ", ")) + "\n")
-	sb.WriteString(labelStyle.Render("🧩 Compatible Addons:  ") + valueStyle.Render(strings.Join(info.SupportedAddons, ", ")) + "\n")
+	sb.WriteString(labelStyle.Render("🌐 Network Ports:      "))
+	sb.WriteString(valueStyle.Render(strings.Join(info.Ports, ", ")))
+	sb.WriteByte('\n')
+	sb.WriteString(labelStyle.Render("🧩 Compatible Addons:  "))
+	sb.WriteString(valueStyle.Render(strings.Join(info.SupportedAddons, ", ")))
+	sb.WriteByte('\n')
 
 	// 4. Commands
 	if len(info.Config.InstallCommand) > 0 {
-		sb.WriteString(labelStyle.Render("📦 Install Command:    ") + cmdStyle.Render(strings.Join(info.Config.InstallCommand, " ")) + "\n")
+		sb.WriteString(labelStyle.Render("📦 Install Command:    "))
+		sb.WriteString(cmdStyle.Render(strings.Join(info.Config.InstallCommand, " ")))
+		sb.WriteByte('\n')
 	}
 	if info.Config.RunCommand != "" {
-		sb.WriteString(labelStyle.Render("⚡ Run Command:        ") + cmdStyle.Render(info.Config.RunCommand) + "\n")
+		sb.WriteString(labelStyle.Render("⚡ Run Command:        "))
+		sb.WriteString(cmdStyle.Render(info.Config.RunCommand))
+		sb.WriteByte('\n')
 	}
 
 	// 5. File Architecture Tree
-	sb.WriteString(sectionHeaderStyle.Render(fmt.Sprintf("🌲 Architecture Tree (%d files):", info.TotalFiles)) + "\n")
+	sb.WriteString(sectionHeaderStyle.Render(fmt.Sprintf("🌲 Architecture Tree (%d files):", info.TotalFiles)))
+	sb.WriteByte('\n')
 	sb.WriteString(treeStyle.Render(info.FileTree))
 
 	// 6. Next Steps Hint
 	scaffoldCmd := fmt.Sprintf("umaru init my-%s -t %s", info.Config.ID, info.Config.ID)
-	sb.WriteString("\n" + labelStyle.Render("🚀 Quick Scaffold Command:") + "\n")
-	sb.WriteString("  " + cmdStyle.Render(scaffoldCmd) + "\n")
+	sb.WriteByte('\n')
+	sb.WriteString(labelStyle.Render("🚀 Quick Scaffold Command:"))
+	sb.WriteByte('\n')
+	sb.WriteString("  ")
+	sb.WriteString(cmdStyle.Render(scaffoldCmd))
+	sb.WriteByte('\n')
 
 	fmt.Println()
 	fmt.Println(boxStyle.Render(sb.String()))
