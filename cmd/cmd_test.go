@@ -542,5 +542,43 @@ func TestGlobalFlags_NoColorAndQuiet(t *testing.T) {
 	}
 }
 
+func TestAddCmd_List_TableAndJSON(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Simulate Go project with a Dockerfile
+	goModContent := "module test-add-list-app\n\ngo 1.24\n\nrequire github.com/gofiber/fiber/v2 v2.52.0\n"
+	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(goModContent), 0644); err != nil {
+		t.Fatalf("Failed to write go.mod: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempDir, "docker-compose.yml"), []byte("version: '3.8'\n"), 0644); err != nil {
+		t.Fatalf("Failed to write docker-compose.yml: %v", err)
+	}
+
+	// 1. Test table output
+	out, err := executeCommand("add", "--list", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("add --list failed: %v", err)
+	}
+	if !strings.Contains(out, "Addon Audit") {
+		t.Errorf("Expected output to contain 'Addon Audit', got: %s", out)
+	}
+	if !strings.Contains(out, "Docker & Compose") {
+		t.Errorf("Expected output to contain 'Docker & Compose', got: %s", out)
+	}
+
+	// 2. Test JSON output
+	jsonOut, err := executeCommand("add", "--list", "--json", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("add --list --json failed: %v", err)
+	}
+	var audit map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonOut), &audit); err != nil {
+		t.Fatalf("add --list --json did not return valid JSON: %v\nOutput: %s", err, jsonOut)
+	}
+	if audit["project_name"] == nil || audit["addons"] == nil {
+		t.Errorf("Expected audit JSON to contain project_name and addons, got: %v", audit)
+	}
+}
+
 
 

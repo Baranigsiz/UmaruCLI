@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"umaru/internal/actions"
 	"umaru/internal/generator"
+	"umaru/internal/ui"
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
@@ -18,6 +20,8 @@ import (
 var (
 	addDirFlag   string
 	addForceFlag bool
+	addListFlag  bool
+	addJSONFlag  bool
 )
 
 var addCmd = &cobra.Command{
@@ -34,6 +38,7 @@ var addCmd = &cobra.Command{
 
 Usage:
   umaru add                       # Interactive multi-select wizard
+  umaru add --list                # Inspect installed vs available addons
   umaru add redis                 # Add a single addon
   umaru add docker                # Add Docker & Compose containerization
   umaru add ci                    # Add GitHub Actions CI/CD pipeline
@@ -45,6 +50,25 @@ Usage:
 		targetDir := addDirFlag
 		if targetDir == "" {
 			targetDir = "."
+		}
+
+		if addListFlag {
+			audit, err := generator.AuditProjectAddons(targetDir)
+			if err != nil {
+				return err
+			}
+
+			if addJSONFlag {
+				data, err := json.MarshalIndent(audit, "", "  ")
+				if err != nil {
+					return fmt.Errorf("failed to serialize addon audit to json: %w", err)
+				}
+				fmt.Println(string(data))
+				return nil
+			}
+
+			ui.PrintAddonAuditCard(audit)
+			return nil
 		}
 
 		proj, err := generator.DetectProject(targetDir)
@@ -81,15 +105,32 @@ Usage:
 				}
 			}
 		} else {
-			// Interactive Multi-Selection
+			// Interactive Multi-Selection with intelligent status detection
+			audit, _ := generator.AuditProjectAddons(targetDir)
+			installedMap := make(map[string]bool)
+			if audit != nil {
+				for _, a := range audit.Addons {
+					if a.Installed {
+						installedMap[a.ID] = true
+					}
+				}
+			}
+
+			formatOption := func(label, id string) huh.Option[string] {
+				if installedMap[id] {
+					return huh.NewOption(label+" [Installed]", id)
+				}
+				return huh.NewOption(label, id)
+			}
+
 			var selectedChoices []string
 			options := []huh.Option[string]{
-				huh.NewOption("🐘 PostgreSQL (Connection pool & healthcheck)", "postgres"),
-				huh.NewOption("📦 SQLite (Embedded file-based DB)", "sqlite"),
-				huh.NewOption("🔐 JWT (Authentication middleware & claims)", "jwt"),
-				huh.NewOption("🔴 Redis (In-memory caching client)", "redis"),
-				huh.NewOption("🐳 Docker (Multi-stage Dockerfile & Compose)", "docker"),
-				huh.NewOption("🤖 GitHub Actions CI/CD (.github/workflows/ci.yml)", "ci"),
+				formatOption("🐘 PostgreSQL (Connection pool & healthcheck)", "postgres"),
+				formatOption("📦 SQLite (Embedded file-based DB)", "sqlite"),
+				formatOption("🔐 JWT (Authentication middleware & claims)", "jwt"),
+				formatOption("🔴 Redis (In-memory caching client)", "redis"),
+				formatOption("🐳 Docker (Multi-stage Dockerfile & Compose)", "docker"),
+				formatOption("🤖 GitHub Actions CI/CD (.github/workflows/ci.yml)", "ci"),
 			}
 
 			prompt := huh.NewMultiSelect[string]().
@@ -267,6 +308,8 @@ Usage:
 func init() {
 	addCmd.Flags().StringVarP(&addDirFlag, "dir", "d", ".", "Target project directory")
 	addCmd.Flags().BoolVarP(&addForceFlag, "force", "f", false, "Overwrite existing files if present")
+	addCmd.Flags().BoolVarP(&addListFlag, "list", "l", false, "Inspect and list installed vs available addons for the project")
+	addCmd.Flags().BoolVar(&addJSONFlag, "json", false, "Output addon audit report in JSON format")
 
 	addCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		allAddons := []string{

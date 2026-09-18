@@ -208,3 +208,67 @@ func TestPrintTemplateInfoCard(t *testing.T) {
 		t.Errorf("Expected architecture tree header, got: %s", out)
 	}
 }
+
+func TestPrintAddonAuditCard(t *testing.T) {
+	t.Run("PartialAddons", func(t *testing.T) {
+		audit := &generator.ProjectAddonAudit{
+			ProjectName: "my-project",
+			Framework:   "Go Fiber",
+			Addons: []generator.AddonStatus{
+				{
+					Name:          "Docker",
+					Installed:     true,
+					DetectedFiles: []string{"Dockerfile", "docker-compose.yml"},
+				},
+				{
+					Name:          "PostgreSQL",
+					Installed:     false,
+					DetectedFiles: nil,
+				},
+			},
+		}
+
+		out := captureOutput(func() {
+			PrintAddonAuditCard(audit)
+		})
+
+		if !strings.Contains(out, "Addon Audit for my-project (Go Fiber)") {
+			t.Errorf("Expected audit header, got: %s", out)
+		}
+		if !strings.Contains(out, "Docker") || !strings.Contains(out, "Installed") {
+			t.Errorf("Expected Docker to be listed as installed, got: %s", out)
+		}
+		if !strings.Contains(out, "PostgreSQL") || !strings.Contains(out, "Available") {
+			t.Errorf("Expected PostgreSQL to be listed as available, got: %s", out)
+		}
+		if !strings.Contains(out, "Dockerfile, docker-compose.yml") {
+			t.Errorf("Expected detected files in output, got: %s", out)
+		}
+		if !strings.Contains(out, "umaru add <addon...>") {
+			t.Errorf("Expected usage hint when some addons missing, got: %s", out)
+		}
+	})
+
+	t.Run("AllAddonsInstalled", func(t *testing.T) {
+		audit := &generator.ProjectAddonAudit{
+			ProjectName: "complete-project",
+			Framework:   "Node Express",
+			Addons: []generator.AddonStatus{
+				{
+					Name:          "Docker",
+					Installed:     true,
+					DetectedFiles: []string{"Dockerfile"},
+				},
+			},
+		}
+
+		out := captureOutput(func() {
+			PrintAddonAuditCard(audit)
+		})
+
+		if !strings.Contains(out, "All available infrastructure addons are installed!") {
+			t.Errorf("Expected all installed message, got: %s", out)
+		}
+	})
+}
+

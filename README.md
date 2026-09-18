@@ -86,7 +86,7 @@ The following real-world measurements compare project scaffolding time with depe
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
 - 🔌 **Zero Network Reliance:** All 25 starter boilerplates are compiled directly into the binary via `//go:embed`.
-- 🧩 **Interactive Addon Wizard:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache).
+- 🧩 **Interactive Addon Wizard & Auditor:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache) with intelligent project audit (`umaru add --list`).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
 - 🌐 **Remote Template Scaffolding:** Scaffold directly from any GitHub repo via `--from owner/repo`.
 - 🎨 **Modern Terminal DX:** Interactive, accessible prompts powered by [Huh](https://github.com/charmbracelet/huh) and styled result cards with [Lipgloss](https://github.com/charmbracelet/lipgloss).
@@ -177,10 +177,16 @@ umaru init my-backend --no-addons
 
 ### ➕ Inject Addons into Existing Projects (`umaru add`)
 
-Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Bun, Python, Rust) and injects modular addons into your existing codebase. You can even stack multiple addons simultaneously in a single pass:
+Already have an existing project? Umaru CLI automatically detects your language and framework (Go, Node.js, Bun, Python, Rust) and injects modular addons into your existing codebase. You can also audit which addons are currently installed or available:
 
 ```bash
-# Interactive multi-select addon wizard
+# Audit installed and available addons in the current project
+umaru add --list
+
+# Machine-readable addon audit for CI/CD scripting
+umaru add --list --json
+
+# Interactive multi-select addon wizard (installed addons are marked with [Installed])
 umaru add
 
 # Add GitHub Actions automated CI/CD pipeline
@@ -423,6 +429,9 @@ umaru list --json
 # Inspect a specific template's full architecture and directory tree as JSON
 umaru info go-fiber --json
 
+# Audit project addons and detect installed components as JSON
+umaru add --list --json
+
 # Run system environment diagnostics and receive structured JSON report
 umaru doctor --json
 
@@ -436,7 +445,7 @@ umaru config list --json
 
 | Flag | Shorthand | Description |
 |---|:---:|---|
-| `--json` | — | Output command results in machine-readable JSON format (`list`, `info`, `doctor`, `config list`) |
+| `--json` | — | Output command results in machine-readable JSON format (`list`, `info`, `doctor`, `add --list`, `config list`) |
 | `--no-color` | — | Disable ANSI colors and styling (strictly adheres to the [no-color.org](https://no-color.org/) standard) |
 | `--quiet` | `-q` | Quiet mode: suppress decorative banners and non-essential log messages |
 | `--help` | `-h` | Display help and usage information for any command or subcommand |
