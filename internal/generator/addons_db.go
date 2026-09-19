@@ -145,7 +145,8 @@ export async function connectDatabase(config?: DBConfig) {
 		var content string
 		reqPath := filepath.Join(baseDir, "requirements.txt")
 
-		if db == "postgres" {
+		switch db {
+		case "postgres":
 			content = `import os
 from typing import AsyncGenerator
 
@@ -160,7 +161,7 @@ async def get_db_session():
 			if err := injectPythonDependencies(reqPath, []string{"asyncpg>=0.29.0"}); err != nil {
 				return fmt.Errorf("failed injecting python database dependencies: %w", err)
 			}
-		} else if db == "sqlite" {
+		case "sqlite":
 			content = `import os
 from typing import AsyncGenerator
 
