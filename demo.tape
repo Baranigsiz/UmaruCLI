@@ -41,12 +41,22 @@ Enter
 Sleep 600ms
 
 # 5. Demonstrate smart project cleaner (Dry-Run mode)
+Hide
+Type 'New-Item -ItemType Directory -Path "dist", "tmp" -Force | Out-Null; Set-Content -Path "dist/bundle.js" -Value "demo content"; clear'
+Enter
+Sleep 300ms
+Show
 Type "umaru clean --dry-run"
 Sleep 600ms
 Enter
 Sleep 3.5s
 
 # 6. Clear terminal
+Hide
+Type 'Remove-Item -Path "dist", "tmp" -Recurse -Force -ErrorAction SilentlyContinue'
+Enter
+Sleep 200ms
+Show
 Type "clear"
 Enter
 Sleep 600ms
