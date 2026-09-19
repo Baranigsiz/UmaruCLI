@@ -1,26 +1,26 @@
 class Umaru < Formula
   desc "Blazing-fast CLI to scaffold modern fullstack, backend, frontend & CLI starters"
   homepage "https://github.com/Baranigsiz/UmaruCLI"
-  version "2.0.2"
+  version "2.0.3"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.2/umaru_2.0.2_darwin_arm64.tar.gz"
-      sha256 "d490e569f75276cdf3eb2dbc83e98f09eafa44246b8945da0427fdf37276572a"
+      url "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.3/umaru_2.0.3_darwin_arm64.tar.gz"
+      sha256 "f5893524333dabe74b3d8308c536811905f8613b28ce38bb77a0dc6087498830"
     else
-      url "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.2/umaru_2.0.2_darwin_amd64.tar.gz"
-      sha256 "57ccafd255f1469d1b555f0def801fc6d3cc1e1dbd7af22892238704fc72e0cc"
+      url "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.3/umaru_2.0.3_darwin_amd64.tar.gz"
+      sha256 "1caf116115226d7db759919f046e90f05b7c80e4b5f5b9ecc22bc39cad0c6841"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.2/umaru_2.0.2_linux_arm64.tar.gz"
-      sha256 "8a3ccaa3c84e8a77c1d2150d8db92a001f7bfb1da783ab2730975f6bef32b9e6"
+      url "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.3/umaru_2.0.3_linux_arm64.tar.gz"
+      sha256 "bbba017253b1bd758cc9721dff1bbf217059040fd2255c0b7a7625c5da9ffad2"
     else
-      url "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.2/umaru_2.0.2_linux_amd64.tar.gz"
-      sha256 "eaaa7f60d7a89e2bd48a48104054a0fd13fd40abba8652ec78d12f334d083026"
+      url "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.3/umaru_2.0.3_linux_amd64.tar.gz"
+      sha256 "a43f37f3fdb69812541a731cad9eeae1e1db6c590fef18962ac3a8c1e6d389d8"
     end
   end
 
