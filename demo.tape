@@ -40,18 +40,29 @@ Type "clear"
 Enter
 Sleep 600ms
 
-# 5. Run ultra-fast concurrent environment diagnostics
-Type "umaru doctor"
+# 5. Demonstrate smart project cleaner (Dry-Run mode)
+Type "umaru clean --dry-run"
 Sleep 600ms
 Enter
-Sleep 4s
+Sleep 3.5s
 
 # 6. Clear terminal
 Type "clear"
 Enter
 Sleep 600ms
 
-# 7. Show global persistent configuration table
+# 7. Run ultra-fast concurrent environment diagnostics
+Type "umaru doctor"
+Sleep 600ms
+Enter
+Sleep 4s
+
+# 8. Clear terminal
+Type "clear"
+Enter
+Sleep 600ms
+
+# 9. Show global persistent configuration table
 Type "umaru config list"
 Sleep 600ms
 Enter

@@ -57,6 +57,12 @@ func executeCommand(args ...string) (string, error) {
 	debugFlag = false
 	configFileFlag = ""
 	config.SetCustomConfigFile("")
+	cleanDirFlag = "."
+	cleanRecursiveFlag = false
+	cleanDryRunFlag = false
+	cleanForceFlag = false
+	cleanAllFlag = false
+	cleanJSONFlag = false
 
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
@@ -969,5 +975,115 @@ func TestConfigInitCmd_NonInteractive(t *testing.T) {
 		t.Errorf("Expected error message to mention terminal, got: %v", err)
 	}
 }
+
+func TestCleanCmd_DryRun(t *testing.T) {
+	tempDir := t.TempDir()
+	nodeModulesDir := filepath.Join(tempDir, "node_modules", "testpkg")
+	_ = os.MkdirAll(nodeModulesDir, 0755)
+	_ = os.WriteFile(filepath.Join(nodeModulesDir, "index.js"), []byte("console.log('clean test')"), 0644)
+
+	distDir := filepath.Join(tempDir, "dist")
+	_ = os.MkdirAll(distDir, 0755)
+	_ = os.WriteFile(filepath.Join(distDir, "output.js"), []byte("bundled code"), 0644)
+
+	out, err := executeCommand("clean", "--dry-run", tempDir)
+	if err != nil {
+		t.Fatalf("clean --dry-run failed: %v", err)
+	}
+
+	if !strings.Contains(out, "node_modules") || !strings.Contains(out, "dist") {
+		t.Errorf("Expected dry run output to list node_modules and dist, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Dry-run mode") {
+		t.Errorf("Expected dry run disclaimer, got:\n%s", out)
+	}
+
+	// Verify files still exist after dry-run
+	if _, err := os.Stat(nodeModulesDir); os.IsNotExist(err) {
+		t.Errorf("node_modules was deleted during dry run!")
+	}
+}
+
+func TestCleanCmd_Force(t *testing.T) {
+	tempDir := t.TempDir()
+	nodeModulesDir := filepath.Join(tempDir, "node_modules", "testpkg")
+	_ = os.MkdirAll(nodeModulesDir, 0755)
+	_ = os.WriteFile(filepath.Join(nodeModulesDir, "index.js"), []byte("some code"), 0644)
+
+	srcFile := filepath.Join(tempDir, "main.go")
+	_ = os.WriteFile(srcFile, []byte("package main"), 0644)
+
+	out, err := executeCommand("clean", "-f", tempDir)
+	if err != nil {
+		t.Fatalf("clean -f failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Successfully reclaimed") {
+		t.Errorf("Expected success output, got:\n%s", out)
+	}
+
+	// node_modules must be deleted
+	if _, err := os.Stat(nodeModulesDir); !os.IsNotExist(err) {
+		t.Errorf("node_modules still exists after clean -f")
+	}
+
+	// source code must remain intact
+	if _, err := os.Stat(srcFile); os.IsNotExist(err) {
+		t.Errorf("CRITICAL: main.go was deleted by clean -f!")
+	}
+}
+
+func TestCleanCmd_JSON(t *testing.T) {
+	tempDir := t.TempDir()
+	distDir := filepath.Join(tempDir, "dist")
+	_ = os.MkdirAll(distDir, 0755)
+	_ = os.WriteFile(filepath.Join(distDir, "app.js"), []byte("compiled"), 0644)
+
+	out, err := executeCommand("clean", "--dry-run", "--json", tempDir)
+	if err != nil {
+		t.Fatalf("clean --dry-run --json failed: %v", err)
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &data); err != nil {
+		t.Fatalf("clean --json output is not valid JSON: %v\nOutput: %s", err, out)
+	}
+
+	if data["items"] == nil || data["total_size_bytes"] == nil {
+		t.Errorf("Expected JSON to have items and total_size_bytes fields: %v", data)
+	}
+}
+
+func TestCleanCmd_AlreadyClean(t *testing.T) {
+	tempDir := t.TempDir()
+	out, err := executeCommand("clean", tempDir)
+	if err != nil {
+		t.Fatalf("clean on clean project failed: %v", err)
+	}
+
+	if !strings.Contains(out, "completely clean") {
+		t.Errorf("Expected clean confirmation message, got: %s", out)
+	}
+}
+
+func TestCleanCmd_Aliases(t *testing.T) {
+	tempDir := t.TempDir()
+	outSanitize, err := executeCommand("sanitize", tempDir)
+	if err != nil {
+		t.Fatalf("sanitize alias failed: %v", err)
+	}
+	if !strings.Contains(outSanitize, "Project Cleaner") {
+		t.Errorf("Expected Project Cleaner header with sanitize, got: %s", outSanitize)
+	}
+
+	outPurge, err := executeCommand("purge", tempDir)
+	if err != nil {
+		t.Fatalf("purge alias failed: %v", err)
+	}
+	if !strings.Contains(outPurge, "Project Cleaner") {
+		t.Errorf("Expected Project Cleaner header with purge, got: %s", outPurge)
+	}
+}
+
 
 

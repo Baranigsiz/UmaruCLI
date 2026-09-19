@@ -42,6 +42,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
   <a href="#-usage">💻 Usage</a> •
   <a href="#-system-diagnostics">🩺 Doctor</a> •
   <a href="#-template-deep-inspection-umaru-info">🔍 Inspect</a> •
+  <a href="#-project-sanitizer--disk-cleaner-umaru-clean">🧹 Cleaner</a> •
   <a href="#-shell-autocompletion">🐚 Autocompletion</a> •
   <a href="#-self-upgrade">🔄 Self-Upgrade</a> •
   <a href="#️-extensibility--custom-templates">🛠️ Extensibility</a>
@@ -284,6 +285,45 @@ umaru doctor --verbose
 - 🐳 **Containers:** Docker CLI, Docker Compose, and live Docker Daemon status.
 - 📊 **Template Readiness:** Percentage calculation of ready vs. missing tooling across all starter templates.
 - 💡 **Actionable Tips:** Direct installation links and commands for any missing tools.
+
+---
+
+## 🧹 Project Sanitizer & Disk Cleaner (`umaru clean`)
+
+Reclaim gigabytes of disk space by safely scanning and purging build artifacts, caches, and dependency folders across single projects or monorepos:
+
+```bash
+# Scan current directory and prompt to reclaim space
+umaru clean
+
+# Preview removable files and calculated space without deleting anything
+umaru clean --dry-run
+
+# Force cleanup without interactive confirmation (ideal for scripts & CI)
+umaru clean -f
+
+# Scan nested packages and monorepo workspaces recursively
+umaru clean -r
+
+# Target a specific directory
+umaru clean ./apps/backend
+
+# Deep clean (includes Python virtual environments .venv and extra caches)
+umaru clean --all -f
+
+# Output cleanup report as JSON
+umaru clean --json
+```
+
+**Targeted Artifacts:**
+- 📦 **Node.js / Web:** `node_modules`, `.next`, `.nuxt`, `.turbo`, `.astro`, `.svelte-kit`, `.cache`
+- 🔨 **Build Outputs:** `dist`, `build`, `out`, `coverage`
+- 🦀 **Rust:** `target`
+- 🐍 **Python:** `__pycache__`, `.pytest_cache`, `.mypy_cache`, `*.pyc` (and `.venv` with `--all`)
+- 🗑️ **OS / Temp:** `tmp`, `.DS_Store`, `Thumbs.db`
+
+> [!NOTE]
+> `umaru clean` strictly protects `.git` repositories and source code files. It never touches files outside recognized temporary artifact categories.
 
 ---
 
