@@ -43,6 +43,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
   <a href="#-system-diagnostics">🩺 Doctor</a> •
   <a href="#-template-deep-inspection-umaru-info">🔍 Inspect</a> •
   <a href="#-project-sanitizer--disk-cleaner-umaru-clean">🧹 Cleaner</a> •
+  <a href="#-universal-development-runner-umaru-dev--umaru-run">⚡ Dev Runner</a> •
   <a href="#-shell-autocompletion">🐚 Autocompletion</a> •
   <a href="#-self-upgrade">🔄 Self-Upgrade</a> •
   <a href="#️-extensibility--custom-templates">🛠️ Extensibility</a>
@@ -423,6 +424,36 @@ umaru init
 Next steps to get started:
   1. cd my-awesome-api
   2. go run cmd/api/main.go
+```
+
+---
+
+### ⚡ Universal Development Runner (`umaru dev` / `umaru run`)
+
+Stop memorizing framework-specific dev commands (`uvicorn ...`, `pnpm run dev`, `cargo run`, `go run cmd/api/main.go`). `umaru dev` automatically inspects your project, detects the language, framework, lockfile, and entrypoint, and launches the server:
+
+```bash
+# Automatically detects language, framework, and entrypoint, and starts the dev server
+umaru dev
+
+# Preview resolved command, port, and environment variables without launching
+umaru dev --dry-run
+
+# Run on a custom port (automatically sets PORT=...)
+umaru dev -p 8080
+
+# Bind to custom host address
+umaru dev --host 0.0.0.0
+
+# Force package manager for Node/TS projects
+umaru dev --pm pnpm
+
+# Target a specific project directory
+umaru dev ./apps/web
+
+# Aliases: umaru run, umaru start
+umaru run
+umaru start
 ```
 
 ---

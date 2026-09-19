@@ -63,6 +63,12 @@ func executeCommand(args ...string) (string, error) {
 	cleanForceFlag = false
 	cleanAllFlag = false
 	cleanJSONFlag = false
+	devDirFlag = "."
+	devPortFlag = ""
+	devHostFlag = ""
+	devPkgManagerFlag = ""
+	devDryRunFlag = false
+	devJSONFlag = false
 
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
@@ -1084,6 +1090,94 @@ func TestCleanCmd_Aliases(t *testing.T) {
 		t.Errorf("Expected Project Cleaner header with purge, got: %s", outPurge)
 	}
 }
+
+func TestDevCmd_DryRun_Go(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testgo\ngo 1.24\nrequire github.com/gofiber/fiber/v2 v2.52.0"), 0644)
+	apiDir := filepath.Join(tempDir, "cmd", "api")
+	_ = os.MkdirAll(apiDir, 0755)
+	_ = os.WriteFile(filepath.Join(apiDir, "main.go"), []byte("package main"), 0644)
+
+	out, err := executeCommand("dev", "--dry-run", tempDir)
+	if err != nil {
+		t.Fatalf("dev --dry-run failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Umaru Dev Runner") {
+		t.Errorf("Expected Umaru Dev Runner header, got: %s", out)
+	}
+	if !strings.Contains(out, "go run cmd/api/main.go") {
+		t.Errorf("Expected go run cmd/api/main.go command, got: %s", out)
+	}
+}
+
+func TestDevCmd_DryRun_Node(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(`{"name":"myapp","scripts":{"dev":"vite"}}`), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "pnpm-lock.yaml"), []byte("lockfileVersion: 9.0"), 0644)
+
+	out, err := executeCommand("dev", "--dry-run", "-p", "3000", tempDir)
+	if err != nil {
+		t.Fatalf("dev --dry-run failed: %v", err)
+	}
+
+	if !strings.Contains(out, "pnpm dev") {
+		t.Errorf("Expected pnpm dev command, got: %s", out)
+	}
+	if !strings.Contains(out, "PORT=3000") {
+		t.Errorf("Expected PORT=3000 in environment, got: %s", out)
+	}
+}
+
+func TestDevCmd_DryRun_JSON(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "Cargo.toml"), []byte("[package]\nname = \"myrust\"\nversion = \"0.1.0\"\n[dependencies]\naxum = \"0.7\""), 0644)
+	srcDir := filepath.Join(tempDir, "src")
+	_ = os.MkdirAll(srcDir, 0755)
+	_ = os.WriteFile(filepath.Join(srcDir, "main.rs"), []byte("fn main(){}"), 0644)
+
+	out, err := executeCommand("dev", "--dry-run", "--json", tempDir)
+	if err != nil {
+		t.Fatalf("dev --dry-run --json failed: %v", err)
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &data); err != nil {
+		t.Fatalf("dev --json output is not valid JSON: %v\nOutput: %s", err, out)
+	}
+
+	if data["language"] != "rust" {
+		t.Errorf("Expected language 'rust', got: %v", data["language"])
+	}
+	if data["command_line"] != "cargo run" {
+		t.Errorf("Expected command_line 'cargo run', got: %v", data["command_line"])
+	}
+}
+
+func TestDevCmd_Aliases(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testalias\ngo 1.24\nrequire github.com/gofiber/fiber/v2 v2.52.0"), 0644)
+	apiDir := filepath.Join(tempDir, "cmd", "api")
+	_ = os.MkdirAll(apiDir, 0755)
+	_ = os.WriteFile(filepath.Join(apiDir, "main.go"), []byte("package main"), 0644)
+
+	outRun, err := executeCommand("run", "--dry-run", tempDir)
+	if err != nil {
+		t.Fatalf("run alias failed: %v", err)
+	}
+	if !strings.Contains(outRun, "go run cmd/api/main.go") {
+		t.Errorf("Expected go run command with 'run' alias, got: %s", outRun)
+	}
+
+	outStart, err := executeCommand("start", "--dry-run", tempDir)
+	if err != nil {
+		t.Fatalf("start alias failed: %v", err)
+	}
+	if !strings.Contains(outStart, "go run cmd/api/main.go") {
+		t.Errorf("Expected go run command with 'start' alias, got: %s", outStart)
+	}
+}
+
 
 
 

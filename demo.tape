@@ -61,18 +61,29 @@ Type "clear"
 Enter
 Sleep 600ms
 
-# 7. Run ultra-fast concurrent environment diagnostics
-Type "umaru doctor"
+# 7. Demonstrate universal development runner (Dry-Run mode)
+Type "umaru dev --dry-run -p 8080"
 Sleep 600ms
 Enter
-Sleep 4s
+Sleep 3.5s
 
 # 8. Clear terminal
 Type "clear"
 Enter
 Sleep 600ms
 
-# 9. Show global persistent configuration table
+# 9. Run ultra-fast concurrent environment diagnostics
+Type "umaru doctor"
+Sleep 600ms
+Enter
+Sleep 4s
+
+# 10. Clear terminal
+Type "clear"
+Enter
+Sleep 600ms
+
+# 11. Show global persistent configuration table
 Type "umaru config list"
 Sleep 600ms
 Enter
