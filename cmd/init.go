@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"umaru/internal/actions"
@@ -16,6 +17,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/huh/spinner"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +39,10 @@ var (
 	commitFlag         bool
 	yesFlag            bool
 )
+
+func isTerminalStdin() bool {
+	return isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+}
 
 func runScaffoldWorkflow(
 	projConfig generator.ProjectConfig,
@@ -73,7 +79,7 @@ func runScaffoldWorkflow(
 				fmt.Printf("⚠️ Git init warning: %v\n", err)
 			} else if commit {
 				fmt.Println("📝 Creating initial Git commit...")
-				if err := actions.CommitGit(projConfig.TargetDir, "chore: initial commit via umaru"); err != nil {
+				if err := actions.CommitGit(projConfig.TargetDir, "chore: initial commit via umaru", projConfig.Author); err != nil {
 					fmt.Printf("⚠️ Git commit warning: %v\n", err)
 				}
 			}
@@ -112,7 +118,7 @@ func runScaffoldWorkflow(
 				if !noGit {
 					gitErr = actions.InitGit(projConfig.TargetDir)
 					if gitErr == nil && commit {
-						gitErr = actions.CommitGit(projConfig.TargetDir, "chore: initial commit via umaru")
+						gitErr = actions.CommitGit(projConfig.TargetDir, "chore: initial commit via umaru", projConfig.Author)
 					}
 				}
 
@@ -227,6 +233,10 @@ var initCmd = &cobra.Command{
 			}
 
 			if err := generator.CheckDestination(projConfig.TargetDir, forceFlag); err != nil {
+				if !isTerminalStdin() {
+					return err
+				}
+
 				var confirmForce bool
 				confirmPrompt := huh.NewConfirm().
 					Title(fmt.Sprintf("Directory '%s' is not empty. Continue and overwrite existing files?", projConfig.TargetDir)).
@@ -237,7 +247,7 @@ var initCmd = &cobra.Command{
 					forceFlag = true
 				} else {
 					fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
-					return nil
+					return fmt.Errorf("operation cancelled by user")
 				}
 			}
 
@@ -294,6 +304,10 @@ var initCmd = &cobra.Command{
 
 		// Check target destination directory
 		if err := generator.CheckDestination(projConfig.TargetDir, forceFlag); err != nil {
+			if !isTerminalStdin() {
+				return err
+			}
+
 			var confirmForce bool
 			confirmPrompt := huh.NewConfirm().
 				Title(fmt.Sprintf("Directory '%s' is not empty. Continue and overwrite existing files?", projConfig.TargetDir)).
@@ -304,7 +318,7 @@ var initCmd = &cobra.Command{
 				forceFlag = true
 			} else {
 				fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#94A3B8")).Render("\nOperation cancelled."))
-				return nil
+				return fmt.Errorf("operation cancelled by user")
 			}
 		}
 

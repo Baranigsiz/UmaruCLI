@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.0.2] - 2026-09-19
+
+### 🚀 New Features & Enhancements
+
+- **Remote Branch & Tag Support (`--from`)**: Added support for branch/tag ref specifications (`owner/repo#branch`, `owner/repo#v1.0.0`) and non-scheme provider URLs (`github.com/...`, `gitlab.com/...`), enabling scaffolding from specific versions.
+- **Git Identity Preservation**: Initial commits now automatically preserve developer's configured Git author name/email and signing settings, falling back to Umaru config `author` or `Umaru CLI`.
+- **Automated Open-Source `LICENSE` Generation**: Scaffolding now automatically emits standard `LICENSE` files (MIT, Apache-2.0, BSD-3, ISC, GPL-3, Unlicense) customized with the current year and configured author.
+- **Interactive Wizard Search**: Added live keyword search (`🔍 Search templates by keyword...`) to the interactive terminal wizard, enabling instant filtering across all 25 starter templates.
+- **`umaru config unset <key>`**: Added ability to reset a single configuration key back to default without clearing the entire user config.
+- **`umaru version --json`**: Machine-readable JSON output for CLI version, git commit, build timestamp, OS, and architecture.
+- **`umaru add --dry-run` & `--skip-install`**: Preview injected addon files before writing to disk and skip dependency installations in offline/CI environments.
+- **GitHub API Rate Limit Guard**: Updater now automatically attaches `GITHUB_TOKEN` / `GH_TOKEN` if present in the environment to increase API limits from 60 to 5,000 req/hr.
+- **Package Manager Collision Guard**: `umaru upgrade` now detects if the binary was installed via Homebrew (`brew upgrade umaru`) or Scoop (`scoop update umaru`) to avoid corrupting package manager trees.
+
+### 🛠️ Bug Fixes & Stability Improvements
+
+- **Non-Interactive TTY Hang**: Integrated `isatty` terminal detection across `cmd/init.go`, `prompts.go`, `cmd/add.go`, and `cmd/info.go` to fail fast with actionable errors in non-interactive / CI piped environments instead of freezing on prompts.
+- **Addon Audit False Positives**: Resolved collision where both PostgreSQL and SQLite were reported as installed simultaneously for Node and Python projects by adding file content inspection. Also ensured Docker is only reported as installed when `Dockerfile` or `docker-compose.yml` actually exists.
+- **Python SQLite Database URL & Dependency**: Fixed Python SQLite addon generation to produce `sqlite+aiosqlite:///./app.db` instead of an async PostgreSQL URL, and inject `aiosqlite>=0.20.0`.
+- **Python JWT Secret Name Mismatch**: Standardized `security.py` to prioritize `JWT_SECRET` (matching `.env` and `.env.example`) with fallback to `JWT_SECRET_KEY`.
+- **Dockerfile Go Entrypoint Resolution**: Dynamically detects Go entrypoints (`cmd/api/main.go`, `cmd/web/main.go`, root `main.go`) to prevent Docker build failures.
+- **Test Config Isolation**: Prevented unit tests from mutating or wiping the developer's real `~/.umarurc.json` by adding `SetTestConfigDir()` and `TestMain` isolation.
+
 ## [v2.0.1] - 2026-09-17
 
 ### 🛠️ Bug Fixes & Stability Improvements

@@ -226,6 +226,12 @@ umaru add ci
 
 # Overwrite existing addon files
 umaru add docker --force
+
+# Preview files that will be injected without writing to disk
+umaru add redis --dry-run
+
+# Inject addon files without running package manager dependency installs
+umaru add redis --skip-install
 ```
 
 ---
@@ -243,6 +249,12 @@ umaru config set author "Baran Igsiz"
 
 # View all saved preferences in a table
 umaru config list
+
+# View saved preferences as JSON
+umaru config list --json
+
+# Unset a specific preference back to its default value
+umaru config unset author
 
 # Reset all preferences to defaults
 umaru config reset
@@ -426,8 +438,10 @@ umaru create my-frontend -t react-vite-ts
 # 4. Scaffold a React + Vite application with Bun package manager
 umaru init my-frontend -t react-vite-ts -p bun
 
-# 5. Scaffold directly from a remote GitHub repository
+# 5. Scaffold directly from a remote repository (supports branches and tags)
 umaru init my-custom-app --from username/my-custom-starter
+umaru init my-versioned-app --from username/my-custom-starter#v1.0.0
+umaru init my-branch-app --from github.com/username/my-custom-starter#dev
 
 # 6. Simulate file generation without writing to disk
 umaru init test-app -t node-express --dry-run
@@ -449,6 +463,9 @@ umaru init my-app -y
 Integrate Umaru CLI directly into CI/CD pipelines, automated scripts, and editor extensions using structured JSON outputs:
 
 ```bash
+# Export CLI version, git commit, build timestamp, OS, and arch as JSON
+umaru version --json
+
 # List all 25 starter templates with metadata as a JSON array
 umaru list --json
 

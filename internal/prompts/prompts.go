@@ -2,12 +2,14 @@ package prompts
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"umaru/internal/config"
 	"umaru/internal/generator"
 	"umaru/internal/templates"
 
 	"github.com/charmbracelet/huh"
+	"github.com/mattn/go-isatty"
 )
 
 type PromptResult struct {
@@ -63,6 +65,11 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 		}
 	}
 
+	// If standard input is not a terminal, we cannot prompt interactively
+	if !isatty.IsTerminal(os.Stdin.Fd()) && !isatty.IsCygwinTerminal(os.Stdin.Fd()) {
+		return nil, fmt.Errorf("interactive prompt unavailable: standard input is not a terminal. Please provide project name and required flags (e.g. --template, --package-manager) or use --yes (-y)")
+	}
+
 	// 1. First Group: Project Name & Category Selection
 	selectedCategory := "all"
 	var firstFields []huh.Field
@@ -83,6 +90,7 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 
 	if selectedTemplateID == "" {
 		categoryOptions := []huh.Option[string]{
+			huh.NewOption("🔍 Search templates by keyword...", "search"),
 			huh.NewOption(fmt.Sprintf("🌟 All Templates (Show all %d starters)", len(availableTemplates)), "all"),
 			huh.NewOption("🌐 Frontend Frameworks (React, Vue 3, Svelte 5, Next.js, Astro)", "Frontend"),
 			huh.NewOption("⚙️ Backend APIs (Go, NestJS, Express, Hono, Fastify, Echo, FastAPI, Rust)", "Backend"),
@@ -106,12 +114,30 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 		}
 	}
 
-	// 2. Second Group: Template Selection based on category
+	// 2. Second Group: Template Selection based on category or search
 	if selectedTemplateID == "" {
 		var filteredTemplates []templates.TemplateConfig
-		for _, t := range availableTemplates {
-			if selectedCategory == "all" || t.GetCategory() == selectedCategory {
-				filteredTemplates = append(filteredTemplates, t)
+		if selectedCategory == "search" {
+			var searchQuery string
+			searchForm := huh.NewForm(huh.NewGroup(
+				huh.NewInput().
+					Title("Enter search term").
+					Description("Matches name, ID, framework, or description (e.g. fiber, react, axum)").
+					Value(&searchQuery),
+			))
+			if err := searchForm.Run(); err != nil {
+				return nil, err
+			}
+			filteredTemplates = FilterTemplatesByKeyword(availableTemplates, searchQuery)
+			if len(filteredTemplates) == 0 {
+				fmt.Printf("\n⚠️ No templates matched '%s'. Showing all available templates.\n\n", searchQuery)
+				filteredTemplates = availableTemplates
+			}
+		} else {
+			for _, t := range availableTemplates {
+				if selectedCategory == "all" || t.GetCategory() == selectedCategory {
+					filteredTemplates = append(filteredTemplates, t)
+				}
 			}
 		}
 
@@ -235,3 +261,23 @@ func Run(initialName string, initialTemplateID string, initialPkgManager string,
 		Addons:         selectedAddons,
 	}, nil
 }
+
+// FilterTemplatesByKeyword filters a slice of templates matching any keyword in ID, Name, Description, or Category
+func FilterTemplatesByKeyword(all []templates.TemplateConfig, query string) []templates.TemplateConfig {
+	q := strings.ToLower(strings.TrimSpace(query))
+	if q == "" {
+		return all
+	}
+
+	var results []templates.TemplateConfig
+	for _, t := range all {
+		if strings.Contains(strings.ToLower(t.ID), q) ||
+			strings.Contains(strings.ToLower(t.Name), q) ||
+			strings.Contains(strings.ToLower(t.Description), q) ||
+			strings.Contains(strings.ToLower(t.GetCategory()), q) {
+			results = append(results, t)
+		}
+	}
+	return results
+}
+

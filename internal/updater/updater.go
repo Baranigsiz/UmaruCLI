@@ -55,6 +55,11 @@ func FetchLatestReleaseContext(ctx context.Context) (*ReleaseInfo, error) {
 	}
 	req.Header.Set("User-Agent", "UmaruCLI-Updater")
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	} else if token := os.Getenv("GH_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -253,6 +258,11 @@ func DownloadAndExtractBinaryContext(ctx context.Context, assetURL string) ([]by
 		return nil, err
 	}
 	req.Header.Set("User-Agent", "UmaruCLI-Updater")
+	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	} else if token := os.Getenv("GH_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

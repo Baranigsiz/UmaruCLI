@@ -126,6 +126,26 @@ var configSetCmd = &cobra.Command{
 	},
 }
 
+var configUnsetCmd = &cobra.Command{
+	Use:   "unset <key>",
+	Short: "Unset a configuration key back to its default value",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		key := args[0]
+		_, err := config.UnsetConfigValue(key)
+		if err != nil {
+			return err
+		}
+
+		successStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#10B981"))
+		keyStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00D8F6"))
+
+		fmt.Println()
+		fmt.Println(successStyle.Render(fmt.Sprintf("✔ Configuration '%s' unset successfully!", keyStyle.Render(key))))
+		return nil
+	},
+}
+
 var configResetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "Reset all configuration keys to default",
@@ -157,6 +177,13 @@ func init() {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 
+	configUnsetCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return configKeyCompletions, cobra.ShellCompDirectiveNoFileComp
+		}
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
 	configSetCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return configKeyCompletions, cobra.ShellCompDirectiveNoFileComp
@@ -178,6 +205,7 @@ func init() {
 	configCmd.AddCommand(configListCmd)
 	configCmd.AddCommand(configGetCmd)
 	configCmd.AddCommand(configSetCmd)
+	configCmd.AddCommand(configUnsetCmd)
 	configCmd.AddCommand(configResetCmd)
 	rootCmd.AddCommand(configCmd)
 }

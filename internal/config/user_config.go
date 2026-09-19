@@ -28,8 +28,21 @@ func DefaultConfig() UserConfig {
 	}
 }
 
+var configTestDir string // used for isolated testing
+
+// SetTestConfigDir overrides the configuration directory for test isolation
+func SetTestConfigDir(dir string) {
+	configTestDir = dir
+}
+
 // GetConfigFilePath returns the absolute path to ~/.umarurc.json
 func GetConfigFilePath() (string, error) {
+	if configTestDir != "" {
+		return filepath.Join(configTestDir, ".umarurc.json"), nil
+	}
+	if envDir := os.Getenv("UMARU_CONFIG_DIR"); envDir != "" {
+		return filepath.Join(envDir, ".umarurc.json"), nil
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("could not determine user home directory: %w", err)
@@ -96,6 +109,9 @@ func SetConfigValue(key string, value string) (UserConfig, error) {
 		cfg.License = value
 	case "git-init", "gitinit", "git":
 		val := strings.ToLower(value)
+		if val != "true" && val != "false" && val != "1" && val != "0" && val != "yes" && val != "no" {
+			return cfg, fmt.Errorf("invalid boolean value '%s' for git-init. Supported: true, false, 1, 0, yes, no", value)
+		}
 		cfg.GitInit = (val == "true" || val == "1" || val == "yes")
 	default:
 		return cfg, fmt.Errorf("unknown config key '%s'. Supported keys: package-manager, author, license, git-init", key)
@@ -105,6 +121,31 @@ func SetConfigValue(key string, value string) (UserConfig, error) {
 		return cfg, err
 	}
 
+	return cfg, nil
+}
+
+// UnsetConfigValue resets a specific key in user configuration to its default value
+func UnsetConfigValue(key string) (UserConfig, error) {
+	cfg := LoadUserConfig()
+	key = strings.ToLower(strings.TrimSpace(key))
+	defaultCfg := DefaultConfig()
+
+	switch key {
+	case "package-manager", "pm", "packagemanager":
+		cfg.PackageManager = defaultCfg.PackageManager
+	case "author":
+		cfg.Author = defaultCfg.Author
+	case "license":
+		cfg.License = defaultCfg.License
+	case "git-init", "gitinit", "git":
+		cfg.GitInit = defaultCfg.GitInit
+	default:
+		return cfg, fmt.Errorf("unknown config key '%s'. Supported keys: package-manager, author, license, git-init", key)
+	}
+
+	if err := SaveUserConfig(cfg); err != nil {
+		return cfg, err
+	}
 	return cfg, nil
 }
 

@@ -179,6 +179,11 @@ func DryRun(config ProjectConfig) ([]string, error) {
 	addonFiles := GetAddonFiles(config)
 	files = append(files, addonFiles...)
 
+	// Append LICENSE file if enabled
+	if config.License != "" && strings.ToLower(config.License) != "none" {
+		files = append(files, filepath.Join(config.TargetDir, "LICENSE"))
+	}
+
 	return files, err
 }
 
@@ -261,5 +266,10 @@ func Generate(config ProjectConfig) error {
 	}
 
 	// Generate selected Addons
-	return GenerateAddons(config)
+	if err := GenerateAddons(config); err != nil {
+		return err
+	}
+
+	// Generate LICENSE file
+	return GenerateLicenseFile(config.TargetDir, config.License, config.Author)
 }

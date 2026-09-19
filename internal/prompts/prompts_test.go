@@ -3,6 +3,7 @@ package prompts
 import (
 	"testing"
 	"umaru/internal/generator"
+	"umaru/internal/templates"
 )
 
 func TestRun_NonInteractiveFullySpecified(t *testing.T) {
@@ -69,4 +70,42 @@ func TestRun_NonInteractiveFullySpecified(t *testing.T) {
 			t.Errorf("Expected error for invalid template ID, got nil")
 		}
 	})
+}
+
+func TestFilterTemplatesByKeyword(t *testing.T) {
+	mockTemplates := []templates.TemplateConfig{
+		{ID: "go-fiber", Name: "Go Fiber API", Description: "High performance web framework"},
+		{ID: "react-vite-ts", Name: "React + Vite + TS", Description: "Modern frontend SPA"},
+		{ID: "rust-axum", Name: "Rust Axum API", Description: "Ergonomic and modular web framework"},
+		{ID: "tauri-desktop", Name: "Tauri v2 Desktop App", Description: "Cross-platform desktop with Rust"},
+	}
+
+	// 1. Empty query returns all
+	if len(FilterTemplatesByKeyword(mockTemplates, "")) != 4 {
+		t.Errorf("Expected all 4 templates for empty query")
+	}
+
+	// 2. Search by ID substring
+	fiberRes := FilterTemplatesByKeyword(mockTemplates, "fiber")
+	if len(fiberRes) != 1 || fiberRes[0].ID != "go-fiber" {
+		t.Errorf("Expected go-fiber for 'fiber', got: %v", fiberRes)
+	}
+
+	// 3. Search by Name substring
+	rustRes := FilterTemplatesByKeyword(mockTemplates, "Rust")
+	if len(rustRes) != 2 {
+		t.Errorf("Expected 2 rust templates for 'Rust', got: %d", len(rustRes))
+	}
+
+	// 4. Search by Description substring
+	deskRes := FilterTemplatesByKeyword(mockTemplates, "desktop")
+	if len(deskRes) != 1 || deskRes[0].ID != "tauri-desktop" {
+		t.Errorf("Expected tauri-desktop for 'desktop', got: %v", deskRes)
+	}
+
+	// 5. Search non-matching
+	noneRes := FilterTemplatesByKeyword(mockTemplates, "nonexistent999")
+	if len(noneRes) != 0 {
+		t.Errorf("Expected 0 results for nonexistent query, got: %d", len(noneRes))
+	}
 }

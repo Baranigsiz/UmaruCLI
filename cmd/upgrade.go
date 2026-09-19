@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"umaru/internal/updater"
@@ -64,6 +66,24 @@ var upgradeCmd = &cobra.Command{
 
 		if checkOnlyFlag {
 			fmt.Println(warnStyle.Render(fmt.Sprintf("⚡ A new version (%s) is available! Run 'umaru upgrade' to install it.", latest)))
+			return nil
+		}
+
+		// Detect if binary was installed via package managers (Homebrew, Scoop)
+		execPath, _ := os.Executable()
+		if resolved, err := filepath.EvalSymlinks(execPath); err == nil {
+			execPath = resolved
+		}
+		lowerPath := strings.ToLower(filepath.ToSlash(execPath))
+
+		if strings.Contains(lowerPath, "/cellar/umaru") || strings.Contains(lowerPath, "/homebrew/") {
+			fmt.Println(infoStyle.Render("🍺 Umaru was installed via Homebrew."))
+			fmt.Printf("To upgrade to %s, please run: %s\n\n", latest, successStyle.Render("brew upgrade umaru"))
+			return nil
+		}
+		if strings.Contains(lowerPath, "/scoop/apps/umaru") {
+			fmt.Println(infoStyle.Render("🍨 Umaru was installed via Scoop."))
+			fmt.Printf("To upgrade to %s, please run: %s\n\n", latest, successStyle.Render("scoop update umaru"))
 			return nil
 		}
 

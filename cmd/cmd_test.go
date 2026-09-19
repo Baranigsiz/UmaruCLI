@@ -8,7 +8,18 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"umaru/internal/config"
 )
+
+func TestMain(m *testing.M) {
+	tmpDir, err := os.MkdirTemp("", "umaru-test-config-*")
+	if err == nil {
+		config.SetTestConfigDir(tmpDir)
+		defer os.RemoveAll(tmpDir)
+	}
+	os.Exit(m.Run())
+}
 
 func executeCommand(args ...string) (string, error) {
 	// Reset CLI command flags to ensure complete test isolation
@@ -34,6 +45,10 @@ func executeCommand(args ...string) (string, error) {
 	addListFlag = false
 	addJSONFlag = false
 	addAllFlag = false
+	addDryRunFlag = false
+	addSkipInstallFlag = false
+	versionJSONFlag = false
+	configJSONFlag = false
 	listCategoryFlag = ""
 	listSearchFlag = ""
 	listJSONFlag = false
@@ -100,6 +115,21 @@ func TestVersionFlag(t *testing.T) {
 
 	if !strings.Contains(outShort, "Umaru CLI") {
 		t.Errorf("Expected -v output to contain 'Umaru CLI', got: %s", outShort)
+	}
+}
+
+func TestVersionCmd_JSON(t *testing.T) {
+	out, err := executeCommand("version", "--json")
+	if err != nil {
+		t.Fatalf("version --json failed: %v", err)
+	}
+
+	var info map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &info); err != nil {
+		t.Fatalf("version --json output is not valid JSON: %v\nOutput: %s", err, out)
+	}
+	if info["version"] == nil || info["os"] == nil || info["arch"] == nil {
+		t.Errorf("Expected version JSON to contain version, os, and arch fields: %v", info)
 	}
 }
 
@@ -210,6 +240,9 @@ func TestInitCmd_Aliases(t *testing.T) {
 }
 
 func TestConfigCmd_GetAndList(t *testing.T) {
+	tempDir := t.TempDir()
+	config.SetTestConfigDir(tempDir)
+
 	// Test config list
 	outList, err := executeCommand("config", "list")
 	if err != nil {
@@ -230,6 +263,9 @@ func TestConfigCmd_GetAndList(t *testing.T) {
 }
 
 func TestConfigCmd_SetAndReset(t *testing.T) {
+	tempDir := t.TempDir()
+	config.SetTestConfigDir(tempDir)
+
 	// Set author
 	outSet, err := executeCommand("config", "set", "author", "Test Author Name")
 	if err != nil {
@@ -246,6 +282,63 @@ func TestConfigCmd_SetAndReset(t *testing.T) {
 	}
 	if !strings.Contains(outReset, "reset to default") {
 		t.Errorf("Expected reset message, got: %s", outReset)
+	}
+}
+
+func TestConfigCmd_Unset(t *testing.T) {
+	tempDir := t.TempDir()
+	config.SetTestConfigDir(tempDir)
+
+	// 1. Set author
+	_, err := executeCommand("config", "set", "author", "Original Author")
+	if err != nil {
+		t.Fatalf("config set author failed: %v", err)
+	}
+
+	// Verify author is set
+	getOut, err := executeCommand("config", "get", "author")
+	if err != nil {
+		t.Fatalf("config get author failed: %v", err)
+	}
+	if !strings.Contains(getOut, "Original Author") {
+		t.Fatalf("Expected 'Original Author', got: %s", getOut)
+	}
+
+	// 2. Unset author
+	unsetOut, err := executeCommand("config", "unset", "author")
+	if err != nil {
+		t.Fatalf("config unset author failed: %v", err)
+	}
+	if !strings.Contains(unsetOut, "unset successfully") {
+		t.Errorf("Expected unset confirmation message, got: %s", unsetOut)
+	}
+
+	// 3. Verify author is empty (default)
+	getAfter, err := executeCommand("config", "get", "author")
+	if err != nil {
+		t.Fatalf("config get author after unset failed: %v", err)
+	}
+	if strings.TrimSpace(getAfter) != "" {
+		t.Errorf("Expected empty author after unset, got: '%s'", getAfter)
+	}
+
+	// 4. Unset invalid key should return error
+	_, err = executeCommand("config", "unset", "invalid-key-xyz")
+	if err == nil {
+		t.Errorf("Expected error unsetting invalid key, got nil")
+	}
+}
+
+func TestConfigCmd_InvalidGitInit(t *testing.T) {
+	tempDir := t.TempDir()
+	config.SetTestConfigDir(tempDir)
+
+	_, err := executeCommand("config", "set", "git-init", "not-a-boolean")
+	if err == nil {
+		t.Fatalf("Expected error when setting git-init to invalid value, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid boolean value") {
+		t.Errorf("Expected error to mention 'invalid boolean value', got: %v", err)
 	}
 }
 
@@ -558,6 +651,9 @@ func TestDoctorCmd_JSON(t *testing.T) {
 }
 
 func TestConfigListCmd_JSON(t *testing.T) {
+	tempDir := t.TempDir()
+	config.SetTestConfigDir(tempDir)
+
 	out, err := executeCommand("config", "list", "--json")
 	if err != nil {
 		t.Fatalf("config list --json failed: %v", err)
@@ -657,6 +753,9 @@ func TestAddCmd_ValidationErrors(t *testing.T) {
 }
 
 func TestConfigCmd_FullFlow(t *testing.T) {
+	tempDir := t.TempDir()
+	config.SetTestConfigDir(tempDir)
+
 	// 1. Set key
 	setOut, err := executeCommand("config", "set", "author", "Test Engineer")
 	if err != nil {
@@ -775,6 +874,41 @@ func TestAddCmd_AllFlag(t *testing.T) {
 	}
 	if !strings.Contains(out2, "All available infrastructure addons are already installed") {
 		t.Errorf("Expected all installed message on second run, got: %s", out2)
+	}
+}
+
+func TestAddCmd_DryRunAndSkipInstall(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Minimal Go project
+	goModContent := "module testdryrunaddon\n\ngo 1.24\n\nrequire github.com/gofiber/fiber/v2 v2.52.0\n"
+	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(goModContent), 0644); err != nil {
+		t.Fatalf("Failed to write go.mod: %v", err)
+	}
+
+	// 1. Dry run should NOT create redis.go
+	outDryRun, err := executeCommand("add", "redis", "--dry-run", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("add redis --dry-run failed: %v", err)
+	}
+	if !strings.Contains(outDryRun, "Dry-Run Mode") {
+		t.Errorf("Expected dry run header in output, got: %s", outDryRun)
+	}
+	redisPath := filepath.Join(tempDir, "internal", "cache", "redis.go")
+	if _, err := os.Stat(redisPath); !os.IsNotExist(err) {
+		t.Errorf("Expected %s to NOT exist after dry-run", redisPath)
+	}
+
+	// 2. Skip install should create the file without executing go get
+	outSkip, err := executeCommand("add", "redis", "--skip-install", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("add redis --skip-install failed: %v", err)
+	}
+	if !strings.Contains(outSkip, "Addon(s) Injected Successfully") {
+		t.Errorf("Expected success output, got: %s", outSkip)
+	}
+	if _, err := os.Stat(redisPath); os.IsNotExist(err) {
+		t.Errorf("Expected %s to exist after add with --skip-install", redisPath)
 	}
 }
 

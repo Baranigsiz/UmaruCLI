@@ -14,15 +14,18 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
 var (
-	addDirFlag   string
-	addForceFlag bool
-	addListFlag  bool
-	addJSONFlag  bool
-	addAllFlag   bool
+	addDirFlag         string
+	addForceFlag       bool
+	addListFlag        bool
+	addJSONFlag        bool
+	addAllFlag         bool
+	addDryRunFlag      bool
+	addSkipInstallFlag bool
 )
 
 var addCmd = &cobra.Command{
@@ -141,6 +144,10 @@ Usage:
 				}
 			}
 		} else {
+			if !isatty.IsTerminal(os.Stdin.Fd()) && !isatty.IsCygwinTerminal(os.Stdin.Fd()) {
+				return fmt.Errorf("interactive prompt unavailable: standard input is not a terminal. Specify addon arguments (e.g. 'umaru add redis') or use --all")
+			}
+
 			// Interactive Multi-Selection with intelligent status detection
 			audit, _ := generator.AuditProjectAddons(targetDir)
 			installedMap := make(map[string]bool)
@@ -228,6 +235,11 @@ Usage:
 		projConfig := proj.ToProjectConfig(addonConfig)
 		addonFiles := generator.GetAddonFiles(projConfig)
 
+		if addDryRunFlag {
+			ui.PrintDryRunCard(projConfig, string(proj.Framework), addonFiles)
+			return nil
+		}
+
 		// Check for existing files
 		if !addForceFlag {
 			var existingFiles []string
@@ -253,7 +265,7 @@ Usage:
 		}
 
 		// Auto-run dependency resolution if applicable
-		if proj.Type == generator.ProjectTypeGo {
+		if proj.Type == generator.ProjectTypeGo && !addSkipInstallFlag {
 			_ = actions.InstallDependencies(generator.GetAddonBaseDir(projConfig), []string{"go", "mod", "tidy"}, false)
 		}
 
@@ -347,6 +359,8 @@ func init() {
 	addCmd.Flags().BoolVarP(&addListFlag, "list", "l", false, "Inspect and list installed vs available addons for the project")
 	addCmd.Flags().BoolVarP(&addAllFlag, "all", "a", false, "Inject all available infrastructure addons for the project")
 	addCmd.Flags().BoolVar(&addJSONFlag, "json", false, "Output addon audit report in JSON format")
+	addCmd.Flags().BoolVar(&addDryRunFlag, "dry-run", false, "Simulate addon injection without writing files to disk")
+	addCmd.Flags().BoolVar(&addSkipInstallFlag, "skip-install", false, "Skip automatic dependency installation (e.g. go mod tidy)")
 
 	addCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		allAddons := []string{

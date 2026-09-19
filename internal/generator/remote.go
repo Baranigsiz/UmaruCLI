@@ -18,34 +18,83 @@ import (
 // CloneTimeout is the maximum duration allowed for a git clone operation
 const CloneTimeout = 2 * time.Minute
 
-// NormalizeGitURL converts GitHub shorthands (e.g., "owner/repo") to full git clone URLs
-func NormalizeGitURL(raw string) string {
+// RemoteSpec contains the parsed clone URL and optional git ref (branch/tag/commit)
+type RemoteSpec struct {
+	CloneURL string
+	Ref      string
+}
+
+// ParseRemoteURL parses a git shorthand, full URL, or branch/tag specifier into a RemoteSpec.
+// Supported formats:
+//   - "owner/repo" -> https://github.com/owner/repo.git
+//   - "owner/repo#dev" -> https://github.com/owner/repo.git, ref: "dev"
+//   - "github.com/owner/repo" -> https://github.com/owner/repo.git
+//   - "gitlab.com/owner/repo#v1.0.0" -> https://gitlab.com/owner/repo.git, ref: "v1.0.0"
+//   - "github:owner/repo" -> https://github.com/owner/repo.git
+//   - "gitlab:owner/repo" -> https://gitlab.com/owner/repo.git
+//   - "https://github.com/owner/repo.git#main" -> https://github.com/owner/repo.git, ref: "main"
+//   - "git@github.com:owner/repo.git#main" -> git@github.com:owner/repo.git, ref: "main"
+func ParseRemoteURL(raw string) (*RemoteSpec, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" || strings.HasPrefix(raw, "-") {
+		return nil, fmt.Errorf("invalid or empty remote repository URL")
+	}
+
+	var ref string
+	if idx := strings.Index(raw, "#"); idx != -1 {
+		ref = strings.TrimSpace(raw[idx+1:])
+		raw = strings.TrimSpace(raw[:idx])
+	}
+
+	if raw == "" || strings.HasPrefix(raw, "-") {
+		return nil, fmt.Errorf("invalid repository URL")
+	}
+
+	// Handle shorthand prefixes like github:owner/repo, gh:owner/repo, gitlab:owner/repo
+	if strings.HasPrefix(raw, "github:") || strings.HasPrefix(raw, "gh:") {
+		raw = strings.TrimPrefix(strings.TrimPrefix(raw, "github:"), "gh:")
+		raw = "https://github.com/" + strings.TrimPrefix(raw, "/") + ".git"
+	} else if strings.HasPrefix(raw, "gitlab:") {
+		raw = "https://gitlab.com/" + strings.TrimPrefix(strings.TrimPrefix(raw, "gitlab:"), "/") + ".git"
+	} else if strings.HasPrefix(raw, "github.com/") {
+		raw = "https://" + raw
+		if !strings.HasSuffix(raw, ".git") {
+			raw += ".git"
+		}
+	} else if strings.HasPrefix(raw, "gitlab.com/") {
+		raw = "https://" + raw
+		if !strings.HasSuffix(raw, ".git") {
+			raw += ".git"
+		}
+	} else if !strings.HasPrefix(raw, "http://") && !strings.HasPrefix(raw, "https://") && !strings.HasPrefix(raw, "git@") {
+		parts := strings.Split(raw, "/")
+		if len(parts) == 2 && !strings.Contains(raw, ":") {
+			raw = fmt.Sprintf("https://github.com/%s/%s.git", parts[0], parts[1])
+		}
+	}
+
+	return &RemoteSpec{
+		CloneURL: raw,
+		Ref:      ref,
+	}, nil
+}
+
+// NormalizeGitURL retains backwards compatibility for callers expecting just the URL string
+func NormalizeGitURL(raw string) string {
+	spec, err := ParseRemoteURL(raw)
+	if err != nil {
 		return ""
 	}
-
-	// If already a full URL or SSH
-	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") || strings.HasPrefix(raw, "git@") {
-		return raw
-	}
-
-	// Shorthand "owner/repo"
-	parts := strings.Split(raw, "/")
-	if len(parts) == 2 && !strings.Contains(raw, ":") {
-		return fmt.Sprintf("https://github.com/%s/%s.git", parts[0], parts[1])
-	}
-
-	return raw
+	return spec.CloneURL
 }
 
 // GenerateFromRemote clones a remote repository into a temporary directory,
 // strips the .git metadata, renders any .tmpl files, and copies the result
 // into the target directory.
 func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.TemplateConfig, error) {
-	normalizedURL := NormalizeGitURL(repoURL)
-	if normalizedURL == "" {
-		return nil, fmt.Errorf("invalid or empty remote repository URL")
+	spec, err := ParseRemoteURL(repoURL)
+	if err != nil {
+		return nil, err
 	}
 
 	tempDir, err := os.MkdirTemp("", "umaru-remote-*")
@@ -58,7 +107,14 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 	ctx, cancel := context.WithTimeout(context.Background(), CloneTimeout)
 	defer cancel()
 
-	cloneCmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1", normalizedURL, tempDir)
+	var cloneArgs []string
+	if spec.Ref != "" {
+		cloneArgs = []string{"clone", "--depth", "1", "--branch", spec.Ref, spec.CloneURL, tempDir}
+	} else {
+		cloneArgs = []string{"clone", "--depth", "1", spec.CloneURL, tempDir}
+	}
+
+	cloneCmd := exec.CommandContext(ctx, "git", cloneArgs...)
 	if out, err := cloneCmd.CombinedOutput(); err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			return nil, fmt.Errorf("git clone timed out after %s — check your network or repository URL", CloneTimeout)
@@ -83,7 +139,7 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 	}
 
 	if templateConfig.Name == "" {
-		templateConfig.Name = filepath.Base(normalizedURL)
+		templateConfig.Name = filepath.Base(spec.CloneURL)
 	}
 
 	// Walk and process any .tmpl files
@@ -200,20 +256,28 @@ func copyFile(srcPath, dstPath string, perm fs.FileMode) error {
 
 // DryRunRemote clones to a temporary directory to simulate generated files
 func DryRunRemote(repoURL string, config ProjectConfig) ([]string, error) {
+	spec, err := ParseRemoteURL(repoURL)
+	if err != nil {
+		return nil, err
+	}
+
 	tempDir, err := os.MkdirTemp("", "umaru-remote-dryrun-*")
 	if err != nil {
 		return nil, err
 	}
 	defer os.RemoveAll(tempDir)
 
-	normalizedURL := NormalizeGitURL(repoURL)
-	if normalizedURL == "" {
-		return nil, fmt.Errorf("invalid or empty remote repository URL")
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), CloneTimeout)
 	defer cancel()
 
-	cloneCmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1", normalizedURL, tempDir)
+	var cloneArgs []string
+	if spec.Ref != "" {
+		cloneArgs = []string{"clone", "--depth", "1", "--branch", spec.Ref, spec.CloneURL, tempDir}
+	} else {
+		cloneArgs = []string{"clone", "--depth", "1", spec.CloneURL, tempDir}
+	}
+
+	cloneCmd := exec.CommandContext(ctx, "git", cloneArgs...)
 	if out, err := cloneCmd.CombinedOutput(); err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			return nil, fmt.Errorf("git clone timed out after %s — check your network or repository URL", CloneTimeout)

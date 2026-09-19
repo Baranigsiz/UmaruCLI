@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,8 +9,8 @@ import (
 	"strings"
 )
 
-// buildCommand creates a cross-platform exec.Cmd
-func buildCommand(dir string, command []string) *exec.Cmd {
+// buildCommandContext creates a cross-platform exec.Cmd with context support
+func buildCommandContext(ctx context.Context, dir string, command []string) *exec.Cmd {
 	if len(command) == 0 {
 		return nil
 	}
@@ -40,21 +41,26 @@ func buildCommand(dir string, command []string) *exec.Cmd {
 					quotedArgs = append(quotedArgs, arg)
 				}
 			}
-			cmd = exec.Command("cmd.exe", "/c", strings.Join(quotedArgs, " "))
+			cmd = exec.CommandContext(ctx, "cmd.exe", "/c", strings.Join(quotedArgs, " "))
 		} else {
-			cmd = exec.Command(execCmd[0], execCmd[1:]...)
+			cmd = exec.CommandContext(ctx, execCmd[0], execCmd[1:]...)
 		}
 	} else {
-		cmd = exec.Command(execCmd[0], execCmd[1:]...)
+		cmd = exec.CommandContext(ctx, execCmd[0], execCmd[1:]...)
 	}
 
 	cmd.Dir = dir
 	return cmd
 }
 
-// InitGit initializes a git repository in the given directory
-func InitGit(projectPath string) error {
-	cmd := buildCommand(projectPath, []string{"git", "init"})
+// buildCommand creates a cross-platform exec.Cmd
+func buildCommand(dir string, command []string) *exec.Cmd {
+	return buildCommandContext(context.Background(), dir, command)
+}
+
+// InitGitContext initializes a git repository in the given directory with context
+func InitGitContext(ctx context.Context, projectPath string) error {
+	cmd := buildCommandContext(ctx, projectPath, []string{"git", "init"})
 	if out, err := cmd.CombinedOutput(); err != nil {
 		outStr := strings.TrimSpace(string(out))
 		if outStr != "" {
@@ -65,9 +71,14 @@ func InitGit(projectPath string) error {
 	return nil
 }
 
-// CommitGit stages all files and creates an initial commit
-func CommitGit(projectPath string, message string) error {
-	addCmd := buildCommand(projectPath, []string{"git", "add", "-A"})
+// InitGit initializes a git repository in the given directory
+func InitGit(projectPath string) error {
+	return InitGitContext(context.Background(), projectPath)
+}
+
+// CommitGitContext stages all files and creates an initial commit with context
+func CommitGitContext(ctx context.Context, projectPath string, message string, author ...string) error {
+	addCmd := buildCommandContext(ctx, projectPath, []string{"git", "add", "-A"})
 	if out, err := addCmd.CombinedOutput(); err != nil {
 		outStr := strings.TrimSpace(string(out))
 		if outStr != "" {
@@ -76,13 +87,45 @@ func CommitGit(projectPath string, message string) error {
 		return fmt.Errorf("git add failed: %w", err)
 	}
 
-	commitCmd := buildCommand(projectPath, []string{
-		"git",
-		"-c", "user.name=Umaru CLI",
-		"-c", "user.email=umaru@cli.local",
-		"commit",
-		"-m", message,
-	})
+	// Check if user has global or local git identity configured
+	hasGitUser := false
+	checkName := exec.CommandContext(ctx, "git", "config", "user.name")
+	if nameOut, err := checkName.Output(); err == nil && len(strings.TrimSpace(string(nameOut))) > 0 {
+		checkEmail := exec.CommandContext(ctx, "git", "config", "user.email")
+		if emailOut, err := checkEmail.Output(); err == nil && len(strings.TrimSpace(string(emailOut))) > 0 {
+			hasGitUser = true
+		}
+	}
+
+	var commitArgs []string
+	if hasGitUser {
+		// Use developer's native Git author identity and signing settings
+		commitArgs = []string{"git", "commit", "-m", message}
+	} else {
+		var authorName string
+		if len(author) > 0 {
+			authorName = strings.TrimSpace(author[0])
+		}
+		if authorName != "" {
+			commitArgs = []string{
+				"git",
+				"-c", fmt.Sprintf("user.name=%s", authorName),
+				"-c", fmt.Sprintf("user.email=%s@users.noreply.local", strings.ToLower(strings.ReplaceAll(authorName, " ", "-"))),
+				"commit",
+				"-m", message,
+			}
+		} else {
+			commitArgs = []string{
+				"git",
+				"-c", "user.name=Umaru CLI",
+				"-c", "user.email=umaru@cli.local",
+				"commit",
+				"-m", message,
+			}
+		}
+	}
+
+	commitCmd := buildCommandContext(ctx, projectPath, commitArgs)
 	if out, err := commitCmd.CombinedOutput(); err != nil {
 		outStr := strings.TrimSpace(string(out))
 		if outStr != "" {
@@ -93,13 +136,18 @@ func CommitGit(projectPath string, message string) error {
 	return nil
 }
 
-// InstallDependencies runs the specified package manager installation command
-func InstallDependencies(projectPath string, installCommand []string, verbose bool) error {
+// CommitGit stages all files and creates an initial commit
+func CommitGit(projectPath string, message string, author ...string) error {
+	return CommitGitContext(context.Background(), projectPath, message, author...)
+}
+
+// InstallDependenciesContext runs the specified package manager installation command with context
+func InstallDependenciesContext(ctx context.Context, projectPath string, installCommand []string, verbose bool) error {
 	if len(installCommand) == 0 {
 		return nil
 	}
 
-	cmd := buildCommand(projectPath, installCommand)
+	cmd := buildCommandContext(ctx, projectPath, installCommand)
 
 	if verbose {
 		cmd.Stdout = os.Stdout
@@ -118,5 +166,10 @@ func InstallDependencies(projectPath string, installCommand []string, verbose bo
 		return fmt.Errorf("%s failed: %w", strings.Join(installCommand, " "), err)
 	}
 	return nil
+}
+
+// InstallDependencies runs the specified package manager installation command
+func InstallDependencies(projectPath string, installCommand []string, verbose bool) error {
+	return InstallDependenciesContext(context.Background(), projectPath, installCommand, verbose)
 }
 

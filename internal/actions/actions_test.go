@@ -60,6 +60,27 @@ func TestCommitGit(t *testing.T) {
 	}
 }
 
+func TestCommitGit_WithAuthor(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not found in PATH, skipping TestCommitGit_WithAuthor")
+	}
+
+	tempDir := t.TempDir()
+	if err := InitGit(tempDir); err != nil {
+		t.Fatalf("InitGit() failed: %v", err)
+	}
+
+	dummyFile := filepath.Join(tempDir, "LICENSE")
+	if err := os.WriteFile(dummyFile, []byte("MIT License"), 0644); err != nil {
+		t.Fatalf("Failed to write dummy file: %v", err)
+	}
+
+	err := CommitGit(tempDir, "chore: initial commit with author", "Test Author")
+	if err != nil {
+		t.Fatalf("CommitGit() with author failed: %v", err)
+	}
+}
+
 func TestBuildCommand_Variants(t *testing.T) {
 	tempDir := t.TempDir()
 

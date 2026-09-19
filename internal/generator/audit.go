@@ -1,7 +1,9 @@
 package generator
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 // AddonStatus represents the installation status of an individual addon
@@ -49,15 +51,20 @@ func AuditProjectAddons(targetDir string) (*ProjectAddonAudit, error) {
 	// 1. Docker
 	dockerFiles := getDockerFiles(baseDir)
 	var foundDocker []string
+	hasDockerCore := false
 	for _, f := range dockerFiles {
 		if fileExists(f) {
 			foundDocker = append(foundDocker, cleanRel(f))
+			base := filepath.Base(f)
+			if base == "Dockerfile" || strings.HasPrefix(base, "docker-compose") {
+				hasDockerCore = true
+			}
 		}
 	}
 	audit.Addons = append(audit.Addons, AddonStatus{
 		ID:            "docker",
 		Name:          "Docker & Compose",
-		Installed:     len(foundDocker) > 0,
+		Installed:     hasDockerCore,
 		DetectedFiles: foundDocker,
 	})
 
@@ -76,6 +83,24 @@ func AuditProjectAddons(targetDir string) (*ProjectAddonAudit, error) {
 		DetectedFiles: foundCI,
 	})
 
+	isPostgresContent := func(filePath string) bool {
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return false
+		}
+		s := strings.ToLower(string(data))
+		return strings.Contains(s, "pg") || strings.Contains(s, "postgres") || strings.Contains(s, "asyncpg") || strings.Contains(s, "psycopg")
+	}
+
+	isSQLiteContent := func(filePath string) bool {
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return false
+		}
+		s := strings.ToLower(string(data))
+		return strings.Contains(s, "sqlite") || strings.Contains(s, "better-sqlite3") || strings.Contains(s, "aiosqlite")
+	}
+
 	// 3. PostgreSQL
 	pgConfig := dummyConfig
 	pgConfig.Addons.Database = "postgres"
@@ -83,7 +108,13 @@ func AuditProjectAddons(targetDir string) (*ProjectAddonAudit, error) {
 	var foundPG []string
 	for _, f := range pgFiles {
 		if fileExists(f) {
-			foundPG = append(foundPG, cleanRel(f))
+			if proj.Type == ProjectTypeNode || proj.Type == ProjectTypePython {
+				if isPostgresContent(f) {
+					foundPG = append(foundPG, cleanRel(f))
+				}
+			} else {
+				foundPG = append(foundPG, cleanRel(f))
+			}
 		}
 	}
 	audit.Addons = append(audit.Addons, AddonStatus{
@@ -100,7 +131,13 @@ func AuditProjectAddons(targetDir string) (*ProjectAddonAudit, error) {
 	var foundSQLite []string
 	for _, f := range sqliteFiles {
 		if fileExists(f) {
-			foundSQLite = append(foundSQLite, cleanRel(f))
+			if proj.Type == ProjectTypeNode || proj.Type == ProjectTypePython {
+				if isSQLiteContent(f) {
+					foundSQLite = append(foundSQLite, cleanRel(f))
+				}
+			} else {
+				foundSQLite = append(foundSQLite, cleanRel(f))
+			}
 		}
 	}
 	audit.Addons = append(audit.Addons, AddonStatus{

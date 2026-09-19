@@ -270,15 +270,20 @@ __pycache__
 	case isGoTemplate(config.Template):
 		entrypoint := "."
 		if fileExists(filepath.Join(baseDir, "cmd", "api", "main.go")) ||
-			fileExists(filepath.Join(config.TargetDir, "cmd", "api", "main.go")) ||
-			config.Template == "go-fiber" ||
+			fileExists(filepath.Join(config.TargetDir, "cmd", "api", "main.go")) {
+			entrypoint = "cmd/api/main.go"
+		} else if fileExists(filepath.Join(baseDir, "cmd", "web", "main.go")) ||
+			fileExists(filepath.Join(config.TargetDir, "cmd", "web", "main.go")) {
+			entrypoint = "cmd/web/main.go"
+		} else if fileExists(filepath.Join(baseDir, "main.go")) ||
+			fileExists(filepath.Join(config.TargetDir, "main.go")) {
+			entrypoint = "main.go"
+		} else if config.Template == "go-fiber" ||
 			config.Template == "go-gin" ||
 			config.Template == "go-echo" ||
 			config.Template == "fullstack-go-react" {
 			entrypoint = "cmd/api/main.go"
-		} else if fileExists(filepath.Join(baseDir, "cmd", "web", "main.go")) ||
-			fileExists(filepath.Join(config.TargetDir, "cmd", "web", "main.go")) ||
-			config.Template == "go-htmx" {
+		} else if config.Template == "go-htmx" {
 			entrypoint = "cmd/web/main.go"
 		}
 

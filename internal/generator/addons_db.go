@@ -142,7 +142,11 @@ export async function connectDatabase(config?: DBConfig) {
 			return fmt.Errorf("failed injecting node database dependencies: %w", err)
 		}
 	} else if isPythonTemplate(config.Template) {
-		content := `import os
+		var content string
+		reqPath := filepath.Join(baseDir, "requirements.txt")
+
+		if db == "postgres" {
+			content = `import os
 from typing import AsyncGenerator
 
 # Database Connection Settings
@@ -153,15 +157,28 @@ async def get_db_session():
     # Yield database session here
     yield None
 `
-		if err := writeAddonFile(baseDir, filepath.Join("app", "core", "database.py"), content); err != nil {
-			return err
-		}
-
-		if db == "postgres" {
-			reqPath := filepath.Join(baseDir, "requirements.txt")
 			if err := injectPythonDependencies(reqPath, []string{"asyncpg>=0.29.0"}); err != nil {
 				return fmt.Errorf("failed injecting python database dependencies: %w", err)
 			}
+		} else if db == "sqlite" {
+			content = `import os
+from typing import AsyncGenerator
+
+# Database Connection Settings
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./app.db")
+
+async def get_db_session():
+    """Async database session dependency generator."""
+    # Yield database session here
+    yield None
+`
+			if err := injectPythonDependencies(reqPath, []string{"aiosqlite>=0.20.0"}); err != nil {
+				return fmt.Errorf("failed injecting python database dependencies: %w", err)
+			}
+		}
+
+		if err := writeAddonFile(baseDir, filepath.Join("app", "core", "database.py"), content); err != nil {
+			return err
 		}
 	}
 

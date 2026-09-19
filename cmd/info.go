@@ -3,10 +3,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"umaru/internal/templates"
 	"umaru/internal/ui"
 
 	"github.com/charmbracelet/huh"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
@@ -36,6 +38,10 @@ ASCII directory tree of the generated project structure.`,
 		if len(args) > 0 {
 			selectedID = args[0]
 		} else {
+			if !isatty.IsTerminal(os.Stdin.Fd()) && !isatty.IsCygwinTerminal(os.Stdin.Fd()) {
+				return fmt.Errorf("interactive prompt unavailable: standard input is not a terminal. Specify a template ID (e.g. 'umaru info go-fiber')")
+			}
+
 			// Interactive Selection
 			allTemplates, err := templates.GetAvailableTemplates()
 			if err != nil {
