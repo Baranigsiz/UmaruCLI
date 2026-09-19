@@ -241,6 +241,9 @@ umaru add redis --skip-install
 Save your personal defaults to `~/.umarurc.json` so you never have to re-type them:
 
 ```bash
+# Interactive configuration setup wizard
+umaru config init
+
 # Set your default package manager (npm, pnpm, yarn, bun)
 umaru config set pm pnpm
 
@@ -399,13 +402,14 @@ umaru info
 
 ---
 
-### 📋 Catalog, Search & Filtering (`umaru list`)
+### 📋 Catalog, Search & Filtering (`umaru list` / `umaru ls`)
 
 Explore all 25 starter architectures, search by technology keyword, or filter specifically by ecosystem category:
 
 ```bash
-# View all 25 available starter templates
+# View all 25 available starter templates (or use 'ls' alias)
 umaru list
+umaru ls
 
 # Search templates by keyword, framework, or ID
 umaru list -s fiber
@@ -489,6 +493,8 @@ umaru config list --json
 | Flag | Shorthand | Description |
 |---|:---:|---|
 | `--json` | — | Output command results in machine-readable JSON format (`list`, `info`, `doctor`, `add --list`, `config list`) |
+| `--debug` | — | Enable verbose debug mode with detailed error traces and diagnostics |
+| `--config <path>` | — | Path to custom configuration file (overrides `~/.umarurc.json`) |
 | `--no-color` | — | Disable ANSI colors and styling (strictly adheres to the [no-color.org](https://no-color.org/) standard) |
 | `--quiet` | `-q` | Quiet mode: suppress decorative banners and non-essential log messages |
 | `--help` | `-h` | Display help and usage information for any command or subcommand |

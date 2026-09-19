@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"umaru/internal/config"
 	"umaru/internal/updater"
 
 	"github.com/charmbracelet/lipgloss"
@@ -14,8 +16,10 @@ import (
 )
 
 var (
-	noColorFlag bool
-	quietFlag   bool
+	noColorFlag    bool
+	quietFlag      bool
+	debugFlag      bool
+	configFileFlag string
 )
 
 var rootCmd = &cobra.Command{
@@ -31,7 +35,16 @@ Umaru helps you kickstart your projects with best practices out of the box.`,
 			os.Setenv("NO_COLOR", "1")
 			lipgloss.SetColorProfile(termenv.Ascii)
 		}
+
+		if configFileFlag != "" {
+			config.SetCustomConfigFile(configFileFlag)
+		}
 	},
+}
+
+// IsDebug returns whether debug mode is enabled via flag or env var
+func IsDebug() bool {
+	return debugFlag || os.Getenv("UMARU_DEBUG") == "1"
 }
 
 func Execute() {
@@ -42,6 +55,9 @@ func Execute() {
 
 	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
+		if IsDebug() {
+			fmt.Fprintf(os.Stderr, "\n[DEBUG] Command execution failed: %+v\n", err)
+		}
 		os.Exit(1)
 	}
 }
@@ -53,6 +69,8 @@ func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolVar(&noColorFlag, "no-color", false, "Disable colored output (respects NO_COLOR env)")
 	rootCmd.PersistentFlags().BoolVarP(&quietFlag, "quiet", "q", false, "Do not print non-essential log messages")
+	rootCmd.PersistentFlags().BoolVar(&debugFlag, "debug", false, "Enable verbose debug mode with detailed error traces")
+	rootCmd.PersistentFlags().StringVar(&configFileFlag, "config", "", "Location of custom configuration file (default ~/.umarurc.json)")
 
 	// Command groups for organized --help output
 	rootCmd.AddGroup(

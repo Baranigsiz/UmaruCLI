@@ -26,15 +26,26 @@ func DefaultConfig() UserConfig {
 	}
 }
 
-var configTestDir string // used for isolated testing
+var (
+	configTestDir    string // used for isolated testing
+	customConfigFile string // path specified via --config flag
+)
 
 // SetTestConfigDir overrides the configuration directory for test isolation
 func SetTestConfigDir(dir string) {
 	configTestDir = dir
 }
 
+// SetCustomConfigFile overrides the configuration file path directly
+func SetCustomConfigFile(path string) {
+	customConfigFile = path
+}
+
 // GetConfigFilePath returns the absolute path to ~/.umarurc.json
 func GetConfigFilePath() (string, error) {
+	if customConfigFile != "" {
+		return customConfigFile, nil
+	}
 	if configTestDir != "" {
 		return filepath.Join(configTestDir, ".umarurc.json"), nil
 	}

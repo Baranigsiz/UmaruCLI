@@ -86,3 +86,17 @@ func TestGetConfigFilePath(t *testing.T) {
 		t.Errorf("Expected filename .umarurc.json, got %s", path)
 	}
 }
+
+func TestSetCustomConfigFile(t *testing.T) {
+	customPath := filepath.Join(t.TempDir(), "custom-umaru.json")
+	SetCustomConfigFile(customPath)
+	defer SetCustomConfigFile("")
+
+	path, err := GetConfigFilePath()
+	if err != nil {
+		t.Fatalf("GetConfigFilePath failed: %v", err)
+	}
+	if path != customPath {
+		t.Errorf("Expected path %s, got %s", customPath, path)
+	}
+}

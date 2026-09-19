@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
 	"umaru/internal/config"
 
+	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/spf13/cobra"
@@ -18,7 +20,8 @@ var configCmd = &cobra.Command{
 	Use:     "config",
 	Short:   "Manage persistent global user preferences",
 	GroupID: "config",
-	Example: `  umaru config list
+	Example: `  umaru config init
+  umaru config list
   umaru config set package-manager pnpm
   umaru config set author "Baran Igsiz"
   umaru config get license
@@ -151,6 +154,91 @@ var configUnsetCmd = &cobra.Command{
 	},
 }
 
+var configInitCmd = &cobra.Command{
+	Use:     "init",
+	Short:   "Interactive setup wizard to initialize global user configuration",
+	Example: `  umaru config init`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if !isTerminalStdin() {
+			return errors.New("interactive config setup requires a terminal standard input")
+		}
+
+		current := config.LoadUserConfig()
+
+		author := current.Author
+		pkgManager := current.PackageManager
+		if pkgManager == "" {
+			pkgManager = "npm"
+		}
+		license := current.License
+		if license == "" {
+			license = "MIT"
+		}
+		gitInit := current.GitInit
+
+		form := huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Default Project Author").
+					Description("Your name or organization handle (optional)").
+					Value(&author),
+				huh.NewSelect[string]().
+					Title("Default Package Manager").
+					Description("Preferred package manager for JavaScript & TypeScript templates").
+					Options(
+						huh.NewOption("npm (standard Node.js)", "npm"),
+						huh.NewOption("pnpm (fast, efficient disk space)", "pnpm"),
+						huh.NewOption("bun (modern, all-in-one)", "bun"),
+						huh.NewOption("yarn (classic)", "yarn"),
+						huh.NewOption("None (prompt interactively each time)", ""),
+					).
+					Value(&pkgManager),
+				huh.NewSelect[string]().
+					Title("Default Open Source License").
+					Description("Default license added when creating new projects").
+					Options(
+						huh.NewOption("MIT License (Permissive, recommended)", "MIT"),
+						huh.NewOption("Apache 2.0 (Includes patent rights grant)", "Apache-2.0"),
+						huh.NewOption("GPL 3.0 (Strong copyleft)", "GPL-3.0"),
+						huh.NewOption("BSD 3-Clause (Permissive with non-endorsement)", "BSD-3-Clause"),
+						huh.NewOption("ISC License (Simplified MIT equivalent)", "ISC"),
+						huh.NewOption("The Unlicense (Public domain dedication)", "Unlicense"),
+					).
+					Value(&license),
+				huh.NewConfirm().
+					Title("Automatically initialize Git repository?").
+					Description("Runs 'git init' automatically during project scaffolding").
+					Value(&gitInit),
+			),
+		)
+
+		if err := form.Run(); err != nil {
+			return err
+		}
+
+		updated := config.UserConfig{
+			Author:         strings.TrimSpace(author),
+			PackageManager: pkgManager,
+			License:        license,
+			GitInit:        gitInit,
+		}
+
+		if err := config.SaveUserConfig(updated); err != nil {
+			return fmt.Errorf("failed to save configuration: %w", err)
+		}
+
+		successStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#10B981"))
+		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
+
+		fmt.Println()
+		fmt.Println(titleStyle.Render("⚙️ Umaru CLI Configuration Wizard"))
+		fmt.Println(successStyle.Render("✔ Global configuration initialized successfully!"))
+		fmt.Println()
+
+		return nil
+	},
+}
+
 var configResetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "Reset all configuration keys to default",
@@ -207,6 +295,7 @@ func init() {
 	}
 
 	configListCmd.Flags().BoolVar(&configJSONFlag, "json", false, "Output configuration in JSON format")
+	configCmd.AddCommand(configInitCmd)
 	configCmd.AddCommand(configListCmd)
 	configCmd.AddCommand(configGetCmd)
 	configCmd.AddCommand(configSetCmd)

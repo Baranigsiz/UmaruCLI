@@ -54,6 +54,9 @@ func executeCommand(args ...string) (string, error) {
 	listJSONFlag = false
 	quietFlag = false
 	noColorFlag = false
+	debugFlag = false
+	configFileFlag = ""
+	config.SetCustomConfigFile("")
 
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
@@ -926,4 +929,45 @@ func TestAddCmd_DryRunAndSkipInstall(t *testing.T) {
 		t.Errorf("Expected %s to exist after add with --skip-install", redisPath)
 	}
 }
+
+func TestGlobalFlags_DebugAndConfig(t *testing.T) {
+	tempDir := t.TempDir()
+	customConfigPath := filepath.Join(tempDir, "custom-cfg.json")
+	customConfig := `{"packageManager":"yarn","author":"Custom Tester","license":"Apache-2.0","gitInit":false}`
+	if err := os.WriteFile(customConfigPath, []byte(customConfig), 0644); err != nil {
+		t.Fatalf("Failed to write custom config: %v", err)
+	}
+
+	// 1. Test --config flag
+	out, err := executeCommand("config", "get", "author", "--config", customConfigPath)
+	if err != nil {
+		t.Fatalf("config get author --config failed: %v", err)
+	}
+	if !strings.Contains(out, "Custom Tester") {
+		t.Errorf("Expected custom author 'Custom Tester', got: %s", out)
+	}
+
+	// 2. Test --debug flag
+	_, err = executeCommand("version", "--debug")
+	if err != nil {
+		t.Fatalf("version --debug failed: %v", err)
+	}
+	if !debugFlag {
+		t.Errorf("Expected debugFlag to be true")
+	}
+	if !IsDebug() {
+		t.Errorf("Expected IsDebug() to return true")
+	}
+}
+
+func TestConfigInitCmd_NonInteractive(t *testing.T) {
+	_, err := executeCommand("config", "init")
+	if err == nil {
+		t.Errorf("Expected config init to fail in non-terminal environment, but got nil")
+	}
+	if !strings.Contains(err.Error(), "terminal") {
+		t.Errorf("Expected error message to mention terminal, got: %v", err)
+	}
+}
+
 
