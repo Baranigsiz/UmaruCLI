@@ -1,16 +1,16 @@
 {
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Blazing-fast CLI to scaffold modern fullstack, backend, frontend, desktop & CLI starter architectures.",
   "homepage": "https://github.com/Baranigsiz/UmaruCLI",
   "license": "MIT",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.1/umaru_2.0.1_windows_amd64.zip",
-      "hash": "bef9759c31c76cf0944fce64f26a2904fddaff0586af3d6b57312306bceb9c0a"
+      "url": "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.2/umaru_2.0.2_windows_amd64.zip",
+      "hash": "4b782be11c303c3e3bbf0cbfc5845ac83f7b432d921f5f10bb0c3e9840582067"
     },
     "arm64": {
-      "url": "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.1/umaru_2.0.1_windows_arm64.zip",
-      "hash": "13772dce43867091546feda21236a6e521a02ff42b25166273b119bc73a5f1f7"
+      "url": "https://github.com/Baranigsiz/UmaruCLI/releases/download/v2.0.2/umaru_2.0.2_windows_arm64.zip",
+      "hash": "6c9adb0b3202360cc6f2e6a470586b1664c6f4ae3b87565e8b714cb8dc5e27ae"
     }
   },
   "bin": "umaru.exe",

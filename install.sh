@@ -54,7 +54,7 @@ if command -v curl >/dev/null 2>&1; then
 fi
 
 if [ -z "${LATEST_TAG}" ]; then
-    LATEST_TAG="v2.0.1"
+    LATEST_TAG="v2.0.2"
     echo -e "  ${YELLOW}[!] Could not reach GitHub API, falling back to ${LATEST_TAG}${NC}"
 fi
 
