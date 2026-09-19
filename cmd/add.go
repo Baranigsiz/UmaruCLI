@@ -22,6 +22,7 @@ var (
 	addForceFlag bool
 	addListFlag  bool
 	addJSONFlag  bool
+	addAllFlag   bool
 )
 
 var addCmd = &cobra.Command{
@@ -38,6 +39,7 @@ var addCmd = &cobra.Command{
 
 Usage:
   umaru add                       # Interactive multi-select wizard
+  umaru add --all                 # Inject all available infrastructure addons
   umaru add --list                # Inspect installed vs available addons
   umaru add redis                 # Add a single addon
   umaru add docker                # Add Docker & Compose containerization
@@ -78,7 +80,41 @@ Usage:
 
 		addonConfig := generator.AddonConfig{}
 
-		if len(args) > 0 {
+		if addAllFlag {
+			audit, err := generator.AuditProjectAddons(targetDir)
+			if err != nil {
+				return err
+			}
+
+			installedMap := make(map[string]bool)
+			for _, a := range audit.Addons {
+				if a.Installed {
+					installedMap[a.ID] = true
+				}
+			}
+
+			// Select missing addons (default DB is postgres if neither db is installed)
+			if !installedMap["postgres"] && !installedMap["sqlite"] {
+				addonConfig.Database = "postgres"
+			}
+			if !installedMap["jwt"] || addForceFlag {
+				addonConfig.Auth = "jwt"
+			}
+			if !installedMap["redis"] || addForceFlag {
+				addonConfig.Redis = true
+			}
+			if !installedMap["docker"] || addForceFlag {
+				addonConfig.Docker = true
+			}
+			if !installedMap["ci"] || addForceFlag {
+				addonConfig.CI = true
+			}
+
+			if !addForceFlag && !addonConfig.HasAddons() {
+				fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#10B981")).Bold(true).Render("✨ All available infrastructure addons are already installed!"))
+				return nil
+			}
+		} else if len(args) > 0 {
 			for _, rawArg := range args {
 				arg := strings.ToLower(strings.TrimSpace(rawArg))
 				switch arg {
@@ -309,6 +345,7 @@ func init() {
 	addCmd.Flags().StringVarP(&addDirFlag, "dir", "d", ".", "Target project directory")
 	addCmd.Flags().BoolVarP(&addForceFlag, "force", "f", false, "Overwrite existing files if present")
 	addCmd.Flags().BoolVarP(&addListFlag, "list", "l", false, "Inspect and list installed vs available addons for the project")
+	addCmd.Flags().BoolVarP(&addAllFlag, "all", "a", false, "Inject all available infrastructure addons for the project")
 	addCmd.Flags().BoolVar(&addJSONFlag, "json", false, "Output addon audit report in JSON format")
 
 	addCmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

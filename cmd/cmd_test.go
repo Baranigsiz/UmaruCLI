@@ -33,6 +33,10 @@ func executeCommand(args ...string) (string, error) {
 	addForceFlag = false
 	addListFlag = false
 	addJSONFlag = false
+	addAllFlag = false
+	listCategoryFlag = ""
+	listSearchFlag = ""
+	listJSONFlag = false
 	quietFlag = false
 	noColorFlag = false
 
@@ -689,3 +693,88 @@ func TestConfigCmd_FullFlow(t *testing.T) {
 		t.Errorf("Unexpected output from config reset: %s", resetOut)
 	}
 }
+
+func TestListCmd_Search(t *testing.T) {
+	// 1. Search by keyword
+	outFiber, err := executeCommand("list", "-s", "fiber")
+	if err != nil {
+		t.Fatalf("list -s fiber failed: %v", err)
+	}
+	if !strings.Contains(outFiber, "go-fiber") {
+		t.Errorf("Expected search 'fiber' to contain 'go-fiber', got: %s", outFiber)
+	}
+	if strings.Contains(outFiber, "react-vite-ts") {
+		t.Errorf("Expected search 'fiber' to NOT contain 'react-vite-ts', got: %s", outFiber)
+	}
+
+	// 2. Search by category & search combined
+	outCombo, err := executeCommand("list", "-c", "Backend", "--search", "echo")
+	if err != nil {
+		t.Fatalf("list -c Backend --search echo failed: %v", err)
+	}
+	if !strings.Contains(outCombo, "go-echo") {
+		t.Errorf("Expected combo search to contain 'go-echo', got: %s", outCombo)
+	}
+
+	// 3. Search non-matching term
+	outNone, err := executeCommand("list", "-s", "nonexistentterm999")
+	if err != nil {
+		t.Fatalf("list -s nonexistent failed: %v", err)
+	}
+	if !strings.Contains(outNone, "No templates found matching") {
+		t.Errorf("Expected empty search message, got: %s", outNone)
+	}
+
+	// 4. Search with JSON
+	outJSON, err := executeCommand("list", "-s", "fiber", "--json")
+	if err != nil {
+		t.Fatalf("list -s fiber --json failed: %v", err)
+	}
+	var tpls []map[string]interface{}
+	if err := json.Unmarshal([]byte(outJSON), &tpls); err != nil {
+		t.Fatalf("Failed to parse search JSON: %v", err)
+	}
+	if len(tpls) == 0 {
+		t.Errorf("Expected at least 1 template in search JSON, got 0")
+	}
+}
+
+func TestAddCmd_AllFlag(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Create minimal Go Fiber project
+	goModContent := "module testalladdons\n\ngo 1.24\n\nrequire github.com/gofiber/fiber/v2 v2.52.0\n"
+	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(goModContent), 0644); err != nil {
+		t.Fatalf("Failed to write go.mod: %v", err)
+	}
+
+	// 1. Run add --all
+	out, err := executeCommand("add", "--all", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("add --all failed: %v", err)
+	}
+	if !strings.Contains(out, "Injected Addons:") {
+		t.Errorf("Expected Injected Addons output, got: %s", out)
+	}
+
+	// Verify key files were generated
+	if _, err := os.Stat(filepath.Join(tempDir, "Dockerfile")); os.IsNotExist(err) {
+		t.Errorf("Expected Dockerfile to be created by add --all")
+	}
+	if _, err := os.Stat(filepath.Join(tempDir, ".github", "workflows", "ci.yml")); os.IsNotExist(err) {
+		t.Errorf("Expected CI workflow to be created by add --all")
+	}
+	if _, err := os.Stat(filepath.Join(tempDir, "internal", "database", "postgres.go")); os.IsNotExist(err) {
+		t.Errorf("Expected postgres.go to be created by add --all")
+	}
+
+	// 2. Second run without force should report all installed
+	out2, err := executeCommand("add", "--all", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("second add --all failed: %v", err)
+	}
+	if !strings.Contains(out2, "All available infrastructure addons are already installed") {
+		t.Errorf("Expected all installed message on second run, got: %s", out2)
+	}
+}
+

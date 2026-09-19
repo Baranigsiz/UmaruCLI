@@ -14,6 +14,7 @@ import (
 
 var (
 	listCategoryFlag string
+	listSearchFlag   string
 	listJSONFlag     bool
 )
 
@@ -37,6 +38,20 @@ var listCmd = &cobra.Command{
 			allTemplates = filtered
 		}
 
+		if listSearchFlag != "" {
+			query := strings.ToLower(strings.TrimSpace(listSearchFlag))
+			var filtered []templates.TemplateConfig
+			for _, tmpl := range allTemplates {
+				if strings.Contains(strings.ToLower(tmpl.ID), query) ||
+					strings.Contains(strings.ToLower(tmpl.Name), query) ||
+					strings.Contains(strings.ToLower(tmpl.Description), query) ||
+					strings.Contains(strings.ToLower(tmpl.GetCategory()), query) {
+					filtered = append(filtered, tmpl)
+				}
+			}
+			allTemplates = filtered
+		}
+
 		if listJSONFlag {
 			data, err := json.MarshalIndent(allTemplates, "", "  ")
 			if err != nil {
@@ -47,8 +62,15 @@ var listCmd = &cobra.Command{
 		}
 
 		if len(allTemplates) == 0 {
+			var conditions []string
 			if listCategoryFlag != "" {
-				fmt.Printf("No templates found in category '%s'. Available categories: Frontend, Backend, Fullstack, CLI, Desktop\n", listCategoryFlag)
+				conditions = append(conditions, fmt.Sprintf("category '%s'", listCategoryFlag))
+			}
+			if listSearchFlag != "" {
+				conditions = append(conditions, fmt.Sprintf("query '%s'", listSearchFlag))
+			}
+			if len(conditions) > 0 {
+				fmt.Printf("No templates found matching %s.\n", strings.Join(conditions, " and "))
 			} else {
 				fmt.Println("No templates found.")
 			}
@@ -104,12 +126,19 @@ var listCmd = &cobra.Command{
 			MarginBottom(1)
 
 		title := "📦 Available Starter Templates"
+		var subTitles []string
 		if listCategoryFlag != "" {
 			catDisplay := listCategoryFlag
 			if len(catDisplay) > 0 {
 				catDisplay = strings.ToUpper(catDisplay[:1]) + strings.ToLower(catDisplay[1:])
 			}
-			title = fmt.Sprintf("📦 Available Starter Templates (%s)", catDisplay)
+			subTitles = append(subTitles, catDisplay)
+		}
+		if listSearchFlag != "" {
+			subTitles = append(subTitles, fmt.Sprintf("query: %q", listSearchFlag))
+		}
+		if len(subTitles) > 0 {
+			title = fmt.Sprintf("📦 Available Starter Templates (%s)", strings.Join(subTitles, ", "))
 		}
 
 		fmt.Println()
@@ -123,6 +152,7 @@ var listCmd = &cobra.Command{
 
 func init() {
 	listCmd.Flags().StringVarP(&listCategoryFlag, "category", "c", "", "Filter templates by category (Frontend, Backend, Fullstack, CLI, Desktop)")
+	listCmd.Flags().StringVarP(&listSearchFlag, "search", "s", "", "Search templates by keyword, ID, or description")
 	listCmd.Flags().BoolVar(&listJSONFlag, "json", false, "Output templates list in JSON format")
 	_ = listCmd.RegisterFlagCompletionFunc("category", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{
