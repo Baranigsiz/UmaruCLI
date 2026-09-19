@@ -1211,12 +1211,18 @@ func TestConfigCmd_UnsetComprehensive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("config unset license failed: %v", err)
 	}
+	if !strings.Contains(out, "Unset") && !strings.Contains(out, "license") {
+		t.Errorf("Expected success output for unset license, got: %s", out)
+	}
 
 	// 4. Unset git-init
 	_, _ = executeCommand("config", "set", "git-init", "false")
 	out, err = executeCommand("config", "unset", "git-init")
 	if err != nil {
 		t.Fatalf("config unset git-init failed: %v", err)
+	}
+	if !strings.Contains(out, "Unset") && !strings.Contains(out, "git-init") {
+		t.Errorf("Expected success output for unset git-init, got: %s", out)
 	}
 
 	// 5. Unset invalid key
