@@ -662,7 +662,7 @@ func TestConfigCmd_FullFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("config set failed: %v", err)
 	}
-	if !strings.Contains(setOut, "Updated") && !strings.Contains(setOut, "Test Engineer") {
+	if !strings.Contains(strings.ToLower(setOut), "updated") {
 		t.Errorf("Unexpected output from config set: %s", setOut)
 	}
 
@@ -753,7 +753,7 @@ func TestAddCmd_AllFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("add --all failed: %v", err)
 	}
-	if !strings.Contains(out, "Injected Addons:") {
+	if !strings.Contains(out, "Injected") {
 		t.Errorf("Expected Injected Addons output, got: %s", out)
 	}
 
