@@ -5,8 +5,11 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -213,3 +216,158 @@ func TestDownloadAndExtractBinary_Errors(t *testing.T) {
 		}
 	})
 }
+
+func TestFetchLatestRelease(t *testing.T) {
+	t.Run("Success_200", func(t *testing.T) {
+		mockRelease := ReleaseInfo{
+			TagName: "v2.0.3",
+			Name:    "Umaru CLI v2.0.3",
+			Assets: []ReleaseAsset{
+				{Name: "umaru_2.0.3_windows_amd64.zip", BrowserDownloadURL: "http://example.com/win.zip", Size: 1024},
+			},
+		}
+		jsonData, _ := json.Marshal(mockRelease)
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(jsonData)
+		}))
+		defer ts.Close()
+
+		SetAPIURLForTest(ts.URL)
+		defer SetAPIURLForTest("")
+
+		rel, err := FetchLatestRelease()
+		if err != nil {
+			t.Fatalf("FetchLatestRelease failed: %v", err)
+		}
+		if rel.TagName != "v2.0.3" {
+			t.Errorf("Expected TagName 'v2.0.3', got '%s'", rel.TagName)
+		}
+		if len(rel.Assets) != 1 {
+			t.Errorf("Expected 1 asset, got %d", len(rel.Assets))
+		}
+	})
+
+	t.Run("404_NotFound", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		}))
+		defer ts.Close()
+
+		SetAPIURLForTest(ts.URL)
+		defer SetAPIURLForTest("")
+
+		_, err := FetchLatestRelease()
+		if err == nil || !strings.Contains(err.Error(), "no releases found") {
+			t.Errorf("Expected 'no releases found' error, got: %v", err)
+		}
+	})
+
+	t.Run("403_RateLimit", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		}))
+		defer ts.Close()
+
+		SetAPIURLForTest(ts.URL)
+		defer SetAPIURLForTest("")
+
+		_, err := FetchLatestRelease()
+		if err == nil || !strings.Contains(err.Error(), "rate limit exceeded") {
+			t.Errorf("Expected 'rate limit exceeded' error, got: %v", err)
+		}
+	})
+
+	t.Run("500_ServerError", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		SetAPIURLForTest(ts.URL)
+		defer SetAPIURLForTest("")
+
+		_, err := FetchLatestRelease()
+		if err == nil || !strings.Contains(err.Error(), "HTTP 500") {
+			t.Errorf("Expected 'HTTP 500' error, got: %v", err)
+		}
+	})
+
+	t.Run("Malformed_JSON", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("{invalid-json-payload"))
+		}))
+		defer ts.Close()
+
+		SetAPIURLForTest(ts.URL)
+		defer SetAPIURLForTest("")
+
+		_, err := FetchLatestRelease()
+		if err == nil || !strings.Contains(err.Error(), "failed to parse") {
+			t.Errorf("Expected parse error, got: %v", err)
+		}
+	})
+}
+
+func TestFindAssetForSystem_NoMatch(t *testing.T) {
+	release := ReleaseInfo{
+		TagName: "v1.0.0",
+		Assets: []ReleaseAsset{
+			{Name: "unsupported_os_archive.tar.gz", BrowserDownloadURL: "http://example.com/unsupported.tar.gz"},
+		},
+	}
+
+	_, err := release.FindAssetForSystem()
+	if err == nil {
+		t.Errorf("Expected error when no asset matches system, got nil")
+	}
+}
+
+func TestReplaceTargetExecutable(t *testing.T) {
+	tempDir := t.TempDir()
+	binName := "dummy-bin"
+	if runtime.GOOS == "windows" {
+		binName += ".exe"
+	}
+	targetPath := filepath.Join(tempDir, binName)
+
+	// Create initial dummy binary
+	initialBytes := []byte("version-1.0")
+	if err := os.WriteFile(targetPath, initialBytes, 0755); err != nil {
+		t.Fatalf("Failed to write initial dummy binary: %v", err)
+	}
+
+	// Replace it with new binary
+	newBytes := []byte("version-2.0-super-updated")
+	if err := ReplaceTargetExecutable(targetPath, newBytes); err != nil {
+		t.Fatalf("ReplaceTargetExecutable failed: %v", err)
+	}
+
+	// Verify updated content
+	updated, err := os.ReadFile(targetPath)
+	if err != nil {
+		t.Fatalf("Failed to read updated binary: %v", err)
+	}
+	if !bytes.Equal(updated, newBytes) {
+		t.Errorf("Updated binary content %q != expected %q", string(updated), string(newBytes))
+	}
+
+	// Test error case: invalid path that cannot be created
+	invalidTarget := filepath.Join(tempDir, "non-existent-subfolder", "cannot-create", "bin")
+	if err := ReplaceTargetExecutable(invalidTarget, newBytes); err == nil {
+		t.Errorf("Expected error for non-existent destination directory, got nil")
+	}
+}
+
+func TestGetAPIURL_Default(t *testing.T) {
+	SetAPIURLForTest("")
+	if url := getAPIURL(); url != APIURL {
+		t.Errorf("Expected default APIURL %s, got %s", APIURL, url)
+	}
+}
+
+
+

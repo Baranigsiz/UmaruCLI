@@ -100,3 +100,157 @@ func TestSetCustomConfigFile(t *testing.T) {
 		t.Errorf("Expected path %s, got %s", customPath, path)
 	}
 }
+
+func TestSetTestConfigDir(t *testing.T) {
+	tempDir := t.TempDir()
+	SetTestConfigDir(tempDir)
+	defer SetTestConfigDir("")
+
+	path, err := GetConfigFilePath()
+	if err != nil {
+		t.Fatalf("GetConfigFilePath failed: %v", err)
+	}
+	expected := filepath.Join(tempDir, ".umarurc.json")
+	if path != expected {
+		t.Errorf("Expected %s, got %s", expected, path)
+	}
+}
+
+func TestGetConfigFilePath_Env(t *testing.T) {
+	tempDir := t.TempDir()
+	origEnv := os.Getenv("UMARU_CONFIG_DIR")
+	_ = os.Setenv("UMARU_CONFIG_DIR", tempDir)
+	defer func() {
+		_ = os.Setenv("UMARU_CONFIG_DIR", origEnv)
+	}()
+
+	// Ensure custom config file and test dir are empty
+	SetCustomConfigFile("")
+	SetTestConfigDir("")
+
+	path, err := GetConfigFilePath()
+	if err != nil {
+		t.Fatalf("GetConfigFilePath failed with env: %v", err)
+	}
+	expected := filepath.Join(tempDir, ".umarurc.json")
+	if path != expected {
+		t.Errorf("Expected %s, got %s", expected, path)
+	}
+}
+
+func TestUnsetConfigValue(t *testing.T) {
+	tempDir := t.TempDir()
+	SetTestConfigDir(tempDir)
+	defer SetTestConfigDir("")
+
+	// Set initial values
+	_, _ = SetConfigValue("package-manager", "yarn")
+	_, _ = SetConfigValue("author", "Jane Doe")
+	_, _ = SetConfigValue("license", "GPL-3.0")
+	_, _ = SetConfigValue("git-init", "false")
+
+	// Unset package-manager
+	cfg, err := UnsetConfigValue("package-manager")
+	if err != nil {
+		t.Fatalf("UnsetConfigValue package-manager failed: %v", err)
+	}
+	if cfg.PackageManager != DefaultConfig().PackageManager {
+		t.Errorf("Expected default PackageManager, got %s", cfg.PackageManager)
+	}
+
+	// Unset author
+	cfg, err = UnsetConfigValue("author")
+	if err != nil {
+		t.Fatalf("UnsetConfigValue author failed: %v", err)
+	}
+	if cfg.Author != DefaultConfig().Author {
+		t.Errorf("Expected default Author, got %s", cfg.Author)
+	}
+
+	// Unset license
+	cfg, err = UnsetConfigValue("license")
+	if err != nil {
+		t.Fatalf("UnsetConfigValue license failed: %v", err)
+	}
+	if cfg.License != DefaultConfig().License {
+		t.Errorf("Expected default License, got %s", cfg.License)
+	}
+
+	// Unset git-init
+	cfg, err = UnsetConfigValue("git-init")
+	if err != nil {
+		t.Fatalf("UnsetConfigValue git-init failed: %v", err)
+	}
+	if cfg.GitInit != DefaultConfig().GitInit {
+		t.Errorf("Expected default GitInit, got %v", cfg.GitInit)
+	}
+
+	// Test aliases
+	_, _ = SetConfigValue("package-manager", "bun")
+	cfg, err = UnsetConfigValue("pm")
+	if err != nil || cfg.PackageManager != "" {
+		t.Errorf("UnsetConfigValue with alias 'pm' failed: %v", err)
+	}
+
+	_, _ = SetConfigValue("git-init", "false")
+	cfg, err = UnsetConfigValue("git")
+	if err != nil || !cfg.GitInit {
+		t.Errorf("UnsetConfigValue with alias 'git' failed: %v", err)
+	}
+
+	// Test invalid key
+	_, err = UnsetConfigValue("non-existent-key")
+	if err == nil {
+		t.Errorf("Expected error for non-existent key, got nil")
+	}
+}
+
+func TestSetConfigValue_Booleans(t *testing.T) {
+	tempDir := t.TempDir()
+	SetTestConfigDir(tempDir)
+	defer SetTestConfigDir("")
+
+	validTrue := []string{"true", "1", "yes"}
+	for _, val := range validTrue {
+		cfg, err := SetConfigValue("git-init", val)
+		if err != nil {
+			t.Errorf("Expected valid boolean for %s, got error: %v", val, err)
+		}
+		if !cfg.GitInit {
+			t.Errorf("Expected GitInit to be true for %s", val)
+		}
+	}
+
+	validFalse := []string{"false", "0", "no"}
+	for _, val := range validFalse {
+		cfg, err := SetConfigValue("git-init", val)
+		if err != nil {
+			t.Errorf("Expected valid boolean for %s, got error: %v", val, err)
+		}
+		if cfg.GitInit {
+			t.Errorf("Expected GitInit to be false for %s", val)
+		}
+	}
+
+	// Invalid boolean
+	_, err := SetConfigValue("git-init", "not-a-bool")
+	if err == nil {
+		t.Errorf("Expected error for invalid boolean 'not-a-bool', got nil")
+	}
+}
+
+func TestLoadUserConfig_CorruptFile(t *testing.T) {
+	tempDir := t.TempDir()
+	SetTestConfigDir(tempDir)
+	defer SetTestConfigDir("")
+
+	cfgPath := filepath.Join(tempDir, ".umarurc.json")
+	_ = os.WriteFile(cfgPath, []byte("{invalid-json}"), 0644)
+
+	loaded := LoadUserConfig()
+	def := DefaultConfig()
+	if loaded.License != def.License || loaded.GitInit != def.GitInit {
+		t.Errorf("Expected fallback to DefaultConfig on corrupt JSON, got %+v", loaded)
+	}
+}
+

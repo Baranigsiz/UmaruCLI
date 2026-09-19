@@ -3,6 +3,7 @@ package cleaner
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -147,3 +148,113 @@ func TestScanAndClean(t *testing.T) {
 		t.Errorf("CRITICAL: .git directory was accidentally deleted!")
 	}
 }
+
+func TestMatchDirectoryTarget(t *testing.T) {
+	tests := []struct {
+		name       string
+		includeAll bool
+		matched    bool
+		expected   ArtifactCategory
+	}{
+		{"node_modules", false, true, CategoryNode},
+		{"dist", false, true, CategoryBuild},
+		{"build", false, true, CategoryBuild},
+		{"out", false, true, CategoryBuild},
+		{"coverage", false, true, CategoryBuild},
+		{".next", false, true, CategoryCache},
+		{".nuxt", false, true, CategoryCache},
+		{".turbo", false, true, CategoryCache},
+		{".astro", false, true, CategoryCache},
+		{".svelte-kit", false, true, CategoryCache},
+		{".cache", false, true, CategoryCache},
+		{"target", false, true, CategoryRust},
+		{"__pycache__", false, true, CategoryPython},
+		{".pytest_cache", false, true, CategoryPython},
+		{".mypy_cache", false, true, CategoryPython},
+		{".ruff_cache", false, true, CategoryPython},
+		{".venv", false, false, ""},
+		{".venv", true, true, CategoryPython},
+		{"venv", true, true, CategoryPython},
+		{"tmp", false, true, CategoryOS},
+		{"src", true, false, ""},
+		{"internal", true, false, ""},
+	}
+
+	for _, tt := range tests {
+		matched, cat := matchDirectoryTarget(tt.name, tt.includeAll)
+		if matched != tt.matched || cat != tt.expected {
+			t.Errorf("matchDirectoryTarget(%q, %v) = (%v, %q), want (%v, %q)",
+				tt.name, tt.includeAll, matched, cat, tt.matched, tt.expected)
+		}
+	}
+}
+
+func TestMatchFileTarget(t *testing.T) {
+	tests := []struct {
+		name     string
+		matched  bool
+		expected ArtifactCategory
+	}{
+		{".DS_Store", true, CategoryOS},
+		{"Thumbs.db", true, CategoryOS},
+		{"module.cpython-312.pyc", true, CategoryPython},
+		{"module.cpython-312.pyo", true, CategoryPython},
+		{"main.go", false, ""},
+		{"package.json", false, ""},
+	}
+
+	for _, tt := range tests {
+		matched, cat := matchFileTarget(tt.name)
+		if matched != tt.matched || cat != tt.expected {
+			t.Errorf("matchFileTarget(%q) = (%v, %q), want (%v, %q)",
+				tt.name, matched, cat, tt.matched, tt.expected)
+		}
+	}
+}
+
+func TestScan_ErrorsAndOptions(t *testing.T) {
+	// 1. Non-existent path
+	_, err := Scan(ScanOptions{RootDir: "non_existent_folder_xyz_123"})
+	if err == nil {
+		t.Errorf("Expected error for non-existent root dir, got nil")
+	}
+
+	// 2. File instead of directory
+	tempFile := filepath.Join(t.TempDir(), "file.txt")
+	_ = os.WriteFile(tempFile, []byte("data"), 0644)
+	_, err = Scan(ScanOptions{RootDir: tempFile})
+	if err == nil {
+		t.Errorf("Expected error when root dir is a file, got nil")
+	}
+
+	// 3. Non-recursive scan (shallow)
+	tempDir := t.TempDir()
+	topLevelDist := filepath.Join(tempDir, "dist")
+	_ = os.MkdirAll(topLevelDist, 0755)
+	_ = os.WriteFile(filepath.Join(topLevelDist, "bundle.js"), []byte("js"), 0644)
+
+	deepDir := filepath.Join(tempDir, "nested", "sub", "dist")
+	_ = os.MkdirAll(deepDir, 0755)
+	_ = os.WriteFile(filepath.Join(deepDir, "deep.js"), []byte("js"), 0644)
+
+	reportShallow, err := Scan(ScanOptions{
+		RootDir:   tempDir,
+		Recursive: false,
+	})
+	if err != nil {
+		t.Fatalf("Scan shallow failed: %v", err)
+	}
+	// Should only find the top level dist
+	for _, item := range reportShallow.Items {
+		if strings.Contains(item.Path, "nested") {
+			t.Errorf("Shallow scan should not find nested dist: %s", item.Path)
+		}
+	}
+
+	// 4. Clean with empty items
+	res, err := ExecuteClean(&CleanReport{RootDir: tempDir, Items: nil})
+	if err != nil || res.DeletedCount != 0 {
+		t.Errorf("Expected ExecuteClean on empty report to return 0, got %d, err: %v", res.DeletedCount, err)
+	}
+}
+

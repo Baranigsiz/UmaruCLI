@@ -23,6 +23,20 @@ const (
 	APIURL    = "https://api.github.com/repos/" + RepoOwner + "/" + RepoName + "/releases/latest"
 )
 
+var customAPIURL string
+
+// SetAPIURLForTest overrides the release API URL for unit testing
+func SetAPIURLForTest(url string) {
+	customAPIURL = url
+}
+
+func getAPIURL() string {
+	if customAPIURL != "" {
+		return customAPIURL
+	}
+	return APIURL
+}
+
 type ReleaseAsset struct {
 	Name               string `json:"name"`
 	BrowserDownloadURL string `json:"browser_download_url"`
@@ -49,7 +63,7 @@ func FetchLatestRelease() (*ReleaseInfo, error) {
 
 // FetchLatestReleaseContext queries the GitHub Releases API with context support
 func FetchLatestReleaseContext(ctx context.Context) (*ReleaseInfo, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", APIURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", getAPIURL(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -329,13 +343,9 @@ func DownloadAndExtractBinaryContext(ctx context.Context, assetURL string) ([]by
 	return nil, fmt.Errorf("binary '%s' not found inside downloaded tar.gz", binaryName)
 }
 
-// ReplaceCurrentExecutable safely updates the current running executable
-func ReplaceCurrentExecutable(newBinaryBytes []byte) error {
-	execPath, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("failed to determine executable path: %w", err)
-	}
-	execPath, err = filepath.EvalSymlinks(execPath)
+// ReplaceTargetExecutable safely updates the specified executable with new binary bytes
+func ReplaceTargetExecutable(targetPath string, newBinaryBytes []byte) error {
+	execPath, err := filepath.EvalSymlinks(targetPath)
 	if err != nil {
 		return fmt.Errorf("failed to evaluate symlinks: %w", err)
 	}
@@ -383,6 +393,15 @@ func ReplaceCurrentExecutable(newBinaryBytes []byte) error {
 	}
 
 	return nil
+}
+
+// ReplaceCurrentExecutable safely updates the current running executable
+func ReplaceCurrentExecutable(newBinaryBytes []byte) error {
+	execPath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to determine executable path: %w", err)
+	}
+	return ReplaceTargetExecutable(execPath, newBinaryBytes)
 }
 
 // CleanupOldExecutable silently deletes leftover .old executable from previous Windows upgrades

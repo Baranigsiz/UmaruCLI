@@ -69,6 +69,8 @@ func executeCommand(args ...string) (string, error) {
 	devPkgManagerFlag = ""
 	devDryRunFlag = false
 	devJSONFlag = false
+	infoJSONFlag = false
+	doctorJSONFlag = false
 
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
@@ -1177,6 +1179,246 @@ func TestDevCmd_Aliases(t *testing.T) {
 		t.Errorf("Expected go run command with 'start' alias, got: %s", outStart)
 	}
 }
+
+func TestConfigCmd_UnsetComprehensive(t *testing.T) {
+	tempDir := t.TempDir()
+	config.SetTestConfigDir(tempDir)
+	defer config.SetTestConfigDir("")
+
+	// 1. Unset author
+	_, _ = executeCommand("config", "set", "author", "Test Author")
+	out, err := executeCommand("config", "unset", "author")
+	if err != nil {
+		t.Fatalf("config unset author failed: %v", err)
+	}
+	if !strings.Contains(out, "Unset") && !strings.Contains(out, "author") {
+		t.Errorf("Expected success output for unset author, got: %s", out)
+	}
+
+	// 2. Unset package-manager
+	_, _ = executeCommand("config", "set", "package-manager", "pnpm")
+	out, err = executeCommand("config", "unset", "package-manager")
+	if err != nil {
+		t.Fatalf("config unset package-manager failed: %v", err)
+	}
+	if !strings.Contains(out, "Unset") && !strings.Contains(out, "package-manager") {
+		t.Errorf("Expected success output for unset package-manager, got: %s", out)
+	}
+
+	// 3. Unset license
+	_, _ = executeCommand("config", "set", "license", "Apache-2.0")
+	out, err = executeCommand("config", "unset", "license")
+	if err != nil {
+		t.Fatalf("config unset license failed: %v", err)
+	}
+
+	// 4. Unset git-init
+	_, _ = executeCommand("config", "set", "git-init", "false")
+	out, err = executeCommand("config", "unset", "git-init")
+	if err != nil {
+		t.Fatalf("config unset git-init failed: %v", err)
+	}
+
+	// 5. Unset invalid key
+	_, err = executeCommand("config", "unset", "invalid-fake-key")
+	if err == nil {
+		t.Errorf("Expected error for unsetting invalid key, got nil")
+	}
+
+	// 6. Unset without arguments
+	_, err = executeCommand("config", "unset")
+	if err == nil {
+		t.Errorf("Expected error for unset without args, got nil")
+	}
+}
+
+func TestCleanCmd_Execution(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// 1. Clean on already clean directory
+	outClean, err := executeCommand("clean", "--dry-run", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("clean on clean directory failed: %v", err)
+	}
+	if !strings.Contains(outClean, "clean") && !strings.Contains(outClean, "Nothing") {
+		t.Errorf("Expected clean directory message, got: %s", outClean)
+	}
+
+	// 2. Populate with removable targets
+	nodeDir := filepath.Join(tempDir, "node_modules", "pkg")
+	_ = os.MkdirAll(nodeDir, 0755)
+	_ = os.WriteFile(filepath.Join(nodeDir, "index.js"), []byte("mod"), 0644)
+
+	distDir := filepath.Join(tempDir, "dist")
+	_ = os.MkdirAll(distDir, 0755)
+	_ = os.WriteFile(filepath.Join(distDir, "app.js"), []byte("app"), 0644)
+
+	// 3. Dry run test
+	outDry, err := executeCommand("clean", "--dry-run", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("clean --dry-run failed: %v", err)
+	}
+	if !strings.Contains(outDry, "DRY-RUN") && !strings.Contains(outDry, "node_modules") {
+		t.Errorf("Expected DRY-RUN notice in clean output, got: %s", outDry)
+	}
+
+	// 4. JSON dry run test
+	outJSON, err := executeCommand("clean", "--dry-run", "--json", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("clean --json failed: %v", err)
+	}
+	var cleanData map[string]interface{}
+	if err := json.Unmarshal([]byte(outJSON), &cleanData); err != nil {
+		t.Fatalf("clean --json is not valid JSON: %v\nOutput: %s", err, outJSON)
+	}
+	if cleanData["root_dir"] == nil || cleanData["items"] == nil {
+		t.Errorf("Expected root_dir and items in clean JSON output, got: %v", cleanData)
+	}
+
+	// 5. Force clean test
+	outForce, err := executeCommand("clean", "-f", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("clean -f failed: %v", err)
+	}
+	if !strings.Contains(strings.ToLower(outForce), "reclaimed") && !strings.Contains(strings.ToLower(outForce), "cleaned") {
+		t.Errorf("Expected reclaimed message, got: %s", outForce)
+	}
+
+	// Verify folders are deleted
+	if _, err := os.Stat(distDir); !os.IsNotExist(err) {
+		t.Errorf("Expected dist to be deleted by clean -f")
+	}
+}
+
+func TestDevCmd_Errors(t *testing.T) {
+	// 1. Non-existent directory
+	_, err := executeCommand("dev", "--dir", "non-existent-dev-dir-xyz")
+	if err == nil {
+		t.Errorf("Expected error for non-existent dir, got nil")
+	}
+
+	// 2. Unknown directory structure
+	tempEmpty := t.TempDir()
+	_, err = executeCommand("dev", "--dir", tempEmpty)
+	if err == nil {
+		t.Errorf("Expected error for empty dir with no supported stack, got nil")
+	}
+}
+
+func TestCompletionCmd_Shells(t *testing.T) {
+	shells := []string{"bash", "zsh", "fish", "powershell"}
+	for _, sh := range shells {
+		out, err := executeCommand("completion", sh)
+		if err != nil {
+			t.Errorf("completion %s failed: %v", sh, err)
+		}
+		if len(out) == 0 {
+			t.Errorf("completion %s returned empty output", sh)
+		}
+	}
+
+	// Invalid shell
+	_, err := executeCommand("completion", "invalidshell")
+	if err == nil {
+		t.Errorf("Expected error for invalid shell, got nil")
+	}
+}
+
+func TestInfoCmd_JSON_AndErrors(t *testing.T) {
+	// 1. Valid info with --json
+	out, err := executeCommand("info", "go-fiber", "--json")
+	if err != nil {
+		t.Fatalf("info go-fiber --json failed: %v", err)
+	}
+
+	var infoData map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &infoData); err != nil {
+		t.Fatalf("info --json output is not valid JSON: %v\nOutput: %s", err, out)
+	}
+	if infoData["Config"] == nil {
+		t.Errorf("Expected 'Config' in info --json output, got: %v", infoData)
+	}
+
+	// 2. Non-existent template error
+	_, err = executeCommand("info", "non-existent-fake-template-xyz")
+	if err == nil {
+		t.Errorf("Expected error for non-existent template in info, got nil")
+	}
+}
+
+func TestDetectShell(t *testing.T) {
+	origShell := os.Getenv("SHELL")
+	defer func() {
+		_ = os.Setenv("SHELL", origShell)
+	}()
+
+	_ = os.Setenv("SHELL", "/bin/zsh")
+	if sh := detectShell(); sh != "zsh" {
+		t.Errorf("Expected zsh, got %s", sh)
+	}
+
+	_ = os.Setenv("SHELL", "/usr/bin/bash")
+	if sh := detectShell(); sh != "bash" {
+		t.Errorf("Expected bash, got %s", sh)
+	}
+
+	_ = os.Setenv("SHELL", "/usr/local/bin/fish")
+	if sh := detectShell(); sh != "fish" {
+		t.Errorf("Expected fish, got %s", sh)
+	}
+}
+
+func TestGetPowerShellProfilePath(t *testing.T) {
+	dummyHome := filepath.Join(t.TempDir(), "fakehome")
+	completionTestHomeDir = dummyHome
+	defer func() {
+		completionTestHomeDir = ""
+	}()
+
+	path := getPowerShellProfilePath(dummyHome)
+	expected := filepath.Join(dummyHome, "Documents", "WindowsPowerShell", "Microsoft.PowerShell_profile.ps1")
+	if path != expected {
+		t.Errorf("Expected %s, got %s", expected, path)
+	}
+}
+
+func TestInitCmd_DryRun(t *testing.T) {
+	tempDir := t.TempDir()
+	targetPath := filepath.Join(tempDir, "dryrun-project")
+
+	out, err := executeCommand("init", targetPath, "-t", "go-fiber", "--no-git", "--skip-install", "--no-addons", "--dry-run")
+	if err != nil {
+		t.Fatalf("init --dry-run failed: %v", err)
+	}
+	if !strings.Contains(out, "Dry-Run") && !strings.Contains(out, "Simulation") {
+		t.Errorf("Expected dry run output for init, got: %s", out)
+	}
+}
+
+func TestInitCmd_ScaffoldWorkflow(t *testing.T) {
+	tempDir := t.TempDir()
+	targetPath := filepath.Join(tempDir, "scaffold-project")
+
+	out, err := executeCommand("init", targetPath, "-t", "go-fiber", "--no-git", "--skip-install", "--no-addons", "-f")
+	if err != nil {
+		t.Fatalf("init scaffold workflow failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Project Scaffolding Complete") && !strings.Contains(strings.ToLower(out), "next steps") {
+		t.Errorf("Expected success summary card in init output, got: %s", out)
+	}
+
+	// Verify project files were generated
+	if _, err := os.Stat(filepath.Join(targetPath, "go.mod")); os.IsNotExist(err) {
+		t.Errorf("Expected go.mod to be created in %s", targetPath)
+	}
+	if _, err := os.Stat(filepath.Join(targetPath, "cmd", "api", "main.go")); os.IsNotExist(err) {
+		t.Errorf("Expected cmd/api/main.go to be created in %s", targetPath)
+	}
+}
+
+
+
 
 
 
