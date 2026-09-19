@@ -32,6 +32,14 @@ var addCmd = &cobra.Command{
 	Use:   "add [addons...]",
 	Short: "Inject modular infrastructure addons into an existing project",
 	GroupID: "core",
+	Example: `  umaru add
+  umaru add redis
+  umaru add postgres redis jwt
+  umaru add docker ci
+  umaru add --all
+  umaru add --list
+  umaru add --list --json
+  umaru add sqlite redis -f`,
 	Long: `Detects the current project type and injects modular infrastructure addons:
   - postgres : PostgreSQL connection pool & config
   - sqlite   : SQLite embedded database setup

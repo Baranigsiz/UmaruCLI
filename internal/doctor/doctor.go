@@ -2,6 +2,7 @@ package doctor
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -217,12 +218,25 @@ func RunDiagnostics(umaruVersion string) DoctorReport {
 	for i, tc := range toolDefs {
 		go func(idx int, check ToolCheck) {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					check.Status = StatusWarning
+					check.Notes = fmt.Sprintf("check panicked: %v", r)
+					results[idx] = check
+				}
+			}()
 			results[idx] = inspectTool(check)
 		}(i, tc)
 	}
 
 	go func() {
 		defer wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				daemonStatus.Status = StatusWarning
+				daemonStatus.Notes = fmt.Sprintf("check panicked: %v", r)
+			}
+		}()
 		daemonStatus = inspectDockerDaemon()
 	}()
 

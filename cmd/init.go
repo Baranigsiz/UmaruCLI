@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -45,6 +46,7 @@ func isTerminalStdin() bool {
 }
 
 func runScaffoldWorkflow(
+	ctx context.Context,
 	projConfig generator.ProjectConfig,
 	generateFn func() (*templates.TemplateConfig, error),
 	defaultInstallCmd []string,
@@ -75,18 +77,18 @@ func runScaffoldWorkflow(
 
 		if !noGit {
 			fmt.Println("📦 Initializing Git repository...")
-			if err := actions.InitGit(projConfig.TargetDir); err != nil {
+			if err := actions.InitGitContext(ctx, projConfig.TargetDir); err != nil {
 				fmt.Printf("⚠️ Git init warning: %v\n", err)
 			} else if commit {
 				fmt.Println("📝 Creating initial Git commit...")
-				if err := actions.CommitGit(projConfig.TargetDir, "chore: initial commit via umaru", projConfig.Author); err != nil {
+				if err := actions.CommitGitContext(ctx, projConfig.TargetDir, "chore: initial commit via umaru", projConfig.Author); err != nil {
 					fmt.Printf("⚠️ Git commit warning: %v\n", err)
 				}
 			}
 		}
 		if !skipInstall && len(installCmd) > 0 {
 			fmt.Printf("📥 Installing dependencies with '%s'...\n", strings.Join(installCmd, " "))
-			if err := actions.InstallDependencies(projConfig.TargetDir, installCmd, true); err != nil {
+			if err := actions.InstallDependenciesContext(ctx, projConfig.TargetDir, installCmd, true); err != nil {
 				fmt.Printf("⚠️ Failed to install dependencies: %v\n", err)
 				fmt.Printf("💡 You can install them manually by running '%s' in %s\n", strings.Join(installCmd, " "), projConfig.TargetDir)
 				skipInstall = true
@@ -116,14 +118,14 @@ func runScaffoldWorkflow(
 				}
 
 				if !noGit {
-					gitErr = actions.InitGit(projConfig.TargetDir)
+					gitErr = actions.InitGitContext(ctx, projConfig.TargetDir)
 					if gitErr == nil && commit {
-						gitErr = actions.CommitGit(projConfig.TargetDir, "chore: initial commit via umaru", projConfig.Author)
+						gitErr = actions.CommitGitContext(ctx, projConfig.TargetDir, "chore: initial commit via umaru", projConfig.Author)
 					}
 				}
 
 				if !skipInstall && len(installCmd) > 0 {
-					installErr = actions.InstallDependencies(projConfig.TargetDir, installCmd, false)
+					installErr = actions.InstallDependenciesContext(ctx, projConfig.TargetDir, installCmd, false)
 				}
 			}).
 			Run()
@@ -155,6 +157,13 @@ var initCmd = &cobra.Command{
 	Short:   "Initialize a new project",
 	GroupID: "core",
 	Args:    cobra.MaximumNArgs(1),
+	Example: `  umaru init my-api
+  umaru init my-app --template react-vite-ts
+  umaru init my-api -t go-fiber --db postgres --auth jwt --docker --ci
+  umaru init --from owner/repo
+  umaru init --from owner/repo#dev
+  umaru init -y
+  umaru init my-api --dry-run`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if dbFlag != "" {
 			normDB := strings.ToLower(strings.TrimSpace(dbFlag))
@@ -259,7 +268,7 @@ var initCmd = &cobra.Command{
 				return generator.GenerateFromRemote(fromFlag, projConfig)
 			}
 
-			return runScaffoldWorkflow(projConfig, generateRemote, nil, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), "")
+			return runScaffoldWorkflow(cmd.Context(), projConfig, generateRemote, nil, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, fmt.Sprintf("Remote (%s)", fromFlag), "")
 		}
 
 		if initialName == "" && templateFlag == "" && !quietFlag {
@@ -338,7 +347,7 @@ var initCmd = &cobra.Command{
 			return &result.Template, nil
 		}
 
-		return runScaffoldWorkflow(projConfig, generateLocal, installCmd, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, result.Template.Name, runCmd)
+		return runScaffoldWorkflow(cmd.Context(), projConfig, generateLocal, installCmd, noGitFlag, commitFlag, skipInstallFlag, verboseFlag, result.Template.Name, runCmd)
 	},
 }
 

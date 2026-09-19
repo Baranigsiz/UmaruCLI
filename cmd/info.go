@@ -18,6 +18,10 @@ var infoCmd = &cobra.Command{
 	Use:     "info [template-id]",
 	Short:   "Inspect template architecture, directory tree, ports, and metadata",
 	GroupID: "core",
+	Example: `  umaru info go-fiber
+  umaru info react-vite-ts
+  umaru info --json go-fiber
+  umaru info`,
 	Long: `Inspect provides in-depth technical details about any starter template,
 including its default ports, install/run commands, supported addons, and a full
 ASCII directory tree of the generated project structure.`,

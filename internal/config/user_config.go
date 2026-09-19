@@ -14,7 +14,6 @@ type UserConfig struct {
 	Author         string `json:"author,omitempty"`         // Default author name
 	License        string `json:"license,omitempty"`        // Default license (e.g. "MIT")
 	GitInit        bool   `json:"gitInit"`                  // Auto git init (default: true)
-	Telemetry      bool   `json:"telemetry"`                // Reserved for future opt-in metrics
 }
 
 // DefaultConfig returns the default configuration
@@ -24,7 +23,6 @@ func DefaultConfig() UserConfig {
 		Author:         "",
 		License:        "MIT",
 		GitInit:        true,
-		Telemetry:      false,
 	}
 }
 

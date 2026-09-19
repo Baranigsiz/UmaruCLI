@@ -111,6 +111,25 @@ func TestTemplateConfig_NodeHelpers(t *testing.T) {
 	if monorepoTmpl.GetRunCommand("pnpm") != "docker-compose up --build" {
 		t.Errorf("Expected 'docker-compose up --build', got '%s'", monorepoTmpl.GetRunCommand("pnpm"))
 	}
+
+	// Test built-in npm command (npm start)
+	startTmpl := TemplateConfig{
+		ID:             "express-api",
+		InstallCommand: []string{"npm", "install"},
+		RunCommand:     "npm start",
+	}
+	if startTmpl.GetRunCommand("pnpm") != "pnpm start" {
+		t.Errorf("Expected 'pnpm start', got '%s'", startTmpl.GetRunCommand("pnpm"))
+	}
+	if startTmpl.GetRunCommand("yarn") != "yarn start" {
+		t.Errorf("Expected 'yarn start', got '%s'", startTmpl.GetRunCommand("yarn"))
+	}
+	if startTmpl.GetRunCommand("bun") != "bun start" {
+		t.Errorf("Expected 'bun start', got '%s'", startTmpl.GetRunCommand("bun"))
+	}
+	if startTmpl.GetRunCommand("npm") != "npm start" {
+		t.Errorf("Expected 'npm start', got '%s'", startTmpl.GetRunCommand("npm"))
+	}
 }
 
 func TestFindTemplateByID(t *testing.T) {

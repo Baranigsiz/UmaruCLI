@@ -39,7 +39,7 @@ type ReleaseInfo struct {
 }
 
 var httpClient = &http.Client{
-	Timeout: 15 * time.Second,
+	Timeout: 120 * time.Second,
 }
 
 // FetchLatestRelease queries the GitHub Releases API for the latest version metadata

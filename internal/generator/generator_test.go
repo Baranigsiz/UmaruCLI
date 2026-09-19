@@ -22,12 +22,36 @@ func TestSlugify(t *testing.T) {
 		{"Örnek Şahane Proje", "ornek-sahane-proje"},
 		{"Çalışma Alanı", "calisma-alani"},
 		{"Café & Crème Brûlée", "cafe-creme-brulee"},
+		{"My---Cool---App", "my-cool-app"},
+		{"foo--bar__baz", "foo-bar__baz"},
 	}
 
 	for _, tt := range tests {
 		got := Slugify(tt.input)
 		if got != tt.expected {
 			t.Errorf("Slugify(%q) = %q, expected %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestTransliterate(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"MyProject", "MyProject"},
+		{"Istanbul", "Istanbul"},
+		{"İstanbul", "istanbul"},
+		{"ışık", "isik"},
+		{"IĞDIR", "IgDIR"},
+		{"Çalışkan Öğrenci", "caliskan ogrenci"},
+		{"şeker", "seker"},
+	}
+
+	for _, tt := range tests {
+		got := Transliterate(tt.input)
+		if got != tt.expected {
+			t.Errorf("Transliterate(%q) = %q, expected %q", tt.input, got, tt.expected)
 		}
 	}
 }

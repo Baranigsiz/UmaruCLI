@@ -17,6 +17,9 @@ var doctorCmd = &cobra.Command{
 	Use:     "doctor",
 	Short:   "Inspect developer environment and verify template readiness",
 	GroupID: "util",
+	Example: `  umaru doctor
+  umaru doctor --verbose
+  umaru doctor --json`,
 	Long: `Doctor checks your system for required tools, programming runtimes (Go, Node, Python, Rust),
 package managers, containers (Docker & Compose), and reports readiness across all starter templates.`,
 	RunE: func(cmd *cobra.Command, args []string) error {

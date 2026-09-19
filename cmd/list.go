@@ -20,8 +20,14 @@ var (
 
 var listCmd = &cobra.Command{
 	Use:     "list",
+	Aliases: []string{"ls"},
 	Short:   "List all available project templates",
 	GroupID: "core",
+	Example: `  umaru list
+  umaru ls
+  umaru list --category Backend
+  umaru list --search fiber
+  umaru list --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		allTemplates, err := templates.GetAvailableTemplates()
 		if err != nil {

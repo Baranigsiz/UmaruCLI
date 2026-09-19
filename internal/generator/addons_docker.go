@@ -18,7 +18,7 @@ func getDockerFiles(baseDir string) []string {
 
 func buildDockerCompose(config ProjectConfig, appService, appPort string, defaultEnv []string) string {
 	var sb strings.Builder
-	sb.WriteString("version: '3.8'\n\nservices:\n")
+	sb.WriteString("services:\n")
 	sb.WriteString(fmt.Sprintf("  %s:\n", appService))
 	sb.WriteString("    build:\n      context: .\n      dockerfile: Dockerfile\n")
 	sb.WriteString(fmt.Sprintf("    ports:\n      - \"%s:%s\"\n", appPort, appPort))
@@ -411,8 +411,11 @@ CMD ["npm", "start"]
 		}
 	}
 
-	if err := writeAddonFile(baseDir, ".dockerignore", dockerignoreContent); err != nil {
-		return err
+	dockerignorePath := filepath.Join(baseDir, ".dockerignore")
+	if !fileExists(dockerignorePath) {
+		if err := writeAddonFile(baseDir, ".dockerignore", dockerignoreContent); err != nil {
+			return err
+		}
 	}
 
 	return nil

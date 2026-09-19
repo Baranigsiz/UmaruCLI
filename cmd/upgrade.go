@@ -22,6 +22,9 @@ var upgradeCmd = &cobra.Command{
 	Use:     "upgrade",
 	Short:   "Check for updates and upgrade Umaru CLI to the latest release",
 	GroupID: "util",
+	Example: `  umaru upgrade
+  umaru upgrade --check
+  umaru upgrade --force`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#7D56F4"))
 		successStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#10B981"))

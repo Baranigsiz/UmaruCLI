@@ -136,8 +136,12 @@ func (t TemplateConfig) GetRunCommand(pkgManager string) string {
 
 	// If RunCommand is not an npm script, return it as-is (e.g. docker-compose up)
 	var scriptName string
+	isBuiltin := false
 	if strings.HasPrefix(t.RunCommand, "npm run ") {
 		scriptName = strings.TrimPrefix(t.RunCommand, "npm run ")
+	} else if t.RunCommand == "npm start" || t.RunCommand == "npm test" {
+		scriptName = strings.TrimPrefix(t.RunCommand, "npm ")
+		isBuiltin = true
 	} else if strings.HasPrefix(t.RunCommand, "npm ") {
 		scriptName = strings.TrimPrefix(t.RunCommand, "npm ")
 	} else {
@@ -150,8 +154,14 @@ func (t TemplateConfig) GetRunCommand(pkgManager string) string {
 	case "yarn":
 		return "yarn " + scriptName
 	case "bun":
+		if isBuiltin {
+			return "bun " + scriptName
+		}
 		return "bun run " + scriptName
 	default:
+		if isBuiltin {
+			return "npm " + scriptName
+		}
 		return "npm run " + scriptName
 	}
 }

@@ -18,6 +18,11 @@ var configCmd = &cobra.Command{
 	Use:     "config",
 	Short:   "Manage persistent global user preferences",
 	GroupID: "config",
+	Example: `  umaru config list
+  umaru config set package-manager pnpm
+  umaru config set author "Baran Igsiz"
+  umaru config get license
+  umaru config reset`,
 	Long: `View and modify persistent user configuration stored in ~/.umarurc.json.
 
 Available Keys:

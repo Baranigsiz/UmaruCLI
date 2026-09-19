@@ -150,6 +150,21 @@ func TestListCmd(t *testing.T) {
 	}
 }
 
+func TestListCmd_Alias(t *testing.T) {
+	out, err := executeCommand("ls")
+	if err != nil {
+		t.Fatalf("ls command alias failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Available Starter Templates") {
+		t.Errorf("Expected ls output to contain 'Available Starter Templates', got: %s", out)
+	}
+	if !strings.Contains(out, "go-fiber") {
+		t.Errorf("Expected ls output to contain 'go-fiber', got: %s", out)
+	}
+}
+
+
 func TestListCmd_CategoryFilter(t *testing.T) {
 	// Filter by frontend
 	out, err := executeCommand("list", "-c", "Frontend")

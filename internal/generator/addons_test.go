@@ -552,4 +552,46 @@ func TestGenerateAddons_MonorepoCILocation(t *testing.T) {
 	}
 }
 
+func TestAddAddonDocker_PreservesExistingDockerignore(t *testing.T) {
+	tempDir := t.TempDir()
+	dockerignorePath := filepath.Join(tempDir, ".dockerignore")
+	customContent := "# Custom ignore\n*.log\nsecret.txt\n"
+	if err := os.WriteFile(dockerignorePath, []byte(customContent), 0644); err != nil {
+		t.Fatalf("Failed to write custom .dockerignore: %v", err)
+	}
+
+	cfg := ProjectConfig{
+		TargetDir: tempDir,
+		SafeName:  "custom-docker",
+		Template:  "go-fiber",
+		Addons: AddonConfig{
+			Docker: true,
+		},
+	}
+
+	if err := GenerateAddons(cfg); err != nil {
+		t.Fatalf("GenerateAddons failed: %v", err)
+	}
+
+	// Verify custom .dockerignore was NOT overwritten
+	content, err := os.ReadFile(dockerignorePath)
+	if err != nil {
+		t.Fatalf("Failed to read .dockerignore: %v", err)
+	}
+	if string(content) != customContent {
+		t.Errorf("Expected custom .dockerignore to be preserved, got:\n%s", string(content))
+	}
+
+	// Verify docker-compose does not contain deprecated version field
+	composePath := filepath.Join(tempDir, "docker-compose.yml")
+	composeData, err := os.ReadFile(composePath)
+	if err != nil {
+		t.Fatalf("Failed to read docker-compose.yml: %v", err)
+	}
+	if strings.Contains(string(composeData), "version:") {
+		t.Errorf("docker-compose.yml should NOT contain deprecated 'version' field, got:\n%s", string(composeData))
+	}
+}
+
+
 

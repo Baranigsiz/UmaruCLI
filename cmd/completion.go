@@ -23,6 +23,11 @@ var completionCmd = &cobra.Command{
 	Use:   "completion [bash|zsh|fish|powershell]",
 	Short: "Generate shell completion script or install it automatically",
 	GroupID: "util",
+	Example: `  umaru completion --install
+  umaru completion bash
+  umaru completion zsh --install
+  umaru completion powershell --install
+  umaru completion fish`,
 	Long: `Generate shell completion script for Umaru CLI, or install it to your shell profile.
 
 To load completions automatically in your current shell:

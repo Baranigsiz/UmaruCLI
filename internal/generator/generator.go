@@ -32,7 +32,7 @@ func Transliterate(s string) string {
 			sb.WriteString("c")
 		case 'ğ', 'Ğ':
 			sb.WriteString("g")
-		case 'ı', 'İ', 'I':
+		case 'ı', 'İ':
 			sb.WriteString("i")
 		case 'ö', 'Ö':
 			sb.WriteString("o")
@@ -62,6 +62,7 @@ func Transliterate(s string) string {
 }
 
 var slugifyRegex = regexp.MustCompile(`[^a-z0-9_\-]+`)
+var consecutiveDashRegex = regexp.MustCompile(`-{2,}`)
 
 // Slugify converts any string into a clean lowercase slug (e.g. "Türkçe Proje" -> "turkce-proje")
 func Slugify(s string) string {
@@ -69,6 +70,8 @@ func Slugify(s string) string {
 	s = strings.TrimSpace(strings.ToLower(s))
 	// Replace non-alphanumeric characters (excluding hyphen and underscore) with hyphen
 	s = slugifyRegex.ReplaceAllString(s, "-")
+	// Collapse consecutive dashes into a single dash
+	s = consecutiveDashRegex.ReplaceAllString(s, "-")
 	// Trim leading and trailing hyphens
 	s = strings.Trim(s, "-")
 	if s == "" {
