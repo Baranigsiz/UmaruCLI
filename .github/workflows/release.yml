@@ -41,7 +41,7 @@ jobs:
         run: |
           python3 .github/scripts/update-manifests.py
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add bucket/umaru.json Formula/umaru.rb install.sh install.ps1 README.md
           if ! git diff --cached --quiet; then
             git commit -m "chore(release): auto-update manifests and docs for ${{ github.ref_name }} [skip ci]"
