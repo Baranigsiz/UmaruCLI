@@ -9,8 +9,7 @@ import (
 
 func BenchmarkSlugify(b *testing.B) {
 	input := "Türkiye Süper Lig ve Şampiyonlar Ligi 2026 - Modern Proje!"
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = Slugify(input)
 	}
 }
@@ -21,15 +20,13 @@ func BenchmarkAuditProjectAddons(b *testing.B) {
 	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testbench\n"), 0644)
 	_ = os.WriteFile(filepath.Join(tempDir, "Dockerfile"), []byte("FROM alpine\n"), 0644)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = AuditProjectAddons(tempDir)
 	}
 }
 
 func BenchmarkTemplateFind(b *testing.B) {
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = templates.FindTemplateByID("go-fiber")
 	}
 }
@@ -43,8 +40,7 @@ func BenchmarkGenerateProject_GoFiber(b *testing.B) {
 		License:     "MIT",
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		b.StopTimer()
 		target := filepath.Join(b.TempDir(), "target")
 		cfg.TargetDir = target
@@ -63,8 +59,7 @@ func BenchmarkGenerateProject_ReactVite(b *testing.B) {
 		License:     "MIT",
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		b.StopTimer()
 		target := filepath.Join(b.TempDir(), "target")
 		cfg.TargetDir = target
@@ -73,3 +68,4 @@ func BenchmarkGenerateProject_ReactVite(b *testing.B) {
 		_ = Generate(cfg)
 	}
 }
+
