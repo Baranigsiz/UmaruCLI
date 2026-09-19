@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v2.0.3] - 2026-09-19
+
+### 🚀 New Features & Enhancements
+
+- **`umaru clean` (Project Sanitizer & Disk Space Reclaimer)**: Automatically scans and safely purges heavy build artifacts, dependencies, and caches (`node_modules`, `target/`, `dist/`, `.next/`, `__pycache__/`, `coverage/`, `.cache/`, `tmp/`) across projects or monorepos with `--dry-run`, `-f, --force`, `-r, --recursive`, `--all`, and `--json` support. Strictly protects `.git` and source code.
+- **`umaru dev` (Universal Zero-Config Development Runner)**: Automatically detects project language (Go, Node/TypeScript, Python, Rust, Docker Monorepo), lockfile (`pnpm`, `bun`, `yarn`, `npm`), framework, and entrypoint, and launches the live dev server without requiring developers to remember framework-specific commands. Aliases: `umaru run`, `umaru start`.
+- **`umaru config init` (Interactive Setup Wizard)**: Added interactive terminal configuration setup wizard powered by `charmbracelet/huh` to configure default author, preferred package manager, license, and git-init preferences.
+- **Global `--debug` & `--config <path>` Flags**: Added global `--debug` flag for verbose error stack traces, and `--config` flag to override `~/.umarurc.json` with a custom configuration file for CI/CD and automation.
+- **`umaru ls` Alias**: Added `ls` alias to `umaru list` matching standard CLI conventions.
+- **Rich Command Usage Examples**: Added comprehensive `Example:` sections across all commands (`init`, `dev`, `clean`, `add`, `list`, `info`, `doctor`, `config`, `upgrade`, `completion`).
+
+### 🛠️ Bug Fixes & Stability Improvements
+
+- **Transliteration ASCII 'I' Bug**: Removed ASCII 'I' from Turkish transliteration table so standard English uppercase 'I' (e.g. `MyProject`, `Istanbul`, `ID`) is preserved instead of being lowercased to 'i'.
+- **Context Cancellation (Ctrl+C Child Process Leak)**: Propagated `cmd.Context()` into `runScaffoldWorkflow` and child process actions (`git`, `npm install`, etc.) so child processes terminate immediately when user cancels via Ctrl+C.
+- **Docker Compose V2 Standard**: Removed deprecated `version: '3.8'` from generated `docker-compose.yml` files, aligning with Docker Compose V2 specifications.
+- **`Slugify` Consecutive Dash Normalization**: Added regex collapsing for multiple consecutive hyphens (`my---app` -> `my-app`).
+- **`.dockerignore` Protection**: Ensured existing `.dockerignore` files are protected from overwrite, matching `Dockerfile` and `docker-compose.yml` behavior.
+- **HTTP Download Timeout**: Increased updater HTTP client timeout from 15s to 120s to prevent timeouts on slower network connections.
+- **Doctor Panic Recovery**: Added deferred panic recovery guards to concurrent tool diagnostic goroutines.
+- **NPM Builtin vs Script Normalization**: Resolved `GetRunCommand` mapping for `npm start` and `npm test` across bun, pnpm, yarn, and npm.
+
+---
+
 ## [v2.0.2] - 2026-09-19
 
 ### 🚀 New Features & Enhancements
