@@ -11,6 +11,31 @@ import (
 )
 
 func executeCommand(args ...string) (string, error) {
+	// Reset CLI command flags to ensure complete test isolation
+	templateFlag = ""
+	packageManagerFlag = ""
+	fromFlag = ""
+	dbFlag = ""
+	authFlag = ""
+	redisFlag = false
+	dockerFlag = false
+	ciFlag = false
+	noAddonsFlag = false
+	noGitFlag = false
+	skipInstallFlag = false
+	forceFlag = false
+	verboseFlag = false
+	dryRunFlag = false
+	commitFlag = false
+	yesFlag = false
+	completionInstallFlag = false
+	addDirFlag = "."
+	addForceFlag = false
+	addListFlag = false
+	addJSONFlag = false
+	quietFlag = false
+	noColorFlag = false
+
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
 	r, w, err := os.Pipe()
@@ -242,6 +267,14 @@ func TestDoctorCmd_Verbose(t *testing.T) {
 
 	if !strings.Contains(out, "BINARY PATH") {
 		t.Errorf("Expected verbose doctor output to contain 'BINARY PATH', got: %s", out)
+	}
+
+	outFull, err := executeCommand("doctor", "--verbose")
+	if err != nil {
+		t.Fatalf("doctor --verbose command failed: %v", err)
+	}
+	if !strings.Contains(outFull, "BINARY PATH") {
+		t.Errorf("Expected verbose doctor output to contain 'BINARY PATH', got: %s", outFull)
 	}
 }
 
@@ -580,5 +613,79 @@ func TestAddCmd_List_TableAndJSON(t *testing.T) {
 	}
 }
 
+func TestInfoCmd_InvalidTemplate(t *testing.T) {
+	_, err := executeCommand("info", "non-existent-template-999")
+	if err == nil {
+		t.Errorf("Expected error when inspecting non-existent template, got nil")
+	}
+}
 
+func TestInitCmd_ValidationErrors(t *testing.T) {
+	t.Run("InvalidTemplate", func(t *testing.T) {
+		tempDir := filepath.Join(t.TempDir(), "invalid-tpl-app")
+		_, err := executeCommand("init", tempDir, "-t", "non-existent-template-xyz", "--skip-install", "--no-git")
+		if err == nil {
+			t.Errorf("Expected error for invalid template ID, got nil")
+		}
+	})
 
+	t.Run("ExistingNonEmptyDirectory", func(t *testing.T) {
+		tempDir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(tempDir, "existing-file.txt"), []byte("data"), 0644); err != nil {
+			t.Fatalf("Failed to create existing file: %v", err)
+		}
+
+		_, err := executeCommand("init", tempDir, "-t", "go-fiber", "--skip-install", "--no-git")
+		if err == nil {
+			t.Errorf("Expected error when target directory is not empty, got nil")
+		}
+	})
+}
+
+func TestAddCmd_ValidationErrors(t *testing.T) {
+	t.Run("EmptyDirectoryWithoutProject", func(t *testing.T) {
+		tempDir := t.TempDir()
+		_, err := executeCommand("add", "docker", "--dir", tempDir)
+		if err == nil {
+			t.Errorf("Expected error when running add in non-project directory, got nil")
+		}
+	})
+}
+
+func TestConfigCmd_FullFlow(t *testing.T) {
+	// 1. Set key
+	setOut, err := executeCommand("config", "set", "author", "Test Engineer")
+	if err != nil {
+		t.Fatalf("config set failed: %v", err)
+	}
+	if !strings.Contains(setOut, "Updated") && !strings.Contains(setOut, "Test Engineer") {
+		t.Errorf("Unexpected output from config set: %s", setOut)
+	}
+
+	// 2. Get key
+	getOut, err := executeCommand("config", "get", "author")
+	if err != nil {
+		t.Fatalf("config get failed: %v", err)
+	}
+	if !strings.Contains(getOut, "Test Engineer") {
+		t.Errorf("Expected config get author to contain 'Test Engineer', got: %s", getOut)
+	}
+
+	// 3. List
+	listOut, err := executeCommand("config", "list")
+	if err != nil {
+		t.Fatalf("config list failed: %v", err)
+	}
+	if !strings.Contains(listOut, "Test Engineer") {
+		t.Errorf("Expected config list to contain 'Test Engineer', got: %s", listOut)
+	}
+
+	// 4. Reset
+	resetOut, err := executeCommand("config", "reset")
+	if err != nil {
+		t.Fatalf("config reset failed: %v", err)
+	}
+	if !strings.Contains(resetOut, "reset") {
+		t.Errorf("Unexpected output from config reset: %s", resetOut)
+	}
+}
