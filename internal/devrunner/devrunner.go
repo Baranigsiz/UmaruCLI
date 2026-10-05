@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"umaru/internal/config"
@@ -20,6 +21,7 @@ type DevOptions struct {
 	Port           string
 	Host           string
 	PackageManager string // optional override (npm, pnpm, yarn, bun)
+	Watch          bool   // enable live reload watcher (e.g. air for Go)
 }
 
 // DevConfig contains all information necessary to execute the development server
@@ -38,6 +40,28 @@ type DevConfig struct {
 func fileExists(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && !info.IsDir()
+}
+
+// findPythonVenvExecutable looks for an executable inside a local virtual environment (.venv / venv)
+func findPythonVenvExecutable(baseDir, exeName string) string {
+	var candidates []string
+	if runtime.GOOS == "windows" {
+		candidates = []string{
+			filepath.Join(baseDir, ".venv", "Scripts", exeName+".exe"),
+			filepath.Join(baseDir, "venv", "Scripts", exeName+".exe"),
+		}
+	} else {
+		candidates = []string{
+			filepath.Join(baseDir, ".venv", "bin", exeName),
+			filepath.Join(baseDir, "venv", "bin", exeName),
+		}
+	}
+	for _, c := range candidates {
+		if fileExists(c) {
+			return c
+		}
+	}
+	return ""
 }
 
 // detectNodePackageManager determines the package manager based on lockfiles or user config
@@ -118,7 +142,12 @@ func DetectDevCommand(opts DevOptions) (*DevConfig, error) {
 
 	// 1. Go Projects
 	if detected.Type == generator.ProjectTypeGo {
-		if fileExists(filepath.Join(absDir, "cmd", "api", "main.go")) {
+		hasAirConfig := fileExists(filepath.Join(absDir, ".air.toml"))
+		_, airInstalled := exec.LookPath("air")
+
+		if (opts.Watch || hasAirConfig) && airInstalled == nil {
+			cfg.Command = []string{"air"}
+		} else if fileExists(filepath.Join(absDir, "cmd", "api", "main.go")) {
 			cfg.Command = []string{"go", "run", "cmd/api/main.go"}
 		} else if fileExists(filepath.Join(absDir, "cmd", "web", "main.go")) {
 			cfg.Command = []string{"go", "run", "cmd/web/main.go"}
@@ -181,8 +210,15 @@ func DetectDevCommand(opts DevOptions) (*DevConfig, error) {
 
 	// 3. Python Projects
 	if detected.Type == generator.ProjectTypePython {
+		venvUvicorn := findPythonVenvExecutable(absDir, "uvicorn")
+		venvPython := findPythonVenvExecutable(absDir, "python")
+
 		if fileExists(filepath.Join(absDir, "app", "main.py")) {
-			cmd := []string{"uvicorn", "app.main:app", "--reload"}
+			uvicornBin := "uvicorn"
+			if venvUvicorn != "" {
+				uvicornBin = venvUvicorn
+			}
+			cmd := []string{uvicornBin, "app.main:app", "--reload"}
 			if opts.Port != "" {
 				cmd = append(cmd, "--port", opts.Port)
 			}
@@ -191,9 +227,17 @@ func DetectDevCommand(opts DevOptions) (*DevConfig, error) {
 			}
 			cfg.Command = cmd
 		} else if fileExists(filepath.Join(absDir, "main.py")) {
-			cfg.Command = []string{"python", "main.py"}
+			pyBin := "python"
+			if venvPython != "" {
+				pyBin = venvPython
+			}
+			cfg.Command = []string{pyBin, "main.py"}
 		} else {
-			cfg.Command = []string{"python", "-m", "app.main"}
+			pyBin := "python"
+			if venvPython != "" {
+				pyBin = venvPython
+			}
+			cfg.Command = []string{pyBin, "-m", "app.main"}
 		}
 		cfg.CommandLine = strings.Join(cfg.Command, " ")
 		return cfg, nil

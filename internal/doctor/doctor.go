@@ -189,6 +189,15 @@ func RunDiagnostics(umaruVersion string) DoctorReport {
 			Description: "Python package installer",
 			InstallTip:  "Bundled with Python",
 		},
+		{
+			Name:        "uv",
+			Category:    "Package Managers",
+			Commands:    []string{"uv"},
+			VersionArgs: []string{"--version"},
+			Required:    false,
+			Description: "Extremely fast Python package manager and resolver",
+			InstallTip:  "https://github.com/astral-sh/uv",
+		},
 		// Containers & Orchestration
 		{
 			Name:        "Docker CLI",
@@ -363,7 +372,7 @@ func calculateReadiness(tools map[string]ToolCheck) []TemplateReadiness {
 	hasNode := isOk(tools, "node.js")
 	hasNpm := isOk(tools, "npm") || isOk(tools, "pnpm") || isOk(tools, "yarn") || isOk(tools, "bun")
 	hasPython := isOk(tools, "python")
-	hasPip := isOk(tools, "pip")
+	hasPip := isOk(tools, "pip") || isOk(tools, "uv")
 	hasRust := isOk(tools, "cargo (rust)")
 
 	groups := map[string]*TemplateReadiness{

@@ -38,7 +38,7 @@ import (
 	"log"
 	"time"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Config struct {
@@ -50,12 +50,12 @@ type Config struct {
 	SSLMode  string
 }
 
-// ConnectPostgres establishes a thread-safe connection pool to PostgreSQL
+// ConnectPostgres establishes a thread-safe connection pool to PostgreSQL using the modern pgx driver
 func ConnectPostgres(cfg Config) (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%%s port=%%d user=%%s password=%%s dbname=%%s sslmode=%%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
 
-	db, err := sql.Open("postgres", dsn)
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open postgres connection: %%w", err)
 	}

@@ -61,12 +61,14 @@ func executeCommand(args ...string) (string, error) {
 	cleanRecursiveFlag = false
 	cleanDryRunFlag = false
 	cleanForceFlag = false
+	cleanInteractiveFlag = false
 	cleanAllFlag = false
 	cleanJSONFlag = false
 	devDirFlag = "."
 	devPortFlag = ""
 	devHostFlag = ""
 	devPkgManagerFlag = ""
+	devWatchFlag = false
 	devDryRunFlag = false
 	devJSONFlag = false
 	infoJSONFlag = false
@@ -1093,6 +1095,21 @@ func TestCleanCmd_Aliases(t *testing.T) {
 	}
 }
 
+func TestCleanCmd_Interactive_NonTerminal(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.MkdirAll(filepath.Join(tempDir, "node_modules"), 0755)
+	_ = os.WriteFile(filepath.Join(tempDir, "node_modules", "package.json"), []byte("{}"), 0644)
+
+	_, err := executeCommand("clean", tempDir, "-i")
+	if err == nil {
+		t.Fatalf("Expected error running -i in non-terminal mode, got nil")
+	}
+	if !strings.Contains(err.Error(), "interactive selection unavailable") {
+		t.Errorf("Expected 'interactive selection unavailable' error, got: %v", err)
+	}
+}
+
+
 func TestDevCmd_DryRun_Go(t *testing.T) {
 	tempDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testgo\ngo 1.24\nrequire github.com/gofiber/fiber/v2 v2.52.0"), 0644)
@@ -1110,6 +1127,23 @@ func TestDevCmd_DryRun_Go(t *testing.T) {
 	}
 	if !strings.Contains(out, "go run cmd/api/main.go") {
 		t.Errorf("Expected go run cmd/api/main.go command, got: %s", out)
+	}
+}
+
+func TestDevCmd_WatchFlag(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testgo\ngo 1.24\nrequire github.com/gofiber/fiber/v2 v2.52.0"), 0644)
+	apiDir := filepath.Join(tempDir, "cmd", "api")
+	_ = os.MkdirAll(apiDir, 0755)
+	_ = os.WriteFile(filepath.Join(apiDir, "main.go"), []byte("package main"), 0644)
+
+	out, err := executeCommand("dev", "--dry-run", "-w", tempDir)
+	if err != nil {
+		t.Fatalf("dev --dry-run -w failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Umaru Dev Runner") {
+		t.Errorf("Expected Umaru Dev Runner header, got: %s", out)
 	}
 }
 

@@ -84,8 +84,10 @@ func TestGenerateAddons_GoFiber(t *testing.T) {
 
 	// Verify generated addon files exist
 	dbFile := filepath.Join(targetPath, "internal", "database", "postgres.go")
-	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
-		t.Errorf("Expected %s to exist", dbFile)
+	if data, err := os.ReadFile(dbFile); err != nil {
+		t.Errorf("Expected %s to exist: %v", dbFile, err)
+	} else if !strings.Contains(string(data), "pgx/v5") {
+		t.Errorf("Expected %s to contain pgx/v5 driver import", dbFile)
 	}
 
 	authFile := filepath.Join(targetPath, "internal", "middleware", "auth.go")

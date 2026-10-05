@@ -14,12 +14,13 @@ import (
 )
 
 var (
-	cleanDirFlag       string
-	cleanRecursiveFlag bool
-	cleanDryRunFlag    bool
-	cleanForceFlag     bool
-	cleanAllFlag       bool
-	cleanJSONFlag      bool
+	cleanDirFlag         string
+	cleanRecursiveFlag   bool
+	cleanDryRunFlag      bool
+	cleanForceFlag       bool
+	cleanInteractiveFlag bool
+	cleanAllFlag         bool
+	cleanJSONFlag        bool
 )
 
 var cleanCmd = &cobra.Command{
@@ -126,6 +127,50 @@ package dependencies, and cache folders that consume significant disk space:
 			return nil
 		}
 
+		// Interactive artifact selection if requested
+		if cleanInteractiveFlag {
+			if !isTerminalStdin() {
+				return fmt.Errorf("interactive selection unavailable in non-terminal mode. Use --force (-f) or --yes (-y)")
+			}
+
+			var selectedIndices []int
+			var options []huh.Option[int]
+			for idx, item := range report.Items {
+				label := fmt.Sprintf("%s (%s) [%s]", item.RelPath, item.SizeDisplay, item.Category)
+				options = append(options, huh.NewOption(label, idx).Selected(true))
+			}
+
+			interactiveForm := huh.NewForm(
+				huh.NewGroup(
+					huh.NewMultiSelect[int]().
+						Title("Select the artifacts you want to delete:").
+						Options(options...).
+						Value(&selectedIndices),
+				),
+			)
+
+			if err := interactiveForm.Run(); err != nil {
+				return err
+			}
+
+			if len(selectedIndices) == 0 {
+				fmt.Println(warnStyle.Render("No targets selected. Cleanup cancelled."))
+				fmt.Println()
+				return nil
+			}
+
+			var filteredItems []cleaner.TargetItem
+			var newTotalBytes int64
+			for _, idx := range selectedIndices {
+				item := report.Items[idx]
+				filteredItems = append(filteredItems, item)
+				newTotalBytes += item.SizeBytes
+			}
+			report.Items = filteredItems
+			report.TotalSizeBytes = newTotalBytes
+			report.TotalDisplay = cleaner.FormatBytes(newTotalBytes)
+		}
+
 		// Prompt user for confirmation if not forced
 		if !cleanForceFlag {
 			if !isTerminalStdin() {
@@ -167,6 +212,7 @@ func init() {
 	cleanCmd.Flags().StringVarP(&cleanDirFlag, "dir", "d", ".", "Target project directory to clean")
 	cleanCmd.Flags().BoolVarP(&cleanRecursiveFlag, "recursive", "r", false, "Scan recursively into subdirectories and monorepo packages")
 	cleanCmd.Flags().BoolVar(&cleanDryRunFlag, "dry-run", false, "Simulate scan and show reclaimable space without deleting files")
+	cleanCmd.Flags().BoolVarP(&cleanInteractiveFlag, "interactive", "i", false, "Interactively choose which artifacts to delete via checkboxes")
 	cleanCmd.Flags().BoolVarP(&cleanForceFlag, "force", "f", false, "Bypass interactive confirmation prompt")
 	cleanCmd.Flags().BoolVarP(&cleanForceFlag, "yes", "y", false, "Automatic yes to confirmation prompt (alias for --force)")
 	cleanCmd.Flags().BoolVar(&cleanAllFlag, "all", false, "Also remove virtual environments (.venv) and additional caches")

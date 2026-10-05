@@ -16,6 +16,7 @@ var (
 	devPortFlag       string
 	devHostFlag       string
 	devPkgManagerFlag string
+	devWatchFlag      bool
 	devDryRunFlag     bool
 	devJSONFlag       bool
 )
@@ -53,6 +54,7 @@ package manager, and entrypoint, and launches the development server with live o
 			Port:           devPortFlag,
 			Host:           devHostFlag,
 			PackageManager: devPkgManagerFlag,
+			Watch:          devWatchFlag,
 		}
 
 		cfg, err := devrunner.DetectDevCommand(opts)
@@ -98,6 +100,7 @@ func init() {
 	devCmd.Flags().StringVarP(&devPortFlag, "port", "p", "", "Port to run the application on (sets PORT=...)")
 	devCmd.Flags().StringVar(&devHostFlag, "host", "", "Host to bind the server to (sets HOST=...)")
 	devCmd.Flags().StringVar(&devPkgManagerFlag, "pm", "", "Package manager override for Node projects (npm, pnpm, yarn, bun)")
+	devCmd.Flags().BoolVarP(&devWatchFlag, "watch", "w", false, "Enable live reload file watcher (e.g. air for Go)")
 	devCmd.Flags().BoolVar(&devDryRunFlag, "dry-run", false, "Preview detected command and environment without launching")
 	devCmd.Flags().BoolVar(&devJSONFlag, "json", false, "Output resolved dev configuration as JSON")
 

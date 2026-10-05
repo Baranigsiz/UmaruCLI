@@ -343,3 +343,54 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func TestDetectDevCommand_PythonVenv(t *testing.T) {
+	tempDir := t.TempDir()
+
+	appDir := filepath.Join(tempDir, "app")
+	_ = os.MkdirAll(appDir, 0755)
+	_ = os.WriteFile(filepath.Join(appDir, "main.py"), []byte("from fastapi import FastAPI\napp = FastAPI()"), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "requirements.txt"), []byte("fastapi\nuvicorn"), 0644)
+
+	// Mock a local .venv with uvicorn
+	venvBin := filepath.Join(tempDir, ".venv", "Scripts")
+	if os.PathSeparator == '/' {
+		venvBin = filepath.Join(tempDir, ".venv", "bin")
+	}
+	_ = os.MkdirAll(venvBin, 0755)
+	uvicornMock := filepath.Join(venvBin, "uvicorn")
+	if os.PathSeparator == '\\' {
+		uvicornMock = filepath.Join(venvBin, "uvicorn.exe")
+	}
+	_ = os.WriteFile(uvicornMock, []byte("mock binary"), 0755)
+
+	cfg, err := DetectDevCommand(DevOptions{
+		TargetDir: tempDir,
+	})
+	if err != nil {
+		t.Fatalf("DetectDevCommand failed: %v", err)
+	}
+
+	if !strings.Contains(cfg.Command[0], ".venv") {
+		t.Errorf("Expected virtualenv uvicorn executable, got '%s'", cfg.Command[0])
+	}
+}
+
+func TestDetectDevCommand_GoWatch(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testgo\ngo 1.24"), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "main.go"), []byte("package main\nfunc main(){}"), 0644)
+
+	// Test without air config (defaults to go run)
+	cfg, err := DetectDevCommand(DevOptions{
+		TargetDir: tempDir,
+		Watch:     false,
+	})
+	if err != nil {
+		t.Fatalf("DetectDevCommand failed: %v", err)
+	}
+	if cfg.CommandLine != "go run main.go" {
+		t.Errorf("Expected 'go run main.go', got '%s'", cfg.CommandLine)
+	}
+}
+
+

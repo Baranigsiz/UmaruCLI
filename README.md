@@ -436,6 +436,10 @@ Stop memorizing framework-specific dev commands (`uvicorn ...`, `pnpm run dev`, 
 # Automatically detects language, framework, and entrypoint, and starts the dev server
 umaru dev
 
+# Enable live reloading file watcher (e.g. air for Go)
+umaru dev --watch
+umaru dev -w
+
 # Preview resolved command, port, and environment variables without launching
 umaru dev --dry-run
 
@@ -455,6 +459,65 @@ umaru dev ./apps/web
 umaru run
 umaru start
 ```
+
+---
+
+### 🧹 Project Sanitizer & Disk Cleaner (`umaru clean`)
+
+Reclaim gigabytes of wasted disk space by scanning and safely purging build artifacts, package dependencies, and caches (`node_modules`, `target/`, `dist/`, `.next/`, `__pycache__/`, `coverage/`, `.cache/`, `tmp/`):
+
+```bash
+# Scan and safely prompt before deleting artifacts in current project
+umaru clean
+
+# Interactively choose which artifacts to delete via checkboxes (TUI Multi-Select)
+umaru clean -i
+umaru clean --interactive
+
+# Preview reclaimable space and target paths without deleting anything
+umaru clean --dry-run
+
+# Force deletion without interactive confirmation (ideal for CI/CD)
+umaru clean -f
+umaru clean --yes
+
+# Recursively scan subdirectories and monorepo packages
+umaru clean -r
+umaru clean --recursive
+
+# Include Python virtual environments (.venv) and deep OS caches
+umaru clean --all -f
+
+# Target a specific directory or monorepo workspace
+umaru clean ./apps/api
+
+# Output detailed cleanup report as JSON
+umaru clean --json
+
+# Aliases: umaru sanitize, umaru purge
+umaru sanitize
+umaru purge
+```
+
+---
+
+### 🩺 System Diagnostics (`umaru doctor`)
+
+Diagnose your local development environment, installed runtimes, package managers, container engines, and template ecosystem readiness with actionable recommendations:
+
+```bash
+# Run comprehensive environment health check
+umaru doctor
+
+# Export diagnostic report as structured JSON for CI/CD auditing
+umaru doctor --json
+```
+
+**What Umaru Doctor Inspects:**
+- 📦 **Runtimes:** Git, Go, Node.js, Python, Cargo (Rust)
+- ⚡ **Package Managers:** npm, pnpm, yarn, bun, pip, uv
+- 🐳 **Containers:** Docker CLI, Docker Compose, Docker Daemon status
+- 📊 **Ecosystem Readiness:** Calculates percentage compatibility across all 25 starter architectures and provides direct installation links for missing tools.
 
 ---
 

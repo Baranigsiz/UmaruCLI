@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### 🚀 New Features & Enhancements
+
+- **`pgx/v5` PostgreSQL Driver Modernization**: Upgraded Go PostgreSQL addon from deprecated `lib/pq` to modern, high-performance `github.com/jackc/pgx/v5/stdlib` with thread-safe connection pooling and standard `pgx` driver compatibility.
+- **`umaru clean -i, --interactive` (Interactive Artifact Selection)**: Added multi-select checkbox TUI powered by `charmbracelet/huh` allowing developers to interactively choose exactly which build artifacts, caches, or dependencies to purge.
+- **`umaru dev --watch, -w` (Live-Reload & Watcher Integration)**: Added `--watch` (`-w`) flag for Go applications to trigger hot-reloading with `air` (when installed or configured via `.air.toml`), and added automatic detection for local Python virtual environments (`.venv/Scripts/uvicorn` or `.venv/bin/uvicorn`).
+- **`umaru doctor` with `uv` Support**: Added environment diagnostic checks for `uv` (Astral's high-speed Python package manager) and included it in the template readiness matrix for FastAPI starters.
+
+---
+
 ## [v2.0.3] - 2026-09-19
 
 ### 🚀 New Features & Enhancements
