@@ -44,7 +44,10 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
   <a href="#-clean-architecture-resource-generator-umaru-generate">🔨 Generator</a> •
   <a href="#-template-deep-inspection-umaru-info">🔍 Inspect</a> •
   <a href="#-project-sanitizer--disk-cleaner-umaru-clean">🧹 Cleaner</a> •
+  <a href="#-project-health--security-diagnostics-umaru-audit">🛡️ Audit</a> •
   <a href="#-universal-development-runner-umaru-dev--umaru-run">⚡ Dev Runner</a> •
+  <a href="#-universal-test-runner-umaru-test">🧪 Test Runner</a> •
+  <a href="#-production-cloud-deployment-umaru-deploy">🚀 Deploy</a> •
   <a href="#-shell-autocompletion">🐚 Autocompletion</a> •
   <a href="#-self-upgrade">🔄 Self-Upgrade</a> •
   <a href="#️-extensibility--custom-templates">🛠️ Extensibility</a>
@@ -103,6 +106,13 @@ Umaru CLI is strictly engineered for low latency, zero allocations where possibl
 
 - 🏎️ **Instantaneous & Lightweight:** Built in Go with zero external runtime dependencies. Compiles to a single static binary.
 - 🔌 **Zero Network Reliance:** All 25 starter boilerplates are compiled directly into the binary via `//go:embed`.
+- 🧪 **Universal Test Runner (`umaru test`):** Zero-config test runner supporting Go (`go test`), Node/TypeScript (`pnpm`, `bun`, `npm`, `vitest`, `jest`), Python (`pytest`, `unittest`), and Rust (`cargo test`) with `--watch`, `--coverage`, and `--filter`.
+- 🚀 **Cloud Deployment Manifests (`umaru deploy`):** Auto-generate production deployment configs for Fly.io (`fly.toml`), Railway (`railway.json`), Render (`render.yaml`), and Production Dockerfiles (`Dockerfile.prod`).
+- 🛡️ **Project Health & Security Diagnostics (`umaru audit`):** Comprehensive project auditor checking `.env` vs `.env.example` parity, secret leak protection in `.gitignore`, dependency status, port availability, and code quality linters (`--lint`).
+- 💎 **Modern TypeScript ORM (`umaru add drizzle`):** Automatic Drizzle ORM scaffolding with PostgreSQL (`node-postgres`) or SQLite (`better-sqlite3`), type-safe schemas, and database scripts.
+- 🧹 **Project Sanitizer & Disk Space Reclaimer (`umaru clean`):** Safely detect and purge heavy build artifacts, dependencies, and caches with `--dry-run`, interactive selection (`-i`), and recursive monorepo scanning.
+- ⚡ **Universal Dev Server (`umaru dev`):** Launch development servers across Go, Node, Python, and Rust without remembering framework-specific commands or virtual environment paths.
+- 🔨 **Clean Architecture Resource Generator (`umaru generate`):** Scaffold complete CRUD domain layers (model, repository, service, handler) on the fly with dynamic module paths.
 - 🧩 **Interactive Addon Wizard & Auditor:** Modular feature injection (PostgreSQL, SQLite, JWT Auth, Redis Cache) with intelligent project audit (`umaru add --list`) and one-command batch installation (`umaru add --all`).
 - 🔎 **Instant Template Search:** Fast keyword and description filtering across all 25 starters via `umaru list --search <query>` (`-s`).
 - ⚙️ **Persistent User Preferences:** Remember your preferred package manager, author, and licenses via `~/.umarurc.json`.
@@ -345,6 +355,9 @@ umaru audit
 # Target a specific project directory
 umaru audit ./my-app
 
+# Run code quality linters (golangci-lint, ruff, clippy) if installed
+umaru audit --lint
+
 # CI/CD gate: exit with code 1 if health score is <80 or critical errors exist
 umaru audit --strict
 
@@ -438,6 +451,44 @@ umaru deploy render --json
 - 🚂 **Railway:** Produces `railway.json` with Nixpacks builder, start commands, and healthcheck timeouts.
 - 🟣 **Render:** Emits `render.yaml` Infrastructure-as-Code Blueprint with native runtimes (Go, Node, Python, Docker).
 - 🐳 **Docker Production:** Creates an ultra-minimal distroless / alpine multi-stage `Dockerfile.prod`.
+
+---
+
+## 🧪 Universal Test Runner (`umaru test`)
+
+Execute test suites across Go, Node.js, Python, and Rust projects with zero manual configuration. Automatically resolves lockfiles, virtual environments, and test scripts:
+
+```bash
+# Auto-detect language and test framework to run test suite
+umaru test
+
+# Run tests in continuous watch mode
+umaru test --watch        # or -w
+
+# Generate code coverage reports
+umaru test --coverage     # or -c
+
+# Filter tests by name or regex pattern
+umaru test --filter TestAuth   # or -f
+
+# Run with verbose real-time streaming output
+umaru test --verbose      # or -v
+
+# Enable data race detector (Go projects)
+umaru test --race
+
+# Preview resolved test command without executing
+umaru test --dry-run
+
+# Output resolved test command and environment as JSON
+umaru test --json
+```
+
+**Supported Test Stacks:**
+- 🐹 **Go:** Runs `go test ./...` with optional `-v`, `-race`, `-coverprofile=coverage.out`, and `-run`.
+- 🟩 **Node.js / TypeScript:** Reads `package.json` test scripts (`pnpm test`, `bun test`, `yarn test`, `npm test`) or automatically invokes `vitest` / `jest` with `--watch`, `--coverage`, and filter patterns.
+- 🐍 **Python:** Auto-detects local `.venv`/`venv` and invokes `pytest -v` (with optional `--cov=.` and `-k`) or falls back to `python -m unittest`.
+- 🦀 **Rust:** Runs `cargo test` with filter support and `--nocapture`.
 
 ---
 

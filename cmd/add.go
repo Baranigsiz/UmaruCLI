@@ -237,6 +237,8 @@ Usage:
 					addonConfig.Docker = true
 				case "ci":
 					addonConfig.CI = true
+				case "drizzle":
+					addonConfig.Drizzle = true
 				}
 			}
 		}

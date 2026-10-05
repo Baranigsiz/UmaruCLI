@@ -223,6 +223,9 @@ var initCmd = &cobra.Command{
 
 		// Handle Remote Template Flow (--from)
 		if fromFlag != "" {
+			if templateFlag != "" && cmd.Flags().Changed("template") {
+				return fmt.Errorf("flags --from and --template cannot be used together: specify either a remote repository or a built-in template")
+			}
 			if initialName == "" {
 				initialName = "umaru-app"
 			}
@@ -356,6 +359,7 @@ var initCmd = &cobra.Command{
 func init() {
 	initCmd.Flags().StringVarP(&templateFlag, "template", "t", "", "Template ID to use (e.g. go-fiber, react-vite-ts)")
 	initCmd.Flags().StringVarP(&packageManagerFlag, "package-manager", "p", "", "Package manager for Node templates (npm, pnpm, yarn, bun)")
+	initCmd.Flags().StringVar(&packageManagerFlag, "pm", "", "Alias for --package-manager (npm, pnpm, yarn, bun)")
 	initCmd.Flags().StringVar(&fromFlag, "from", "", "Scaffold project directly from a Git repository or GitHub shorthand (e.g. owner/repo)")
 	initCmd.Flags().StringVar(&dbFlag, "db", "", "Database addon driver (postgres, sqlite, none)")
 	initCmd.Flags().StringVar(&authFlag, "auth", "", "Authentication addon (jwt, none)")

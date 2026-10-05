@@ -7,7 +7,12 @@ import (
 )
 
 func generateGoResource(baseDir string, ctx resourceContext) []ResourceFile {
+	module := ctx.moduleName
+	if module == "" {
+		module = "umaru"
+	}
 	replacer := strings.NewReplacer(
+		"{{Module}}", module,
 		"{{Pascal}}", ctx.pascal,
 		"{{Slug}}", ctx.slug,
 		"{{Camel}}", ctx.camel,
@@ -58,7 +63,7 @@ import (
 	"errors"
 	"sync"
 	"time"
-	"umaru/internal/models"
+	"{{Module}}/internal/models"
 )
 
 var (
@@ -142,8 +147,8 @@ import (
 	"context"
 	"fmt"
 	"time"
-	"umaru/internal/models"
-	"umaru/internal/repository"
+	"{{Module}}/internal/models"
+	"{{Module}}/internal/repository"
 )
 
 // {{Pascal}}Service defines business logic operations
@@ -201,8 +206,8 @@ func (s *{{Camel}}ServiceImpl) Delete(ctx context.Context, id string) error {
 
 import (
 	"net/http"
-	"umaru/internal/models"
-	"umaru/internal/service"
+	"{{Module}}/internal/models"
+	"{{Module}}/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -272,8 +277,8 @@ func (h *{{Pascal}}Handler) Delete(c *gin.Context) {
 
 import (
 	"net/http"
-	"umaru/internal/models"
-	"umaru/internal/service"
+	"{{Module}}/internal/models"
+	"{{Module}}/internal/service"
 
 	"github.com/labstack/echo/v4"
 )
@@ -336,8 +341,8 @@ func (h *{{Pascal}}Handler) Delete(c echo.Context) error {
 		handlerTmpl = `package handlers
 
 import (
-	"umaru/internal/models"
-	"umaru/internal/service"
+	"{{Module}}/internal/models"
+	"{{Module}}/internal/service"
 
 	"github.com/gofiber/fiber/v2"
 )

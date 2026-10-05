@@ -258,3 +258,44 @@ func TestScan_ErrorsAndOptions(t *testing.T) {
 	}
 }
 
+func TestScan_TargetRustDetection(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// 1. target directory WITHOUT Cargo.toml (e.g. non-rust project) -> Should NOT be picked up
+	targetWithoutCargo := filepath.Join(tempDir, "java-app", "target")
+	_ = os.MkdirAll(targetWithoutCargo, 0755)
+	_ = os.WriteFile(filepath.Join(targetWithoutCargo, "app.jar"), []byte("jar"), 0644)
+
+	// 2. target directory WITH Cargo.toml (Rust project) -> MUST be picked up
+	rustDir := filepath.Join(tempDir, "rust-app")
+	_ = os.MkdirAll(filepath.Join(rustDir, "target"), 0755)
+	_ = os.WriteFile(filepath.Join(rustDir, "Cargo.toml"), []byte("[package]\nname = \"demo\""), 0644)
+	_ = os.WriteFile(filepath.Join(rustDir, "target", "debug-binary"), []byte("bin"), 0644)
+
+	report, err := Scan(ScanOptions{
+		RootDir:   tempDir,
+		Recursive: true,
+	})
+	if err != nil {
+		t.Fatalf("Scan failed: %v", err)
+	}
+
+	foundJavaTarget := false
+	foundRustTarget := false
+	for _, item := range report.Items {
+		if strings.Contains(item.Path, "java-app") {
+			foundJavaTarget = true
+		}
+		if strings.Contains(item.Path, "rust-app") {
+			foundRustTarget = true
+		}
+	}
+
+	if foundJavaTarget {
+		t.Errorf("Scan should NOT treat non-Rust java-app/target as a cleanup candidate")
+	}
+	if !foundRustTarget {
+		t.Errorf("Scan MUST identify rust-app/target as CategoryRust cleanup candidate")
+	}
+}
+

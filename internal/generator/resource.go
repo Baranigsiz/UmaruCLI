@@ -39,6 +39,7 @@ type resourceContext struct {
 	pluralSlug   string
 	pluralPascal string
 	framework    string
+	moduleName   string // Go module name from go.mod (e.g. "github.com/user/my-api")
 }
 
 // ToPascalCase converts strings like "user_profile", "user-profile", "user" into "UserProfile"
@@ -122,6 +123,7 @@ func GenerateResource(cfg ResourceConfig) (*ResourceResult, error) {
 		pluralSlug:   Pluralize(Slugify(rawName)),
 		pluralPascal: Pluralize(ToPascalCase(rawName)),
 		framework:    proj.Framework,
+		moduleName:   proj.ModuleName,
 	}
 
 	baseDir := GetAddonBaseDir(proj.ToProjectConfig(AddonConfig{}))

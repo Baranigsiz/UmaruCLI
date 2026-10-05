@@ -2,11 +2,22 @@ package generator
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
+
+func generateSecretHex(bytesCount int) string {
+	b := make([]byte, bytesCount)
+	if _, err := rand.Read(b); err != nil {
+		return fmt.Sprintf("sec_%d_%d", time.Now().UnixNano(), os.Getpid())
+	}
+	return hex.EncodeToString(b)
+}
 
 // EnvBlock represents a group of environment variables related to an addon
 type EnvBlock struct {
@@ -49,7 +60,7 @@ func getAddonEnvBlocks(config ProjectConfig) []EnvBlock {
 		blocks = append(blocks, EnvBlock{
 			Comment: "Authentication (JWT)",
 			Vars: [][2]string{
-				{"JWT_SECRET", "super-secret-key-change-in-production"},
+				{"JWT_SECRET", generateSecretHex(32)},
 				{"JWT_EXPIRES_IN", "24h"},
 			},
 		})

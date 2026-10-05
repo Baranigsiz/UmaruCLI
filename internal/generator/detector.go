@@ -104,6 +104,8 @@ func DetectProject(dir string) (*DetectedProject, error) {
 			framework = "go-cli"
 		} else if strings.Contains(modContent, "github.com/charmbracelet/bubbletea") {
 			framework = "go-tui"
+		} else if strings.Contains(modContent, "github.com/a-h/templ") {
+			framework = "go-templ-htmx"
 		} else if strings.Contains(modContent, "github.com/gofiber/template/html") {
 			framework = "go-htmx"
 		} else if strings.Contains(modContent, "github.com/labstack/echo") {

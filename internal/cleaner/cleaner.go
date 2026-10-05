@@ -189,6 +189,17 @@ func Scan(opts ScanOptions) (*CleanReport, error) {
 
 		if d.IsDir() {
 			if isTarget, category := matchDirectoryTarget(name, opts.IncludeAll); isTarget {
+				// Prevent false positives on 'target' directories that are not Rust projects
+				if category == CategoryRust && strings.EqualFold(name, "target") {
+					cargoInParent := filepath.Join(filepath.Dir(cleanPath), "Cargo.toml")
+					cargoInRoot := filepath.Join(cleanRoot, "Cargo.toml")
+					_, err1 := os.Stat(cargoInParent)
+					_, err2 := os.Stat(cargoInRoot)
+					if err1 != nil && err2 != nil {
+						return nil // Not a Rust project target, skip
+					}
+				}
+
 				size := DirSize(path)
 				items = append(items, TargetItem{
 					Path:        path,

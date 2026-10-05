@@ -89,6 +89,15 @@ func executeCommand(args ...string) (string, error) {
 	deployForceFlag = false
 	deployDryRunFlag = false
 	deployJSONFlag = false
+	testDirFlag = "."
+	testVerboseFlag = false
+	testWatchFlag = false
+	testCoverageFlag = false
+	testFilterFlag = ""
+	testRaceFlag = false
+	testPkgManagerFlag = ""
+	testDryRunFlag = false
+	testJSONFlag = false
 
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr

@@ -288,7 +288,9 @@ func DownloadAndExtractBinaryContext(ctx context.Context, assetURL string) ([]by
 		return nil, fmt.Errorf("download failed with HTTP status %d", resp.StatusCode)
 	}
 
-	archiveBytes, err := io.ReadAll(resp.Body)
+	// Limit download size to 150MB to protect memory
+	const maxArchiveSize = 150 * 1024 * 1024
+	archiveBytes, err := io.ReadAll(io.LimitReader(resp.Body, maxArchiveSize))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read archive bytes: %w", err)
 	}
@@ -311,8 +313,9 @@ func DownloadAndExtractBinaryContext(ctx context.Context, assetURL string) ([]by
 				if err != nil {
 					return nil, err
 				}
-				defer rc.Close()
-				return io.ReadAll(rc)
+				data, readErr := io.ReadAll(rc)
+				_ = rc.Close()
+				return data, readErr
 			}
 		}
 		return nil, fmt.Errorf("binary '%s' not found inside downloaded zip", binaryName)

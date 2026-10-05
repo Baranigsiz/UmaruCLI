@@ -67,9 +67,15 @@ The codebase is organized into clean, focused packages:
 UmaruCLI/
 ├── main.go                     # Entrypoint (delegates to cmd.Execute())
 ├── cmd/                        # Cobra CLI command definitions
-│   ├── root.go                 # Base root command
-│   ├── init.go                 # 'umaru init' (aliases: 'new', 'create')
-│   ├── add.go                  # 'umaru add' (modular addon injector)
+│   ├── root.go                 # Base root command and global flags
+│   ├── init.go                 # 'umaru init' (project scaffolding)
+│   ├── add.go                  # 'umaru add' (modular infrastructure addon injector)
+│   ├── dev.go                  # 'umaru dev' (universal zero-config live runner)
+│   ├── test.go                 # 'umaru test' (universal zero-config test runner)
+│   ├── generate.go             # 'umaru generate' (clean architecture CRUD resource generator)
+│   ├── audit.go                # 'umaru audit' (project health & security diagnostics)
+│   ├── clean.go                # 'umaru clean' (disk sanitizer & artifact purger)
+│   ├── deploy.go               # 'umaru deploy' (cloud deployment generator)
 │   ├── doctor.go               # 'umaru doctor' (environment diagnostics)
 │   ├── info.go                 # 'umaru info' (template architecture inspection)
 │   ├── list.go                 # 'umaru list' (starter templates catalog)
@@ -79,6 +85,11 @@ UmaruCLI/
 └── internal/
     ├── templates/              # Embedded template assets via //go:embed
     ├── generator/              # File generation, slugification, addon injection, git cloning
+    ├── devrunner/              # Universal development server runner engine
+    ├── testrunner/             # Universal test suite discovery & execution engine
+    ├── audit/                  # Health, parity, security, and linter audit engine
+    ├── cleaner/                # Safe disk reclamation and artifact scanner
+    ├── deploy/                 # Cloud deployment manifest generator (Fly, Railway, Render, Docker)
     ├── doctor/                 # Diagnostic runner & Lipgloss report renderer
     ├── prompts/                # Charmbracelet Huh interactive TUI forms
     ├── ui/                     # Terminal cards, ASCII art, Lipgloss styling

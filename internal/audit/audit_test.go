@@ -116,3 +116,21 @@ func TestRunAudit_FullProject(t *testing.T) {
 		t.Errorf("rendered output missing header: %s", buf.String())
 	}
 }
+
+func TestRunAudit_WithLinter(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, ".env"), []byte("PORT=8080"), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, ".env.example"), []byte("PORT=8080"), 0644)
+
+	report, err := RunAudit(AuditOptions{
+		TargetDir:   tempDir,
+		CheckLinter: true,
+	})
+	if err != nil {
+		t.Fatalf("RunAudit with linter failed: %v", err)
+	}
+	if report == nil {
+		t.Fatalf("expected non-nil report")
+	}
+}

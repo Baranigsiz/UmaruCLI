@@ -221,10 +221,13 @@ primary_region = "fra"
 func generateRailway(proj *generator.DetectedProject, opts DeployOptions) ([]GeneratedFile, []string) {
 	builder := "NIXPACKS"
 	startCmd := ""
+	buildCmd := ""
 
 	switch proj.Type {
 	case generator.ProjectTypeGo:
-		startCmd = "go run main.go"
+		builder = "NIXPACKS"
+		buildCmd = "go build -o server ./cmd/api || go build -o server ."
+		startCmd = "./server"
 	case generator.ProjectTypeNode:
 		startCmd = "npm run start"
 	case generator.ProjectTypePython:
@@ -233,11 +236,16 @@ func generateRailway(proj *generator.DetectedProject, opts DeployOptions) ([]Gen
 		startCmd = "cargo run --release"
 	}
 
+	buildConfig := map[string]string{
+		"builder": builder,
+	}
+	if buildCmd != "" {
+		buildConfig["buildCommand"] = buildCmd
+	}
+
 	configObj := map[string]interface{}{
 		"$schema": "https://railway.com/railway.schema.json",
-		"build": map[string]string{
-			"builder": builder,
-		},
+		"build":   buildConfig,
 		"deploy": map[string]interface{}{
 			"startCommand":            startCmd,
 			"healthcheckPath":         "/",

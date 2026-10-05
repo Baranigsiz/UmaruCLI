@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.1.0] - 2026-10-05
+
+- **Comprehensive End-to-End Life Cycle Test Suite**: Added complete integration lifecycle testing (`cmd/lifecycle_e2e_test.go`) validating the real-world developer workflow end-to-end: `umaru init` ➔ `umaru add` ➔ `umaru generate resource` ➔ `umaru audit --strict` ➔ `umaru test` ➔ `umaru deploy` ➔ `umaru clean`. Covers both Go and Node.js/TypeScript stacks.
+- **`--pm` Alias for `umaru init`**: Added `--pm` shorthand flag to `umaru init` for unified developer experience across `init`, `dev`, and `test` commands.
+- **`umaru test` (Zero-Config Universal Test Runner)**: Automatically discovers project language, test runners, and package managers to execute test suites seamlessly across Go (`go test ./...`), Node/TypeScript (`pnpm test`, `bun test`, `npm test`, `vitest`, `jest`), Python (`pytest`, `unittest`), and Rust (`cargo test`). Supports `--watch` (`-w`), `--coverage` (`-c`), `--filter` (`-f`), `--race`, `--dry-run`, and `--json`.
 - **`umaru deploy` (Production Cloud Deployment Generator)**: Generates production deployment manifests and step-by-step CLI deployment guides for top developer clouds: **Fly.io** (`fly.toml` with machine scaling & auto-stop), **Railway** (`railway.json` with Nixpacks builder), **Render** (`render.yaml` Blueprint), and **Docker Production** (ultra-minimal multi-stage `Dockerfile.prod`). Features `--dry-run`, `--json`, `--force`, custom `--app-name` and `--port` flags, and interactive selection via `charmbracelet/huh`.
 - **`go-templ-htmx` (Type-Safe Hypermedia Starter Template)**: Added a cutting-edge fullstack starter template pairing Go Fiber v2 with compile-time type-safe **[Templ](https://templ.guide)** components, **HTMX 2.0**, and **Tailwind CSS**. Features pre-compiled component implementations, interactive reactive counter widget partials, Docker & Docker Compose configs, and Makefile tooling with zero client-side JavaScript bundle overhead.
 - **`Drizzle ORM` Modern Database Addon (`umaru add drizzle`)**: Integrated first-class Drizzle ORM scaffolding for TypeScript/Node.js projects (Express, Fastify, Hono, Next.js). Automatically provisions `drizzle.config.ts`, typesafe `src/db/schema.ts`, connection client `src/db/index.ts` (supporting PostgreSQL via `node-postgres` or SQLite via `better-sqlite3`), package scripts (`db:generate`, `db:migrate`, `db:push`, `db:studio`), and environment configuration. Available via `umaru add drizzle`, `umaru init --drizzle`, and interactive TUI prompts.
@@ -17,7 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`pgx/v5` PostgreSQL Driver Modernization**: Upgraded Go PostgreSQL addon from deprecated `lib/pq` to modern, high-performance `github.com/jackc/pgx/v5/stdlib` with thread-safe connection pooling and standard `pgx` driver compatibility.
 - **`umaru clean -i, --interactive` (Interactive Artifact Selection)**: Added multi-select checkbox TUI powered by `charmbracelet/huh` allowing developers to interactively choose exactly which build artifacts, caches, or dependencies to purge.
 - **`umaru dev --watch, -w` (Live-Reload & Watcher Integration)**: Added `--watch` (`-w`) flag for Go applications to trigger hot-reloading with `air` (when installed or configured via `.air.toml`), and added automatic detection for local Python virtual environments (`.venv/Scripts/uvicorn` or `.venv/bin/uvicorn`).
-- **`umaru doctor` with `uv` Support**: Added environment diagnostic checks for `uv` (Astral's high-speed Python package manager) and included it in the template readiness matrix for FastAPI starters.
+- **`umaru audit --lint` (Multi-Ecosystem Linter Integration)**: Added optional `--lint` flag to `umaru audit` running linters (`golangci-lint` for Go, `ruff` for Python, `cargo clippy` for Rust) and incorporating their findings into the project health score.
+- **Go Resource Generator Dynamic Module Paths**: Replaced hardcoded `umaru` package imports in `umaru generate resource` with the real module name parsed from `go.mod`, guaranteeing compile-time correctness in user repositories.
+- **Interactive Addon Wizard `Drizzle` Support**: Fixed missing switch case in interactive `umaru add` prompt, enabling seamless Drizzle ORM injection through the TUI.
+- **Rust Target Directory False-Positive Prevention**: Enhanced cleaner directory candidate detection to only target `target/` when a corresponding `Cargo.toml` exists, preventing accidental deletion of non-Rust folders.
+- **Railway Go Production BuildCommand**: Configured automated binary compilation (`go build -o server ./cmd/api || go build -o server .`) in `railway.json` for reliable production execution.
+- **Cryptographic JWT Secret Generation**: Upgraded JWT addon `.env` scaffolding to produce cryptographically random 32-byte hex keys instead of insecure placeholder strings.
+- **`umaru init` Flag Validation**: Added mutual exclusivity validation between `--from` and `--template` flags.
+- **Updater Memory Guard**: Applied bounded `io.LimitReader` (150MB) and immediate file closure when unpacking release binaries.
+- **`go-templ-htmx` Detection**: Added recognition for `github.com/a-h/templ` in project framework detector.
 
 ---
 

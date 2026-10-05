@@ -109,3 +109,41 @@ func TestFilterTemplatesByKeyword(t *testing.T) {
 		t.Errorf("Expected 0 results for nonexistent query, got: %d", len(noneRes))
 	}
 }
+
+func TestRun_NonTerminalErrors(t *testing.T) {
+	// In go test, standard input is a pipe (non-terminal).
+	// Therefore, any call requiring interactive input must return an informative error.
+
+	// 1. Missing project name
+	t.Run("MissingProjectName", func(t *testing.T) {
+		_, err := Run("", "go-fiber", "", generator.AddonConfig{}, true)
+		if err == nil {
+			t.Errorf("Expected error when project name is missing in non-terminal mode")
+		}
+	})
+
+	// 2. Missing template ID
+	t.Run("MissingTemplateID", func(t *testing.T) {
+		_, err := Run("my-app", "", "", generator.AddonConfig{}, true)
+		if err == nil {
+			t.Errorf("Expected error when template ID is missing in non-terminal mode")
+		}
+	})
+
+	// 3. Node project missing package manager
+	t.Run("NodeMissingPackageManager", func(t *testing.T) {
+		_, err := Run("my-node-app", "react-vite-ts", "", generator.AddonConfig{}, true)
+		if err == nil {
+			t.Errorf("Expected error when package manager is missing for node template in non-terminal mode")
+		}
+	})
+
+	// 4. Missing addons specification when skipAddons is false
+	t.Run("MissingAddonsPrompt", func(t *testing.T) {
+		_, err := Run("my-go-app", "go-fiber", "", generator.AddonConfig{}, false)
+		if err == nil {
+			t.Errorf("Expected error when addons prompt is needed in non-terminal mode")
+		}
+	})
+}
+

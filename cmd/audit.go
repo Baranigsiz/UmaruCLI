@@ -12,6 +12,7 @@ var (
 	auditJSONFlag      bool
 	auditStrictFlag    bool
 	auditNoNetworkFlag bool
+	auditLintFlag      bool
 )
 
 var auditCmd = &cobra.Command{
@@ -43,6 +44,7 @@ It checks:
 		opts := audit.AuditOptions{
 			TargetDir:    targetDir,
 			CheckNetwork: !auditNoNetworkFlag,
+			CheckLinter:  auditLintFlag,
 		}
 
 		report, err := audit.RunAudit(opts)
@@ -82,6 +84,7 @@ func init() {
 	auditCmd.Flags().BoolVar(&auditJSONFlag, "json", false, "Output audit results in JSON format")
 	auditCmd.Flags().BoolVar(&auditStrictFlag, "strict", false, "Exit with non-zero code if critical warnings or low health score (<80)")
 	auditCmd.Flags().BoolVar(&auditNoNetworkFlag, "no-network", false, "Skip network port availability testing")
+	auditCmd.Flags().BoolVar(&auditLintFlag, "lint", false, "Run project code quality linters (e.g. golangci-lint, ruff, clippy)")
 
 	rootCmd.AddCommand(auditCmd)
 }

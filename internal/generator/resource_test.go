@@ -77,6 +77,12 @@ func TestGenerateResource_GoFiber(t *testing.T) {
 		t.Errorf("Expected Product struct in model file")
 	}
 
+	// Verify repository uses dynamic module name from go.mod ("testapp")
+	repoBytes, _ := os.ReadFile(filepath.Join(tempDir, "internal", "repository", "product_repository.go"))
+	if !strings.Contains(string(repoBytes), "\"testapp/internal/models\"") {
+		t.Errorf("Expected dynamic module import 'testapp/internal/models', got:\n%s", string(repoBytes))
+	}
+
 	// Test skip on existing file without force
 	res2, err := GenerateResource(ResourceConfig{
 		Name:      "Product",

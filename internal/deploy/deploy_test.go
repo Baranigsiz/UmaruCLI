@@ -86,6 +86,35 @@ func TestGenerateDeployment_Railway(t *testing.T) {
 	}
 }
 
+func TestGenerateDeployment_RailwayGo(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+
+	res, err := GenerateDeployment(DeployOptions{
+		TargetDir: tempDir,
+		Platform:  PlatformRailway,
+	})
+	if err != nil {
+		t.Fatalf("GenerateDeployment(RailwayGo) failed: %v", err)
+	}
+
+	railwayJSON := filepath.Join(tempDir, "railway.json")
+	content, err := os.ReadFile(railwayJSON)
+	if err != nil {
+		t.Fatalf("railway.json not found: %v", err)
+	}
+	contentStr := string(content)
+	if !strings.Contains(contentStr, "buildCommand") {
+		t.Errorf("railway.json missing buildCommand for Go project: %s", contentStr)
+	}
+	if !strings.Contains(contentStr, "\"startCommand\": \"./server\"") {
+		t.Errorf("railway.json missing startCommand ./server for Go project: %s", contentStr)
+	}
+	if len(res.Instructions) == 0 {
+		t.Errorf("expected railway instructions")
+	}
+}
+
 func TestGenerateDeployment_Render(t *testing.T) {
 	tempDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(tempDir, "requirements.txt"), []byte("fastapi\n"), 0644)

@@ -58,6 +58,7 @@ func (r *AuditReport) ToJSON(indent bool) ([]byte, error) {
 type AuditOptions struct {
 	TargetDir    string
 	CheckNetwork bool // Test port availability
+	CheckLinter  bool // Run project linters if available
 }
 
 func fileExists(path string) bool {
@@ -109,6 +110,15 @@ func RunAudit(opts AuditOptions) (*AuditReport, error) {
 	// 4. Port Availability Check
 	if opts.CheckNetwork {
 		report.Checks = append(report.Checks, checkPortAvailability(baseDir)...)
+	}
+
+	// 5. Code Quality / Linter Check
+	if opts.CheckLinter {
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancel()
+		if lintCheck := RunLinterAudit(ctx, absDir, proj.Type); lintCheck != nil {
+			report.Checks = append(report.Checks, *lintCheck)
+		}
 	}
 
 	// Calculate overall health score and extract recommendations
@@ -437,6 +447,48 @@ func RunLinterAudit(ctx context.Context, dir string, projType generator.ProjectT
 				Title:    "Golangci-lint Code Quality",
 				Status:   StatusPass,
 				Message:  "All linter checks passed cleanly",
+			}
+		}
+	case generator.ProjectTypePython:
+		if _, err := exec.LookPath("ruff"); err == nil {
+			cmd := exec.CommandContext(ctx, "ruff", "check", ".")
+			cmd.Dir = dir
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				return &AuditCheck{
+					Category: "Quality",
+					Title:    "Ruff Code Quality",
+					Status:   StatusWarn,
+					Message:  "Linter detected issues",
+					Details:  strings.Split(strings.TrimSpace(string(out)), "\n"),
+				}
+			}
+			return &AuditCheck{
+				Category: "Quality",
+				Title:    "Ruff Code Quality",
+				Status:   StatusPass,
+				Message:  "All linter checks passed cleanly",
+			}
+		}
+	case generator.ProjectTypeRust:
+		if _, err := exec.LookPath("cargo"); err == nil {
+			cmd := exec.CommandContext(ctx, "cargo", "clippy", "--", "-D", "warnings")
+			cmd.Dir = dir
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				return &AuditCheck{
+					Category: "Quality",
+					Title:    "Cargo Clippy",
+					Status:   StatusWarn,
+					Message:  "Clippy detected warnings/issues",
+					Details:  strings.Split(strings.TrimSpace(string(out)), "\n"),
+				}
+			}
+			return &AuditCheck{
+				Category: "Quality",
+				Title:    "Cargo Clippy",
+				Status:   StatusPass,
+				Message:  "All clippy checks passed cleanly",
 			}
 		}
 	}

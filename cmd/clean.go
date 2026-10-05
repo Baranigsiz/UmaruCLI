@@ -18,6 +18,7 @@ var (
 	cleanRecursiveFlag   bool
 	cleanDryRunFlag      bool
 	cleanForceFlag       bool
+	cleanYesFlag         bool
 	cleanInteractiveFlag bool
 	cleanAllFlag         bool
 	cleanJSONFlag        bool
@@ -172,7 +173,8 @@ package dependencies, and cache folders that consume significant disk space:
 		}
 
 		// Prompt user for confirmation if not forced
-		if !cleanForceFlag {
+		isForced := cleanForceFlag || cleanYesFlag
+		if !isForced {
 			if !isTerminalStdin() {
 				return fmt.Errorf("interactive confirmation unavailable in non-terminal mode. Use --force (-f) or --yes (-y)")
 			}
@@ -214,7 +216,7 @@ func init() {
 	cleanCmd.Flags().BoolVar(&cleanDryRunFlag, "dry-run", false, "Simulate scan and show reclaimable space without deleting files")
 	cleanCmd.Flags().BoolVarP(&cleanInteractiveFlag, "interactive", "i", false, "Interactively choose which artifacts to delete via checkboxes")
 	cleanCmd.Flags().BoolVarP(&cleanForceFlag, "force", "f", false, "Bypass interactive confirmation prompt")
-	cleanCmd.Flags().BoolVarP(&cleanForceFlag, "yes", "y", false, "Automatic yes to confirmation prompt (alias for --force)")
+	cleanCmd.Flags().BoolVarP(&cleanYesFlag, "yes", "y", false, "Automatic yes to confirmation prompt (alias for --force)")
 	cleanCmd.Flags().BoolVar(&cleanAllFlag, "all", false, "Also remove virtual environments (.venv) and additional caches")
 	cleanCmd.Flags().BoolVar(&cleanJSONFlag, "json", false, "Output scan report in JSON format")
 
