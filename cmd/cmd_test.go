@@ -77,6 +77,10 @@ func executeCommand(args ...string) (string, error) {
 	generateJSONFlag = false
 	infoJSONFlag = false
 	doctorJSONFlag = false
+	auditDirFlag = "."
+	auditJSONFlag = false
+	auditStrictFlag = false
+	auditNoNetworkFlag = false
 
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
@@ -1534,6 +1538,83 @@ func TestGenerateCmd_NonTerminalPrompt(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "interactive prompt unavailable") {
 		t.Errorf("Expected 'interactive prompt unavailable' error, got: %v", err)
+	}
+}
+
+func TestAuditCmd_Pass(t *testing.T) {
+	tempDir := t.TempDir()
+
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "go.sum"), []byte(""), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, ".env.example"), []byte("PORT=8080\nDB_URL=postgres://..."), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, ".env"), []byte("PORT=8080\nDB_URL=postgres://..."), 0644)
+	_ = os.MkdirAll(filepath.Join(tempDir, ".git"), 0755)
+	_ = os.WriteFile(filepath.Join(tempDir, ".gitignore"), []byte(".env\nbin/\n"), 0644)
+
+	out, err := executeCommand("audit", "-d", tempDir, "--no-network")
+	if err != nil {
+		t.Fatalf("audit failed: %v, out: %s", err, out)
+	}
+
+	if !strings.Contains(out, "UMARU PROJECT AUDIT") {
+		t.Errorf("Expected UMARU PROJECT AUDIT in output, got: %s", out)
+	}
+	if !strings.Contains(out, "HEALTH SCORE:") {
+		t.Errorf("Expected HEALTH SCORE in output, got: %s", out)
+	}
+}
+
+func TestAuditCmd_JSON(t *testing.T) {
+	tempDir := t.TempDir()
+
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, "go.sum"), []byte(""), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, ".env.example"), []byte("PORT=8080"), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, ".env"), []byte("PORT=8080"), 0644)
+	_ = os.MkdirAll(filepath.Join(tempDir, ".git"), 0755)
+	_ = os.WriteFile(filepath.Join(tempDir, ".gitignore"), []byte(".env\n"), 0644)
+
+	out, err := executeCommand("audit", tempDir, "--json", "--no-network")
+	if err != nil {
+		t.Fatalf("audit --json failed: %v, out: %s", err, out)
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		t.Fatalf("Expected valid JSON output, got error: %v, raw: %s", err, out)
+	}
+
+	if parsed["language"] != "go" {
+		t.Errorf("Expected language go in JSON, got: %v", parsed["language"])
+	}
+	score, ok := parsed["health_score"].(float64)
+	if !ok || score < 80 {
+		t.Errorf("Expected health score >= 80, got: %v", parsed["health_score"])
+	}
+}
+
+func TestAuditCmd_StrictFlag(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Project with secret leak vulnerability (.git exists, .gitignore does NOT ignore .env)
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+	_ = os.WriteFile(filepath.Join(tempDir, ".env"), []byte("SECRET=leaked"), 0644)
+	_ = os.MkdirAll(filepath.Join(tempDir, ".git"), 0755)
+	_ = os.WriteFile(filepath.Join(tempDir, ".gitignore"), []byte("dist/"), 0644)
+
+	_, err := executeCommand("audit", "-d", tempDir, "--strict", "--no-network")
+	if err == nil {
+		t.Fatalf("Expected audit --strict to fail on critical security vulnerability")
+	}
+	if !strings.Contains(err.Error(), "audit failed strict criteria") {
+		t.Errorf("Expected strict failure message, got: %v", err)
+	}
+}
+
+func TestAuditCmd_InvalidDir(t *testing.T) {
+	_, err := executeCommand("audit", "-d", filepath.Join(os.TempDir(), "non-existent-dir-umaru-123456"))
+	if err == nil {
+		t.Fatalf("Expected error for non-existent directory")
 	}
 }
 

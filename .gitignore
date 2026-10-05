@@ -23,3 +23,8 @@ dist/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Environment variables
+.env
+.env.*
+!.env.example

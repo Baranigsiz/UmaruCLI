@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### 🚀 New Features & Enhancements
-
+- **`umaru audit` (Project Health & Security Diagnostics Engine)**: Comprehensive project auditor (aliases: `check`, `inspect`) that diagnoses `.env` vs `.env.example` parity, secret leak vulnerabilities (untracked `.env` in git repositories), missing dependencies (`node_modules`, `.venv`, `go.sum`), and port collisions/availability. Features an overall health score (0-100%), actionable remediation recommendations, `--strict` CI/CD gate flag (exits non-zero on failure), and `--json` machine-readable output.
 - **`umaru generate` / `umaru g` (Clean Architecture Resource Generator)**: Scaffolds complete CRUD architectures on the fly across Go (model, in-memory repository, service, handler for Fiber/Gin/Echo), Node/TypeScript (model, service, controller, routes for Express/Fastify), Python (Pydantic schemas and FastAPI APIRouter endpoints), and Rust with `--dry-run`, `-f, --force`, `--json`, and interactive terminal prompts.
 - **`pgx/v5` PostgreSQL Driver Modernization**: Upgraded Go PostgreSQL addon from deprecated `lib/pq` to modern, high-performance `github.com/jackc/pgx/v5/stdlib` with thread-safe connection pooling and standard `pgx` driver compatibility.
 - **`umaru clean -i, --interactive` (Interactive Artifact Selection)**: Added multi-select checkbox TUI powered by `charmbracelet/huh` allowing developers to interactively choose exactly which build artifacts, caches, or dependencies to purge.

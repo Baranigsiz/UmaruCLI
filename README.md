@@ -329,6 +329,81 @@ umaru clean --json
 
 ---
 
+## 🛡️ Project Health & Security Diagnostics (`umaru audit`)
+
+Diagnose potential production failures, secret leaks, missing environment variables, and uninstalled dependencies across your projects:
+
+```bash
+# Run diagnostics on current project
+umaru audit
+
+# Target a specific project directory
+umaru audit ./my-app
+
+# CI/CD gate: exit with code 1 if health score is <80 or critical errors exist
+umaru audit --strict
+
+# Skip port availability checks (useful in sandbox/offline environments)
+umaru audit --no-network
+
+# Output diagnostic results as JSON for automation
+umaru audit --json
+```
+
+**Key Diagnostic Checks:**
+- 🔐 **Secret Leak Protection:** Verifies `.env` files are explicitly excluded in `.gitignore` to prevent committing API keys and secrets.
+- ⚙️ **Environment Parity:** Compares `.env` against `.env.example` and flags missing keys.
+- 📦 **Dependency Verification:** Validates that `node_modules`, `.venv`, or `go.sum` are present and ready.
+- 🔌 **Port Collision Detection:** Probes ports configured in `.env` to detect occupied listener conflicts.
+- 💯 **Health Score:** Calculates an overall 0-100% score with prioritized remediation tips.
+
+---
+
+## ⚡ Universal Live Runner (`umaru dev`)
+
+Start any developer project without needing to remember framework-specific commands or virtual environment paths:
+
+```bash
+# Auto-detect language, framework, and package manager to start dev server
+umaru dev
+
+# Run with hot-reloading (via air for Go, or framework watch mode)
+umaru dev --watch
+
+# Launch with custom host and port
+umaru dev --port 8080 --host 0.0.0.0
+
+# Dry-run preview of the detected command
+umaru dev --dry-run
+```
+
+---
+
+## 🏗️ Clean Architecture Resource Generator (`umaru generate`)
+
+Generate complete, production-ready CRUD vertical slices in seconds conforming to clean architecture standards:
+
+```bash
+# Generate a complete resource (model, repository, service, controller/handler)
+umaru generate resource User
+# Shortcut alias:
+umaru g resource Product
+
+# Target a specific directory or force-overwrite
+umaru g resource Order -d ./backend --force
+
+# Preview generated file paths without writing
+umaru g resource Article --dry-run
+```
+
+**Supported Stacks:**
+- 🐹 **Go:** Fiber / Gin / Echo (domain model, thread-safe memory repository, service, handler, route registration snippet).
+- 🟩 **Node.js / TypeScript:** Express / Fastify (TypeScript interface, mock database repository, service layer, router).
+- 🐍 **Python:** FastAPI (Pydantic v2 schemas and APIRouter endpoints).
+- 🦀 **Rust:** Axum / Actix (Domain struct, Handler, and Router).
+
+---
+
 ## 🚀 Installation
 
 ### ⚡ Quick Install (Recommended - Zero Dependencies)
