@@ -68,6 +68,19 @@ func getAddonEnvBlocks(config ProjectConfig) []EnvBlock {
 		})
 	}
 
+	if config.Addons.Drizzle {
+		dbURL := "postgresql://postgres:postgres@localhost:5432/app"
+		if strings.ToLower(strings.TrimSpace(config.Addons.Database)) == "sqlite" {
+			dbURL = "./sqlite.db"
+		}
+		blocks = append(blocks, EnvBlock{
+			Comment: "Drizzle ORM",
+			Vars: [][2]string{
+				{"DATABASE_URL", dbURL},
+			},
+		})
+	}
+
 	return blocks
 }
 

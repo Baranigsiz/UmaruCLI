@@ -181,5 +181,22 @@ func AuditProjectAddons(targetDir string) (*ProjectAddonAudit, error) {
 		DetectedFiles: foundRedis,
 	})
 
+	// 7. Drizzle ORM
+	drizzleConfig := dummyConfig
+	drizzleConfig.Addons.Drizzle = true
+	drizzleFiles := getDrizzleFiles(drizzleConfig, baseDir)
+	var foundDrizzle []string
+	for _, f := range drizzleFiles {
+		if fileExists(f) {
+			foundDrizzle = append(foundDrizzle, cleanRel(f))
+		}
+	}
+	audit.Addons = append(audit.Addons, AddonStatus{
+		ID:            "drizzle",
+		Name:          "Drizzle ORM",
+		Installed:     len(foundDrizzle) > 0,
+		DetectedFiles: foundDrizzle,
+	})
+
 	return audit, nil
 }

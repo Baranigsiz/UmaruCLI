@@ -57,7 +57,7 @@ Usage:
   umaru add ci                    # Add GitHub Actions CI/CD pipeline
   umaru add postgres redis jwt    # Add multiple addons in one pass
   umaru add sqlite redis -f       # Overwrite existing addon files`,
-	ValidArgs: []string{"redis", "jwt", "postgres", "sqlite", "docker", "ci"},
+	ValidArgs: []string{"redis", "jwt", "postgres", "sqlite", "docker", "ci", "drizzle"},
 	Args:      cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		targetDir := addDirFlag
@@ -120,6 +120,9 @@ Usage:
 			if !installedMap["ci"] || addForceFlag {
 				addonConfig.CI = true
 			}
+			if (!installedMap["drizzle"] || addForceFlag) && proj.Type == generator.ProjectTypeNode {
+				addonConfig.Drizzle = true
+			}
 
 			if !addForceFlag && !addonConfig.HasAddons() {
 				fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("#10B981")).Bold(true).Render("✨ All available infrastructure addons are already installed!"))
@@ -147,8 +150,10 @@ Usage:
 						return fmt.Errorf("cannot select both PostgreSQL and SQLite. Choose one database driver")
 					}
 					addonConfig.Database = "sqlite"
+				case "drizzle", "drizzle-orm", "drizzleorm", "orm":
+					addonConfig.Drizzle = true
 				default:
-					return fmt.Errorf("unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis, docker, ci", arg)
+					return fmt.Errorf("unknown addon '%s'. Supported addons: postgres, sqlite, jwt, redis, docker, ci, drizzle", arg)
 				}
 			}
 		} else {
@@ -180,6 +185,7 @@ Usage:
 				formatOption("📦 SQLite (Embedded file-based DB)", "sqlite"),
 				formatOption("🔐 JWT (Authentication middleware & claims)", "jwt"),
 				formatOption("🔴 Redis (In-memory caching client)", "redis"),
+				formatOption("💎 Drizzle ORM (Type-safe TypeScript SQL ORM)", "drizzle"),
 				formatOption("🐳 Docker (Multi-stage Dockerfile & Compose)", "docker"),
 				formatOption("🤖 GitHub Actions CI/CD (.github/workflows/ci.yml)", "ci"),
 			}

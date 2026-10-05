@@ -181,6 +181,7 @@ Umaru CLI includes 25 production-ready architectures organized across 5 categori
 When scaffolding backend or fullstack projects, Umaru CLI can automatically inject modular infrastructure:
 
 - 🐘 **Database Driver:** `PostgreSQL` (connection pool & healthcheck) or `SQLite` (embedded WAL mode).
+- 💎 **Modern ORM:** `Drizzle ORM` (typesafe schema, migration scripts, connection client, and Drizzle Studio).
 - 🔐 **Authentication:** `JWT` (claim generation & verification middleware).
 - 🔴 **Cache:** `Redis` (client connection pool & ping).
 - 🐳 **Containerization:** `Docker` (multi-stage `Dockerfile`, `docker-compose.yml`, `.dockerignore`).
@@ -210,6 +211,9 @@ umaru add --list --json
 
 # Interactive multi-select addon wizard (installed addons are marked with [Installed])
 umaru add
+
+# Add Drizzle ORM to TypeScript/Node projects
+umaru add drizzle
 
 # Add GitHub Actions automated CI/CD pipeline
 umaru add ci

@@ -595,5 +595,101 @@ func TestAddAddonDocker_PreservesExistingDockerignore(t *testing.T) {
 	}
 }
 
+func TestGenerateAddon_DrizzlePostgres(t *testing.T) {
+	tempDir := t.TempDir()
+	pkgJSON := filepath.Join(tempDir, "package.json")
+	_ = os.WriteFile(pkgJSON, []byte(`{"name":"test-node","dependencies":{},"devDependencies":{},"scripts":{}}`), 0644)
+
+	cfg := ProjectConfig{
+		TargetDir: tempDir,
+		SafeName:  "test-drizzle-pg",
+		Template:  "node-express-ts",
+		Addons: AddonConfig{
+			Database: "postgres",
+			Drizzle:  true,
+		},
+	}
+
+	if err := GenerateAddons(cfg); err != nil {
+		t.Fatalf("GenerateAddons failed: %v", err)
+	}
+
+	drizzleCfgPath := filepath.Join(tempDir, "drizzle.config.ts")
+	cfgContent, err := os.ReadFile(drizzleCfgPath)
+	if err != nil {
+		t.Fatalf("drizzle.config.ts not found: %v", err)
+	}
+	if !strings.Contains(string(cfgContent), "dialect: 'postgresql'") {
+		t.Errorf("expected dialect postgresql in drizzle.config.ts")
+	}
+
+	schemaPath := filepath.Join(tempDir, "src", "db", "schema.ts")
+	schemaContent, err := os.ReadFile(schemaPath)
+	if err != nil {
+		t.Fatalf("src/db/schema.ts not found: %v", err)
+	}
+	if !strings.Contains(string(schemaContent), "pgTable") {
+		t.Errorf("expected pgTable in schema.ts")
+	}
+
+	clientPath := filepath.Join(tempDir, "src", "db", "index.ts")
+	clientContent, err := os.ReadFile(clientPath)
+	if err != nil {
+		t.Fatalf("src/db/index.ts not found: %v", err)
+	}
+	if !strings.Contains(string(clientContent), "node-postgres") {
+		t.Errorf("expected node-postgres in index.ts")
+	}
+
+	// Verify dependencies & scripts
+	pkgData, err := os.ReadFile(pkgJSON)
+	if err != nil {
+		t.Fatalf("package.json read failed: %v", err)
+	}
+	pkgStr := string(pkgData)
+	if !strings.Contains(pkgStr, "drizzle-orm") || !strings.Contains(pkgStr, "drizzle-kit") || !strings.Contains(pkgStr, "db:generate") {
+		t.Errorf("expected drizzle-orm and scripts in package.json: %s", pkgStr)
+	}
+}
+
+func TestGenerateAddon_DrizzleSQLite(t *testing.T) {
+	tempDir := t.TempDir()
+	pkgJSON := filepath.Join(tempDir, "package.json")
+	_ = os.WriteFile(pkgJSON, []byte(`{"name":"test-node","dependencies":{},"devDependencies":{},"scripts":{}}`), 0644)
+
+	cfg := ProjectConfig{
+		TargetDir: tempDir,
+		SafeName:  "test-drizzle-sqlite",
+		Template:  "node-express-ts",
+		Addons: AddonConfig{
+			Database: "sqlite",
+			Drizzle:  true,
+		},
+	}
+
+	if err := GenerateAddons(cfg); err != nil {
+		t.Fatalf("GenerateAddons failed: %v", err)
+	}
+
+	drizzleCfgPath := filepath.Join(tempDir, "drizzle.config.ts")
+	cfgContent, err := os.ReadFile(drizzleCfgPath)
+	if err != nil {
+		t.Fatalf("drizzle.config.ts not found: %v", err)
+	}
+	if !strings.Contains(string(cfgContent), "dialect: 'sqlite'") {
+		t.Errorf("expected dialect sqlite in drizzle.config.ts")
+	}
+
+	schemaPath := filepath.Join(tempDir, "src", "db", "schema.ts")
+	schemaContent, err := os.ReadFile(schemaPath)
+	if err != nil {
+		t.Fatalf("src/db/schema.ts not found: %v", err)
+	}
+	if !strings.Contains(string(schemaContent), "sqliteTable") {
+		t.Errorf("expected sqliteTable in schema.ts")
+	}
+}
+
+
 
 

@@ -16,6 +16,7 @@ type AddonConfig struct {
 	Redis    bool   `json:"redis,omitempty"`    // true/false
 	Docker   bool   `json:"docker,omitempty"`   // true/false
 	CI       bool   `json:"ci,omitempty"`       // true/false
+	Drizzle  bool   `json:"drizzle,omitempty"`  // true/false (Modern TypeScript ORM)
 }
 
 // TemplateSupportsAddons checks if the template supports the optional addons (DB, Auth, Redis, Docker, CI)
@@ -37,7 +38,7 @@ func TemplateSupportsAddons(templateID string) bool {
 func (a AddonConfig) HasAddons() bool {
 	db := strings.ToLower(strings.TrimSpace(a.Database))
 	auth := strings.ToLower(strings.TrimSpace(a.Auth))
-	return (db != "" && db != "none") || (auth != "" && auth != "none") || a.Redis || a.Docker || a.CI
+	return (db != "" && db != "none") || (auth != "" && auth != "none") || a.Redis || a.Docker || a.CI || a.Drizzle
 }
 
 // GetAddonFiles returns the list of file paths that will be generated for the selected addons
@@ -57,6 +58,9 @@ func GetAddonFiles(config ProjectConfig) []string {
 	}
 	if redisFiles := getRedisFiles(config, baseDir); len(redisFiles) > 0 {
 		files = append(files, redisFiles...)
+	}
+	if drizzleFiles := getDrizzleFiles(config, baseDir); len(drizzleFiles) > 0 {
+		files = append(files, drizzleFiles...)
 	}
 	if config.Addons.Docker {
 		files = append(files, getDockerFiles(baseDir)...)
@@ -96,6 +100,9 @@ func GenerateAddons(config ProjectConfig) error {
 		return err
 	}
 	if err := generateRedisAddon(config, baseDir); err != nil {
+		return err
+	}
+	if err := generateDrizzleAddon(config, baseDir); err != nil {
 		return err
 	}
 	if config.Addons.Docker {

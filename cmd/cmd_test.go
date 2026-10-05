@@ -31,6 +31,7 @@ func executeCommand(args ...string) (string, error) {
 	redisFlag = false
 	dockerFlag = false
 	ciFlag = false
+	drizzleFlag = false
 	noAddonsFlag = false
 	noGitFlag = false
 	skipInstallFlag = false
@@ -1617,6 +1618,27 @@ func TestAuditCmd_InvalidDir(t *testing.T) {
 		t.Fatalf("Expected error for non-existent directory")
 	}
 }
+
+func TestAddCmd_Drizzle(t *testing.T) {
+	tempDir := t.TempDir()
+	// Setup Node.js project
+	_ = os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(`{"name":"test-node","dependencies":{},"devDependencies":{},"scripts":{}}`), 0644)
+
+	out, err := executeCommand("add", "drizzle", "--dir", tempDir, "--skip-install")
+	if err != nil {
+		t.Fatalf("add drizzle failed: %v, out: %s", err, out)
+	}
+
+	drizzleCfg := filepath.Join(tempDir, "drizzle.config.ts")
+	if _, err := os.Stat(drizzleCfg); err != nil {
+		t.Errorf("expected drizzle.config.ts to be created by add drizzle: %v", err)
+	}
+	schemaFile := filepath.Join(tempDir, "src", "db", "schema.ts")
+	if _, err := os.Stat(schemaFile); err != nil {
+		t.Errorf("expected src/db/schema.ts to be created by add drizzle: %v", err)
+	}
+}
+
 
 
 

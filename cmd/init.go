@@ -31,6 +31,7 @@ var (
 	redisFlag          bool
 	dockerFlag         bool
 	ciFlag             bool
+	drizzleFlag        bool
 	noAddonsFlag       bool
 	noGitFlag          bool
 	skipInstallFlag    bool
@@ -281,6 +282,7 @@ var initCmd = &cobra.Command{
 			Redis:    redisFlag,
 			Docker:   dockerFlag,
 			CI:       ciFlag,
+			Drizzle:  drizzleFlag,
 		}
 
 		result, err := prompts.Run(initialName, templateFlag, packageManagerFlag, initialAddons, noAddonsFlag)
@@ -360,6 +362,7 @@ func init() {
 	initCmd.Flags().BoolVar(&redisFlag, "redis", false, "Include Redis caching client addon")
 	initCmd.Flags().BoolVar(&dockerFlag, "docker", false, "Include Docker & Docker Compose containerization")
 	initCmd.Flags().BoolVar(&ciFlag, "ci", false, "Include GitHub Actions CI/CD pipeline")
+	initCmd.Flags().BoolVar(&drizzleFlag, "drizzle", false, "Include Drizzle ORM setup (for TypeScript/Node projects)")
 	initCmd.Flags().BoolVar(&noAddonsFlag, "no-addons", false, "Skip interactive addon configuration wizard")
 	initCmd.Flags().BoolVar(&noGitFlag, "no-git", false, "Skip git repository initialization")
 	initCmd.Flags().BoolVar(&commitFlag, "commit", false, "Create an initial git commit after scaffolding")
