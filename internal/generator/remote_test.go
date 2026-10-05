@@ -50,6 +50,8 @@ func TestParseRemoteURL(t *testing.T) {
 		{"", "", "", true},
 		{"-malicious", "", "", true},
 		{"#only-ref", "", "", true},
+		{"owner/repo#--upload-pack=exploit", "", "", true},
+		{"owner/repo#-malicious-flag", "", "", true},
 	}
 
 	for _, tt := range tests {

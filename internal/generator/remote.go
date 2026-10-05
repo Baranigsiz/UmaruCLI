@@ -46,6 +46,10 @@ func ParseRemoteURL(raw string) (*RemoteSpec, error) {
 		raw = strings.TrimSpace(raw[:idx])
 	}
 
+	if ref != "" && strings.HasPrefix(ref, "-") {
+		return nil, fmt.Errorf("invalid git ref '%s': cannot start with a dash", ref)
+	}
+
 	if raw == "" || strings.HasPrefix(raw, "-") {
 		return nil, fmt.Errorf("invalid repository URL")
 	}
@@ -109,9 +113,9 @@ func GenerateFromRemote(repoURL string, config ProjectConfig) (*templates.Templa
 
 	var cloneArgs []string
 	if spec.Ref != "" {
-		cloneArgs = []string{"clone", "--depth", "1", "--branch", spec.Ref, spec.CloneURL, tempDir}
+		cloneArgs = []string{"clone", "--depth", "1", "--branch", spec.Ref, "--", spec.CloneURL, tempDir}
 	} else {
-		cloneArgs = []string{"clone", "--depth", "1", spec.CloneURL, tempDir}
+		cloneArgs = []string{"clone", "--depth", "1", "--", spec.CloneURL, tempDir}
 	}
 
 	cloneCmd := exec.CommandContext(ctx, "git", cloneArgs...)
@@ -272,9 +276,9 @@ func DryRunRemote(repoURL string, config ProjectConfig) ([]string, error) {
 
 	var cloneArgs []string
 	if spec.Ref != "" {
-		cloneArgs = []string{"clone", "--depth", "1", "--branch", spec.Ref, spec.CloneURL, tempDir}
+		cloneArgs = []string{"clone", "--depth", "1", "--branch", spec.Ref, "--", spec.CloneURL, tempDir}
 	} else {
-		cloneArgs = []string{"clone", "--depth", "1", spec.CloneURL, tempDir}
+		cloneArgs = []string{"clone", "--depth", "1", "--", spec.CloneURL, tempDir}
 	}
 
 	cloneCmd := exec.CommandContext(ctx, "git", cloneArgs...)
