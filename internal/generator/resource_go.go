@@ -6,19 +6,19 @@ import (
 	"strings"
 )
 
-func generateGoResource(baseDir, pascal, slug, camel, pluralSlug, pluralPascal, framework string) []ResourceFile {
+func generateGoResource(baseDir string, ctx resourceContext) []ResourceFile {
 	replacer := strings.NewReplacer(
-		"{{Pascal}}", pascal,
-		"{{Slug}}", slug,
-		"{{Camel}}", camel,
-		"{{PluralSlug}}", pluralSlug,
-		"{{PluralPascal}}", pluralPascal,
+		"{{Pascal}}", ctx.pascal,
+		"{{Slug}}", ctx.slug,
+		"{{Camel}}", ctx.camel,
+		"{{PluralSlug}}", ctx.pluralSlug,
+		"{{PluralPascal}}", ctx.pluralPascal,
 	)
 
 	var files []ResourceFile
 
 	// 1. Model (internal/models/<slug>.go)
-	modelPath := filepath.Join(baseDir, "internal", "models", fmt.Sprintf("%s.go", slug))
+	modelPath := filepath.Join(baseDir, "internal", "models", fmt.Sprintf("%s.go", ctx.slug))
 	modelTmpl := `package models
 
 import (
@@ -45,12 +45,12 @@ type Update{{Pascal}}Request struct {
 `
 	files = append(files, ResourceFile{
 		Path:    modelPath,
-		RelPath: filepath.ToSlash(filepath.Join("internal", "models", fmt.Sprintf("%s.go", slug))),
+		RelPath: filepath.ToSlash(filepath.Join("internal", "models", fmt.Sprintf("%s.go", ctx.slug))),
 		Content: replacer.Replace(modelTmpl),
 	})
 
 	// 2. Repository (internal/repository/<slug>_repository.go)
-	repoPath := filepath.Join(baseDir, "internal", "repository", fmt.Sprintf("%s_repository.go", slug))
+	repoPath := filepath.Join(baseDir, "internal", "repository", fmt.Sprintf("%s_repository.go", ctx.slug))
 	repoTmpl := `package repository
 
 import (
@@ -130,12 +130,12 @@ func (r *memory{{Pascal}}Repository) Delete(ctx context.Context, id string) erro
 `
 	files = append(files, ResourceFile{
 		Path:    repoPath,
-		RelPath: filepath.ToSlash(filepath.Join("internal", "repository", fmt.Sprintf("%s_repository.go", slug))),
+		RelPath: filepath.ToSlash(filepath.Join("internal", "repository", fmt.Sprintf("%s_repository.go", ctx.slug))),
 		Content: replacer.Replace(repoTmpl),
 	})
 
 	// 3. Service (internal/service/<slug>_service.go)
-	servicePath := filepath.Join(baseDir, "internal", "service", fmt.Sprintf("%s_service.go", slug))
+	servicePath := filepath.Join(baseDir, "internal", "service", fmt.Sprintf("%s_service.go", ctx.slug))
 	serviceTmpl := `package service
 
 import (
@@ -188,15 +188,15 @@ func (s *{{Camel}}ServiceImpl) Delete(ctx context.Context, id string) error {
 `
 	files = append(files, ResourceFile{
 		Path:    servicePath,
-		RelPath: filepath.ToSlash(filepath.Join("internal", "service", fmt.Sprintf("%s_service.go", slug))),
+		RelPath: filepath.ToSlash(filepath.Join("internal", "service", fmt.Sprintf("%s_service.go", ctx.slug))),
 		Content: replacer.Replace(serviceTmpl),
 	})
 
 	// 4. Handler (internal/handlers/<slug>.go)
-	handlerPath := filepath.Join(baseDir, "internal", "handlers", fmt.Sprintf("%s.go", slug))
+	handlerPath := filepath.Join(baseDir, "internal", "handlers", fmt.Sprintf("%s.go", ctx.slug))
 	var handlerTmpl string
 
-	if strings.Contains(framework, "gin") {
+	if strings.Contains(ctx.framework, "gin") {
 		handlerTmpl = `package handlers
 
 import (
@@ -267,7 +267,7 @@ func (h *{{Pascal}}Handler) Delete(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 `
-	} else if strings.Contains(framework, "echo") {
+	} else if strings.Contains(ctx.framework, "echo") {
 		handlerTmpl = `package handlers
 
 import (
@@ -399,7 +399,7 @@ func (h *{{Pascal}}Handler) Delete(c *fiber.Ctx) error {
 
 	files = append(files, ResourceFile{
 		Path:    handlerPath,
-		RelPath: filepath.ToSlash(filepath.Join("internal", "handlers", fmt.Sprintf("%s.go", slug))),
+		RelPath: filepath.ToSlash(filepath.Join("internal", "handlers", fmt.Sprintf("%s.go", ctx.slug))),
 		Content: replacer.Replace(handlerTmpl),
 	})
 

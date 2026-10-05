@@ -32,6 +32,15 @@ type ResourceResult struct {
 	Files        []ResourceFile `json:"files"`
 }
 
+type resourceContext struct {
+	pascal       string
+	slug         string
+	camel        string
+	pluralSlug   string
+	pluralPascal string
+	framework    string
+}
+
 // ToPascalCase converts strings like "user_profile", "user-profile", "user" into "UserProfile"
 func ToPascalCase(s string) string {
 	s = Transliterate(s)
@@ -106,11 +115,14 @@ func GenerateResource(cfg ResourceConfig) (*ResourceResult, error) {
 		return nil, fmt.Errorf("resource name cannot be empty")
 	}
 
-	pascalName := ToPascalCase(rawName)
-	slugName := Slugify(rawName)
-	camelName := ToCamelCase(rawName)
-	pluralSlug := Pluralize(slugName)
-	pluralPascal := Pluralize(pascalName)
+	rCtx := resourceContext{
+		pascal:       ToPascalCase(rawName),
+		slug:         Slugify(rawName),
+		camel:        ToCamelCase(rawName),
+		pluralSlug:   Pluralize(Slugify(rawName)),
+		pluralPascal: Pluralize(ToPascalCase(rawName)),
+		framework:    proj.Framework,
+	}
 
 	baseDir := GetAddonBaseDir(proj.ToProjectConfig(AddonConfig{}))
 
@@ -118,19 +130,19 @@ func GenerateResource(cfg ResourceConfig) (*ResourceResult, error) {
 
 	switch proj.Type {
 	case ProjectTypeGo:
-		files = generateGoResource(baseDir, pascalName, slugName, camelName, pluralSlug, pluralPascal, proj.Framework)
+		files = generateGoResource(baseDir, rCtx)
 	case ProjectTypeNode:
-		files = generateNodeResource(baseDir, pascalName, slugName, camelName, pluralSlug, pluralPascal, proj.Framework)
+		files = generateNodeResource(baseDir, rCtx)
 	case ProjectTypePython:
-		files = generatePythonResource(baseDir, pascalName, slugName, camelName, pluralSlug, pluralPascal)
+		files = generatePythonResource(baseDir, rCtx)
 	case ProjectTypeRust:
-		files = generateRustResource(baseDir, pascalName, slugName, camelName, pluralSlug, pluralPascal)
+		files = generateRustResource(baseDir, rCtx)
 	default:
 		return nil, fmt.Errorf("resource generation is not supported for project type: %s", proj.Type)
 	}
 
 	result := &ResourceResult{
-		ResourceName: pascalName,
+		ResourceName: rCtx.pascal,
 		Language:     string(proj.Type),
 		Framework:    proj.Framework,
 		Files:        make([]ResourceFile, 0, len(files)),

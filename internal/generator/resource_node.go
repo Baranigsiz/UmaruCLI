@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 )
 
-func generateNodeResource(baseDir, pascal, slug, camel, pluralSlug, pluralPascal, framework string) []ResourceFile {
+func generateNodeResource(baseDir string, ctx resourceContext) []ResourceFile {
 	var files []ResourceFile
 
 	// 1. Model / Schema (src/models/<slug>.model.ts)
-	modelPath := filepath.Join(baseDir, "src", "models", fmt.Sprintf("%s.model.ts", slug))
+	modelPath := filepath.Join(baseDir, "src", "models", fmt.Sprintf("%s.model.ts", ctx.slug))
 	modelContent := fmt.Sprintf(`export interface %s {
   id: string;
   name: string;
@@ -24,16 +24,16 @@ export interface Create%sDTO {
 export interface Update%sDTO {
   name?: string;
 }
-`, pascal, pascal, pascal)
+`, ctx.pascal, ctx.pascal, ctx.pascal)
 
 	files = append(files, ResourceFile{
 		Path:    modelPath,
-		RelPath: filepath.ToSlash(filepath.Join("src", "models", fmt.Sprintf("%s.model.ts", slug))),
+		RelPath: filepath.ToSlash(filepath.Join("src", "models", fmt.Sprintf("%s.model.ts", ctx.slug))),
 		Content: modelContent,
 	})
 
 	// 2. Service (src/services/<slug>.service.ts)
-	servicePath := filepath.Join(baseDir, "src", "services", fmt.Sprintf("%s.service.ts", slug))
+	servicePath := filepath.Join(baseDir, "src", "services", fmt.Sprintf("%s.service.ts", ctx.slug))
 	serviceContent := fmt.Sprintf(`import { %s, Create%sDTO, Update%sDTO } from '../models/%s.model';
 
 export class %sService {
@@ -62,16 +62,16 @@ export class %sService {
     return this.items.delete(id);
   }
 }
-`, pascal, pascal, pascal, slug, pascal, pascal, pascal, pascal, pascal, pascal, pascal, slug)
+`, ctx.pascal, ctx.pascal, ctx.pascal, ctx.slug, ctx.pascal, ctx.pascal, ctx.pascal, ctx.pascal, ctx.pascal, ctx.pascal, ctx.pascal, ctx.slug)
 
 	files = append(files, ResourceFile{
 		Path:    servicePath,
-		RelPath: filepath.ToSlash(filepath.Join("src", "services", fmt.Sprintf("%s.service.ts", slug))),
+		RelPath: filepath.ToSlash(filepath.Join("src", "services", fmt.Sprintf("%s.service.ts", ctx.slug))),
 		Content: serviceContent,
 	})
 
 	// 3. Controller (src/controllers/<slug>.controller.ts)
-	controllerPath := filepath.Join(baseDir, "src", "controllers", fmt.Sprintf("%s.controller.ts", slug))
+	controllerPath := filepath.Join(baseDir, "src", "controllers", fmt.Sprintf("%s.controller.ts", ctx.slug))
 	controllerContent := fmt.Sprintf(`import { Request, Response } from 'express';
 import { %sService } from '../services/%s.service';
 
@@ -104,16 +104,16 @@ export class %sController {
     return res.status(204).send();
   }
 }
-`, pascal, slug, pascal, pascal, pascal, pascal)
+`, ctx.pascal, ctx.slug, ctx.pascal, ctx.pascal, ctx.pascal, ctx.pascal)
 
 	files = append(files, ResourceFile{
 		Path:    controllerPath,
-		RelPath: filepath.ToSlash(filepath.Join("src", "controllers", fmt.Sprintf("%s.controller.ts", slug))),
+		RelPath: filepath.ToSlash(filepath.Join("src", "controllers", fmt.Sprintf("%s.controller.ts", ctx.slug))),
 		Content: controllerContent,
 	})
 
 	// 4. Routes (src/routes/<slug>.routes.ts)
-	routesPath := filepath.Join(baseDir, "src", "routes", fmt.Sprintf("%s.routes.ts", slug))
+	routesPath := filepath.Join(baseDir, "src", "routes", fmt.Sprintf("%s.routes.ts", ctx.slug))
 	routesContent := fmt.Sprintf(`import { Router } from 'express';
 import { %sController } from '../controllers/%s.controller';
 
@@ -125,11 +125,11 @@ router.post('/', %sController.create);
 router.delete('/:id', %sController.delete);
 
 export default router;
-`, pascal, slug, pascal, pascal, pascal, pascal)
+`, ctx.pascal, ctx.slug, ctx.pascal, ctx.pascal, ctx.pascal, ctx.pascal)
 
 	files = append(files, ResourceFile{
 		Path:    routesPath,
-		RelPath: filepath.ToSlash(filepath.Join("src", "routes", fmt.Sprintf("%s.routes.ts", slug))),
+		RelPath: filepath.ToSlash(filepath.Join("src", "routes", fmt.Sprintf("%s.routes.ts", ctx.slug))),
 		Content: routesContent,
 	})
 
