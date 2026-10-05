@@ -45,11 +45,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Package / Function | Coverage |" >> $GITHUB_STEP_SUMMARY
           echo "|---|:---:|" >> $GITHUB_STEP_SUMMARY
-          go tool cover -func=coverage.out | grep -E "total:|\.go" | head -n 35 | while read -r line; do
-            entry=$(echo "$line" | awk '{print $1 " " $2}')
-            cov=$(echo "$line" | awk '{print $3}')
-            echo "| \`$entry\` | **$cov** |" >> $GITHUB_STEP_SUMMARY
-          done
+          go tool cover -func=coverage.out | awk '/(total:|\.go)/ && ++n<=35 { printf("| `%s %s` | **%s** |\n", $1, $2, $3) }' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "</details>" >> $GITHUB_STEP_SUMMARY
 
