@@ -71,6 +71,10 @@ func executeCommand(args ...string) (string, error) {
 	devWatchFlag = false
 	devDryRunFlag = false
 	devJSONFlag = false
+	generateDirFlag = "."
+	generateForceFlag = false
+	generateDryRunFlag = false
+	generateJSONFlag = false
 	infoJSONFlag = false
 	doctorJSONFlag = false
 
@@ -1456,6 +1460,83 @@ func TestInitCmd_ScaffoldWorkflow(t *testing.T) {
 		t.Errorf("Expected cmd/api/main.go to be created in %s", targetPath)
 	}
 }
+
+func TestGenerateCmd_Go(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24\nrequire github.com/gofiber/fiber/v2 v2.52.0"), 0644)
+	_ = os.MkdirAll(filepath.Join(tempDir, "cmd", "api"), 0755)
+	_ = os.WriteFile(filepath.Join(tempDir, "cmd", "api", "main.go"), []byte("package main"), 0644)
+
+	out, err := executeCommand("generate", "resource", "Product", "--dir", tempDir)
+	if err != nil {
+		t.Fatalf("generate resource failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Umaru Resource Generator") {
+		t.Errorf("Expected Umaru Resource Generator header, got: %s", out)
+	}
+	if !strings.Contains(out, "Product") {
+		t.Errorf("Expected Product in output, got: %s", out)
+	}
+
+	// Verify generated files on disk
+	modelFile := filepath.Join(tempDir, "internal", "models", "product.go")
+	if _, err := os.Stat(modelFile); os.IsNotExist(err) {
+		t.Errorf("Expected model file %s to be created", modelFile)
+	}
+}
+
+func TestGenerateCmd_DryRun(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24\nrequire github.com/gofiber/fiber/v2 v2.52.0"), 0644)
+	_ = os.MkdirAll(filepath.Join(tempDir, "cmd", "api"), 0755)
+	_ = os.WriteFile(filepath.Join(tempDir, "cmd", "api", "main.go"), []byte("package main"), 0644)
+
+	out, err := executeCommand("g", "resource", "Invoice", "--dir", tempDir, "--dry-run")
+	if err != nil {
+		t.Fatalf("g resource --dry-run failed: %v", err)
+	}
+
+	if !strings.Contains(out, "Dry-run mode") {
+		t.Errorf("Expected dry-run notice in output, got: %s", out)
+	}
+
+	// File should not exist on disk
+	modelFile := filepath.Join(tempDir, "internal", "models", "invoice.go")
+	if _, err := os.Stat(modelFile); !os.IsNotExist(err) {
+		t.Errorf("Dry-run should not create files on disk")
+	}
+}
+
+func TestGenerateCmd_JSON(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(`{"name":"myapp","dependencies":{"express":"^4.19.0"}}`), 0644)
+
+	out, err := executeCommand("g", "Customer", "--dir", tempDir, "--json", "--dry-run")
+	if err != nil {
+		t.Fatalf("g Customer --json failed: %v", err)
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		t.Fatalf("Expected valid JSON output, got error: %v, raw: %s", err, out)
+	}
+
+	if parsed["resource_name"] != "Customer" {
+		t.Errorf("Expected resource_name Customer in JSON, got: %v", parsed["resource_name"])
+	}
+}
+
+func TestGenerateCmd_NonTerminalPrompt(t *testing.T) {
+	_, err := executeCommand("generate")
+	if err == nil {
+		t.Fatalf("Expected error running generate without arguments in non-terminal mode")
+	}
+	if !strings.Contains(err.Error(), "interactive prompt unavailable") {
+		t.Errorf("Expected 'interactive prompt unavailable' error, got: %v", err)
+	}
+}
+
 
 
 

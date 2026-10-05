@@ -41,6 +41,7 @@ Bootstraps clean architecture backends, modern frontend apps, and monorepos in m
   <a href="#-installation">🚀 Installation</a> •
   <a href="#-usage">💻 Usage</a> •
   <a href="#-system-diagnostics">🩺 Doctor</a> •
+  <a href="#-clean-architecture-resource-generator-umaru-generate">🔨 Generator</a> •
   <a href="#-template-deep-inspection-umaru-info">🔍 Inspect</a> •
   <a href="#-project-sanitizer--disk-cleaner-umaru-clean">🧹 Cleaner</a> •
   <a href="#-universal-development-runner-umaru-dev--umaru-run">⚡ Dev Runner</a> •
@@ -425,6 +426,44 @@ Next steps to get started:
   1. cd my-awesome-api
   2. go run cmd/api/main.go
 ```
+
+---
+
+### 🔨 Clean Architecture Resource Generator (`umaru generate` / `umaru g`)
+
+Scaffold end-to-end CRUD layers, models, services, repositories, and HTTP handlers with a single command. Umaru automatically detects your framework (Go Fiber/Gin/Echo, Node Express, FastAPI, Rust) and emits idiomatic code:
+
+```bash
+# Generate a complete CRUD resource for Go (model, repository, service, handler)
+umaru generate resource Product
+umaru g resource User
+
+# Shortcut notation (defaults to 'resource')
+umaru g Order
+umaru g Customer
+
+# Interactive wizard: prompt for resource name and options
+umaru generate
+
+# Preview files that would be generated without writing to disk
+umaru g resource Invoice --dry-run
+
+# Overwrite existing files if they already exist
+umaru g resource Product -f
+umaru g resource Product --force
+
+# Target a specific subdirectory or monorepo package
+umaru g resource User --dir ./apps/api
+
+# Output generation manifest as machine-readable JSON
+umaru g resource User --json
+```
+
+**Architecture Scaffolding Matrix:**
+- **Go (Fiber / Gin / Echo):** Emits `internal/models/<name>.go`, `internal/repository/<name>_repository.go` (thread-safe in-memory store), `internal/service/<name>_service.go`, and framework-specific `internal/handlers/<name>.go`.
+- **Node.js (Express / Fastify):** Emits `src/models/<name>.model.ts`, `src/services/<name>.service.ts`, `src/controllers/<name>.controller.ts`, and `src/routes/<name>.routes.ts`.
+- **Python (FastAPI):** Emits Pydantic schemas in `app/schemas/<name>.py` and CRUD endpoints in `app/api/endpoints/<name>.py` (or `app/routers/<name>.py`).
+- **Rust (Axum / Actix):** Emits Serde models in `src/models/<name>.rs`.
 
 ---
 
