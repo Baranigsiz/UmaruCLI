@@ -159,6 +159,7 @@ Umaru CLI includes 25 production-ready architectures organized across 5 categori
 ### 📦 Fullstack Applications & Monorepos
 | Template ID | Technology Stack | Included Features |
 |---|---|---|
+| `go-templ-htmx` | **Go + Templ + HTMX 2.0 + Tailwind** | Type-safe Hypermedia Stack, compile-time typed Templ components, Fiber v2, reactive partial swaps, zero-bundle JS, Docker & Makefile. |
 | `go-htmx` | **Go Fiber + HTMX 2.0 + Tailwind** | Modern Hypermedia Stack, Fiber HTML templates, Zero-JS dynamic state, Tailwind CSS, Docker & Makefile. |
 | `fullstack-go-react` | **Go Fiber + React Vite + TS** | Monorepo structure (`apps/api`, `apps/web`), Live API Proxy, Unified Docker Compose, Makefile. |
 | `fullstack-ts-monorepo` | **Hono API + React Vite + TS** | High-performance TypeScript Monorepo, Hono backend, React 18 frontend, Tailwind CSS, Docker Compose. |

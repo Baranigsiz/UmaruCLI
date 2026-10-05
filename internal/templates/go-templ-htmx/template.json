@@ -1,0 +1,7 @@
+{
+  "name": "Go + Templ + HTMX (Type-Safe Hypermedia Stack)",
+  "description": "Cutting-edge fullstack web application with Go, compile-time type-safe Templ components, HTMX 2.0 & Tailwind CSS.",
+  "category": "Fullstack",
+  "installCommand": ["go", "mod", "tidy"],
+  "runCommand": "go run cmd/web/main.go"
+}

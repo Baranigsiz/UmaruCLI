@@ -1,0 +1,6 @@
+/* Custom styling on top of Tailwind CSS */
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}

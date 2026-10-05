@@ -1,0 +1,41 @@
+package pages
+
+import (
+	"{{.SafeName}}/views/components"
+	"{{.SafeName}}/views/layout"
+)
+
+templ Home(appName string, count int64) {
+	@layout.Base(appName) {
+		<div class="max-w-2xl w-full flex flex-col items-center text-center space-y-8">
+			<div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 rounded-full text-indigo-400 text-xs font-semibold">
+				<span>⚡ Hypermedia Driven Architecture</span>
+			</div>
+
+			<h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+				Type-Safe HTML with <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Go & Templ</span>
+			</h1>
+
+			<p class="text-slate-400 text-base max-w-lg leading-relaxed">
+				Zero build-step Reactivity, compile-time typed props, and instant hypermedia partial swaps powered by HTMX 2.0 and Go Fiber.
+			</p>
+
+			@components.Counter(count)
+
+			<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full pt-4">
+				<div class="bg-slate-900/50 border border-slate-800/80 rounded-xl p-4 text-left">
+					<div class="text-indigo-400 font-bold text-sm mb-1">Compile-Time Safe</div>
+					<div class="text-slate-400 text-xs">Components are Go functions with full type checking.</div>
+				</div>
+				<div class="bg-slate-900/50 border border-slate-800/80 rounded-xl p-4 text-left">
+					<div class="text-cyan-400 font-bold text-sm mb-1">0KB JS Bundle</div>
+					<div class="text-slate-400 text-xs">No heavy SPA runtime or hydration overhead.</div>
+				</div>
+				<div class="bg-slate-900/50 border border-slate-800/80 rounded-xl p-4 text-left">
+					<div class="text-emerald-400 font-bold text-sm mb-1">Lightning Fast</div>
+					<div class="text-slate-400 text-xs">Rendered directly from Go memory to HTTP stream.</div>
+				</div>
+			</div>
+		</div>
+	}
+}

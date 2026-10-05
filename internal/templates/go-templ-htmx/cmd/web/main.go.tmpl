@@ -1,0 +1,32 @@
+package main
+
+import (
+	"log"
+	"os"
+
+	"{{.SafeName}}/internal/handlers"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+)
+
+func main() {
+	app := fiber.New(fiber.Config{
+		AppName: "{{.ProjectName}}",
+	})
+
+	app.Use(logger.New())
+	app.Use(recover.New())
+	app.Static("/static", "./public")
+
+	handlers.RegisterRoutes(app)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("🚀 Server running at http://localhost:%s\n", port)
+	log.Fatal(app.Listen(":" + port))
+}

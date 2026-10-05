@@ -26,7 +26,7 @@ func (t TemplateConfig) GetCategory() string {
 	switch t.ID {
 	case "react-vite-ts", "vue-vite-ts", "nextjs-tailwind", "astro-tailwind", "svelte-vite-ts":
 		return "Frontend"
-	case "fullstack-go-react", "fullstack-ts-monorepo", "go-htmx":
+	case "fullstack-go-react", "fullstack-ts-monorepo", "go-htmx", "go-templ-htmx":
 		return "Fullstack"
 	case "go-cli", "go-tui":
 		return "CLI"

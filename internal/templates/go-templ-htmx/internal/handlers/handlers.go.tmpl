@@ -1,0 +1,43 @@
+package handlers
+
+import (
+	"sync/atomic"
+
+	"{{.SafeName}}/views/components"
+	"{{.SafeName}}/views/pages"
+
+	"github.com/a-h/templ"
+	"github.com/gofiber/fiber/v2"
+)
+
+var counter int64 = 0
+
+// Render streams a Templ component directly into the Fiber response body
+func Render(c *fiber.Ctx, component templ.Component) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return component.Render(c.Context(), c.Response().BodyWriter())
+}
+
+// RegisterRoutes sets up all page and HTMX endpoints
+func RegisterRoutes(app *fiber.App) {
+	app.Get("/", func(c *fiber.Ctx) error {
+		currentVal := atomic.LoadInt64(&counter)
+		return Render(c, pages.Home("{{.ProjectName}}", currentVal))
+	})
+
+	// HTMX Interactive Counter endpoints
+	app.Post("/api/counter/increment", func(c *fiber.Ctx) error {
+		newVal := atomic.AddInt64(&counter, 1)
+		return Render(c, components.Counter(newVal))
+	})
+
+	app.Post("/api/counter/decrement", func(c *fiber.Ctx) error {
+		newVal := atomic.AddInt64(&counter, -1)
+		return Render(c, components.Counter(newVal))
+	})
+
+	app.Post("/api/counter/reset", func(c *fiber.Ctx) error {
+		atomic.StoreInt64(&counter, 0)
+		return Render(c, components.Counter(0))
+	})
+}

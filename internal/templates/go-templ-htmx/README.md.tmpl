@@ -1,0 +1,40 @@
+# {{.ProjectName}}
+
+A modern, high-performance web application built with **Go**, **[Templ](https://templ.guide)** (Compile-time Type-safe HTML Components), **[HTMX 2.0](https://htmx.org)** & **Tailwind CSS**.
+
+## ✨ Architecture Highlights
+- 🐹 **Go Fiber v2**: Ultra-fast, Express-like HTTP web framework.
+- 🧩 **Templ Components**: Zero-runtime HTML templating with full compile-time Go type-safety and syntax checking.
+- ⚡ **HTMX 2.0**: SPA-like dynamic reactivity and partial page swaps with zero client-side JavaScript bundle overhead.
+- 🎨 **Tailwind CSS**: Modern, utility-first styling.
+
+## 🚀 Getting Started
+
+### 1. Run the Development Server
+```bash
+go run cmd/web/main.go
+# Or using Umaru CLI:
+umaru dev
+```
+
+Open your browser at [http://localhost:8080](http://localhost:8080).
+
+### 2. Live Templ Generation (Optional)
+If you install the Templ CLI (`go install github.com/a-h/templ/cmd/templ@latest`), you can run:
+```bash
+templ generate --watch --cmd="go run cmd/web/main.go"
+```
+
+## 📁 Directory Structure
+```
+├── cmd/
+│   └── web/
+│       └── main.go          # Application entrypoint & HTTP server
+├── internal/
+│   └── handlers/            # Fiber route handlers & HTMX endpoints
+├── views/
+│   ├── layout/              # Base HTML template shell & navigation
+│   ├── pages/               # Full page Templ views
+│   └── components/          # Reusable, reactive HTMX partials
+└── public/                  # Static assets (CSS, icons)
+```

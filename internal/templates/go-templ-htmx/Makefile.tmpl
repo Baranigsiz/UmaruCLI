@@ -1,0 +1,16 @@
+.PHONY: dev build templ test clean
+
+dev:
+	go run cmd/web/main.go
+
+templ:
+	templ generate
+
+build:
+	go build -o bin/server cmd/web/main.go
+
+test:
+	go test ./...
+
+clean:
+	rm -rf bin/
