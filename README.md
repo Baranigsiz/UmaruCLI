@@ -409,6 +409,38 @@ umaru g resource Article --dry-run
 
 ---
 
+## 🚀 Production Cloud Deployment (`umaru deploy`)
+
+Bridge the gap between local development and cloud hosting. Automatically inspect your project and generate production deployment manifests and step-by-step CLI commands:
+
+```bash
+# Interactive deployment target selector
+umaru deploy
+
+# Direct platform generation
+umaru deploy fly          # Fly.io (fly.toml with internal port & auto-scaling)
+umaru deploy railway      # Railway (railway.json with Nixpacks builder & healthcheck)
+umaru deploy render       # Render (render.yaml Blueprint with native runtimes)
+umaru deploy docker       # Ultra-minimal multi-stage production Dockerfile
+
+# Customize application name or internal port
+umaru deploy fly --app-name my-cool-api --port 8080
+
+# Preview deployment files without writing to disk
+umaru deploy railway --dry-run
+
+# Output deployment configuration and commands as JSON for CI/CD
+umaru deploy render --json
+```
+
+**Supported Cloud Providers:**
+- 🎈 **Fly.io:** Auto-configures `fly.toml`, internal ports, auto-stop/start machines, and resource scaling.
+- 🚂 **Railway:** Produces `railway.json` with Nixpacks builder, start commands, and healthcheck timeouts.
+- 🟣 **Render:** Emits `render.yaml` Infrastructure-as-Code Blueprint with native runtimes (Go, Node, Python, Docker).
+- 🐳 **Docker Production:** Creates an ultra-minimal distroless / alpine multi-stage `Dockerfile.prod`.
+
+---
+
 ## 🚀 Installation
 
 ### ⚡ Quick Install (Recommended - Zero Dependencies)

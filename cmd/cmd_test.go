@@ -82,6 +82,13 @@ func executeCommand(args ...string) (string, error) {
 	auditJSONFlag = false
 	auditStrictFlag = false
 	auditNoNetworkFlag = false
+	deployPlatformFlag = ""
+	deployDirFlag = "."
+	deployAppNameFlag = ""
+	deployPortFlag = 0
+	deployForceFlag = false
+	deployDryRunFlag = false
+	deployJSONFlag = false
 
 	oldStdout := os.Stdout
 	oldStderr := os.Stderr
@@ -1638,6 +1645,91 @@ func TestAddCmd_Drizzle(t *testing.T) {
 		t.Errorf("expected src/db/schema.ts to be created by add drizzle: %v", err)
 	}
 }
+
+func TestDeployCmd_Fly(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+
+	out, err := executeCommand("deploy", "fly", "-d", tempDir, "--app-name", "test-fly-cli", "--port", "8080")
+	if err != nil {
+		t.Fatalf("deploy fly failed: %v, out: %s", err, out)
+	}
+
+	if !strings.Contains(out, "UMARU DEPLOY") || !strings.Contains(out, "FLY") {
+		t.Errorf("expected deploy header in output: %s", out)
+	}
+
+	flyToml := filepath.Join(tempDir, "fly.toml")
+	if _, err := os.Stat(flyToml); err != nil {
+		t.Errorf("fly.toml should have been written to disk: %v", err)
+	}
+}
+
+func TestDeployCmd_Railway(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "package.json"), []byte(`{"name":"test-node"}`), 0644)
+
+	out, err := executeCommand("deploy", "railway", "-d", tempDir)
+	if err != nil {
+		t.Fatalf("deploy railway failed: %v, out: %s", err, out)
+	}
+
+	if !strings.Contains(out, "RAILWAY") {
+		t.Errorf("expected railway in output: %s", out)
+	}
+}
+
+func TestDeployCmd_JSON(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+
+	out, err := executeCommand("deploy", "render", "-d", tempDir, "--json")
+	if err != nil {
+		t.Fatalf("deploy render --json failed: %v, out: %s", err, out)
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		t.Fatalf("expected valid JSON: %v, raw: %s", err, out)
+	}
+
+	if parsed["platform"] != "render" {
+		t.Errorf("expected platform render, got: %v", parsed["platform"])
+	}
+}
+
+func TestDeployCmd_DryRun(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+
+	out, err := executeCommand("deploy", "docker", "-d", tempDir, "--dry-run")
+	if err != nil {
+		t.Fatalf("deploy docker --dry-run failed: %v, out: %s", err, out)
+	}
+
+	if !strings.Contains(out, "Dry-run mode") {
+		t.Errorf("expected dry-run note in output: %s", out)
+	}
+
+	dockerfile := filepath.Join(tempDir, "Dockerfile.prod")
+	if _, err := os.Stat(dockerfile); err == nil {
+		t.Errorf("Dockerfile.prod should NOT be created in dry-run mode")
+	}
+}
+
+func TestDeployCmd_NonTerminalPrompt(t *testing.T) {
+	tempDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module testapp\ngo 1.24"), 0644)
+
+	_, err := executeCommand("deploy", "-d", tempDir)
+	if err == nil {
+		t.Fatalf("expected error when running deploy without platform in non-terminal mode")
+	}
+	if !strings.Contains(err.Error(), "platform required in non-interactive mode") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
 
 
 
